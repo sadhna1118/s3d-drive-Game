@@ -1,5 +1,5 @@
 # ⚡ S3D Drive – 3D Web Racing & Voice Driving
-
+                                  https://s3d-drive-game.onrender.com/
 > **Flagship 3D High-Performance Web Racing Game with Speech Recognition Voice Driving Control, Adaptive AI Nemesis Rivals, 5 Dynamic Environmental Tracks, Real-Time Online Multiplayer, and Multi-Angle Cinematic Replays.**
 
 ---
@@ -68,15 +68,6 @@ Open **`http://localhost:3000`** in Chrome, Edge, or Firefox.
 | **Nitro Warp** | `Shift` / `N` | Nitro Button | *"Nitro"* / *"Boost"* / *"Tez"* |
 | **Change Camera** | `C` | Cam Icon | *"Camera"* / *"View"* |
 | **Reset Car** | `R` | — | *"Reset"* / *"Respawn"* |
-
----
-
-## 🌐 Free Cloud Deployment
-
-For deploying online with persistent WebSockets and free automatic HTTPS for Voice Mic:
-1. Connect this repo to **[Render.com](https://render.com)**.
-2. Build command: `npm install` | Start command: `node server.js`
-3. Check **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** for detailed instructions.
 
 ---
 
