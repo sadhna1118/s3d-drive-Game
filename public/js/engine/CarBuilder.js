@@ -449,11 +449,9 @@ export class CarBuilder {
     const dateMode = visualMods?.dateMode || 'off'; // 'off' | 'romance' | 'candlelight' | 'elegant'
     const coupleNames = visualMods?.coupleNames || { partner1: 'Aarav', partner2: 'Meera' };
     const rawChars = visualMods?.showCharacters;
-    const characterMode = rawChars === 'driver_only'
-      ? 'driver_only'
-      : (rawChars === false || rawChars === 'false' || rawChars === 'none'
-          ? 'none'
-          : (rawChars !== undefined || dateMode !== 'off' ? 'couple' : 'couple'));
+    const characterMode = rawChars === 'couple'
+      ? 'couple'
+      : ((rawChars === false || rawChars === 'false' || rawChars === 'none') ? 'none' : 'driver_only');
     const showCharacters = characterMode !== 'none';
 
     const bodyColor = new THREE.Color(hexColor || config.defaultColor || '#00f0ff');
@@ -1303,7 +1301,7 @@ export class CarBuilder {
     hCtx.fillStyle = '#ffd166';
     hCtx.font = 'bold 24px Rajdhani, sans-serif';
     hCtx.textAlign = 'center';
-    hCtx.fillText('♥ DELHI DATE DRIVE ♥', 256, 48);
+    hCtx.fillText('♥ S3D DATE DRIVE ♥', 256, 48);
     hCtx.fillStyle = '#ffffff';
     hCtx.font = 'bold 38px Orbitron, sans-serif';
     hCtx.fillText(`${n1} ♥ ${n2}`, 256, 114);

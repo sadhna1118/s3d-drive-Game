@@ -101,6 +101,16 @@
   <!-- 3D Canvas Container -->
   <div id="canvas-container"></div>
 
+  <!-- Live Finger Swipe Vector Indicator & Optional Hand-Cam Preview -->
+  <div id="finger-swipe-reticle" class="finger-swipe-reticle hidden">
+    <div id="finger-swipe-knob" class="finger-swipe-knob"></div>
+  </div>
+  <div id="gesture-cam-box" class="gesture-cam-box glass-panel hidden">
+    <video id="gesture-video" playsinline muted style="display:none;"></video>
+    <canvas id="gesture-canvas" width="160" height="120"></canvas>
+    <div id="gesture-cam-label" class="gesture-cam-label">🖐️ GESTURE CAM</div>
+  </div>
+
   <!-- =========================================
        1. 3D GARAGE & SHOWROOM SCREEN
   ========================================= -->
@@ -121,8 +131,11 @@
         <button id="btn-toggle-voice-garage" class="cyber-btn cyber-btn-secondary voice-mic-btn" style="padding:6px 14px; font-size:11px;">
           🎙️ MIC: OFF
         </button>
+        <button id="btn-toggle-gesture-garage" class="cyber-btn cyber-btn-secondary gesture-cam-btn" style="padding:6px 14px; font-size:11px;">
+          🖐️ HAND: OFF
+        </button>
         <button id="btn-open-voice-guide" class="cyber-btn cyber-btn-ghost" style="padding:6px 14px; font-size:11px;">
-          🗣️ VOICE COMMANDS
+          🗣️ VOICE &amp; GESTURES
         </button>
         <button id="btn-self-test" class="cyber-btn cyber-btn-ghost" style="padding:6px 14px; font-size:11px; border-color:var(--accent-green); color:var(--accent-green);">
           🟢 READY
@@ -267,8 +280,8 @@
             <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
               <span class="palette-label">GARAGE CABIN CREW</span>
               <div class="chips-row">
-                <div class="crew-chip active" data-crew="couple">COUPLE</div>
-                <div class="crew-chip" data-crew="driver_only">ONLY DRIVER</div>
+                <div class="crew-chip" data-crew="couple">COUPLE</div>
+                <div class="crew-chip active" data-crew="driver_only">ONLY DRIVER</div>
                 <div class="crew-chip" data-crew="none">EMPTY</div>
               </div>
             </div>
@@ -287,19 +300,19 @@
           </div>
         </div>
 
-        <!-- 6 Delhi Climates & Real-Time Weather Selector -->
+        <!-- 6 World Climates & Real-Time Weather Selector -->
         <div class="track-weather-bar" style="flex-direction:column; gap:4px;">
           <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-            <span class="palette-label">DELHI REAL-TIME CLIMATE &amp; WEATHER</span>
-            <span id="garage-climate-badge" style="font-family:'Orbitron'; font-size:9px; color:#ffd166;">LIVE DELHI SKY</span>
+            <span class="palette-label">REAL-TIME CLIMATE &amp; WEATHER</span>
+            <span id="garage-climate-badge" style="font-family:'Orbitron'; font-size:9px; color:#ffd166;">LIVE SKY</span>
           </div>
           <select id="garage-track-select">
-            <option value="delhi_live" selected>🇮🇳 1. Live Real-Time Delhi (Current Sky, Parks &amp; Forests)</option>
-            <option value="delhi_sunny">☀️ 2. Sunny Delhi Day (India Gate, Lodhi Park &amp; Ridge Forest)</option>
-            <option value="delhi_sunset">🌅 3. Delhi Golden Sunset (Romantic Dusk Skyline)</option>
-            <option value="delhi_monsoon">🌧️ 4. Delhi Monsoon Rain (Wet Reflective Puddles &amp; Storm)</option>
-            <option value="delhi_fog">🌫️ 5. Delhi Winter Fog (November Forest &amp; City Mist)</option>
-            <option value="delhi_night">🌙 6. Midnight Delhi (Floodlights, Metro &amp; Candles)</option>
+            <option value="city_live" selected>🌐 1. Live Real-Time Sky (Dynamic Clock, Parks &amp; Forests)</option>
+            <option value="city_sunny">☀️ 2. Sunny Metro Day (Grand Arch, Emerald Park &amp; Ridge Canopy)</option>
+            <option value="city_sunset">🌅 3. Golden Sunset (Scenic Dusk Skyline)</option>
+            <option value="city_monsoon">🌧️ 4. Monsoon Rain (Wet Reflective Puddles &amp; Storm)</option>
+            <option value="city_fog">🌫️ 5. Winter Morning Fog (Forest Mist &amp; Cityscape)</option>
+            <option value="city_night">🌙 6. Midnight Neon City (Floodlights, Metro &amp; Candles)</option>
           </select>
         </div>
       </div>
@@ -307,10 +320,10 @@
       <!-- Game Mode Launchers -->
       <div class="play-actions-card glass-panel">
         <button id="btn-mode-gp" class="cyber-btn cyber-btn-primary start-race-hero-btn">
-          🏁 START RACE (NEW DELHI GP)
+          🏁 START RACE (GRAND PRIX GP)
         </button>
         <button id="btn-mode-date" class="cyber-btn cyber-btn-love">
-          ❤️ GO ON A DELHI DATE (COUPLE CRUISE)
+          ❤️ SCENIC CRUISE (COUPLE DATE)
         </button>
         <button id="btn-mode-drift" class="cyber-btn cyber-btn-gold">
           🔥 DRIFT ARENA
@@ -346,13 +359,13 @@
   </div>
 
   <!-- =========================================
-       2b. PERSONALIZED COUPLE & DELHI DATE MODAL
+       2b. PERSONALIZED COUPLE CRUISE MODAL
   ========================================= -->
   <div id="modal-date" class="modal-overlay hidden" style="z-index: 58;">
     <div class="modal-card glass-panel" style="width: 560px; border-color: rgba(255, 77, 136, 0.45);">
-      <div class="modal-title" style="color: #ff6b9d;">💐 PERSONALIZED DELHI COUPLE DATE</div>
+      <div class="modal-title" style="color: #ff6b9d;">💐 SCENIC COUPLE DATE CRUISE</div>
       <div style="font-size:12px; color:var(--text-muted); text-align:center;">
-        Customize couple names, 3D car characters, rose bouquets, satin ribbons, glowing candles &amp; illuminated heart boards for both your car and the Lodhi Candlelight Pavilion!
+        Customize couple names, 3D car characters, rose bouquets, satin ribbons, glowing candles &amp; illuminated heart boards for both your car and the Candlelight Pavilion!
       </div>
 
       <div class="settings-panel" style="border-color: rgba(255, 77, 136, 0.25);">
@@ -377,21 +390,21 @@
           <div class="settings-row">
             <span style="font-size:12px; font-weight:700;">3D CHARACTERS IN CAR</span>
             <select id="date-chars-select" class="settings-select">
-              <option value="couple" selected>Couple Inside Cabin (Driver + Partner)</option>
-              <option value="driver_only">Only Driver Mode (Solo Driver)</option>
+              <option value="driver_only" selected>Only Driver Mode (Solo Driver)</option>
+              <option value="couple">Couple Inside Cabin (Driver + Partner)</option>
               <option value="none">Empty Cabin (Hidden)</option>
             </select>
           </div>
         </div>
 
         <div id="date-board-preview" class="date-board-preview">
-          ♥ AARAV ♥ MEERA — DELHI DATE BOARD ♥
+          ♥ AARAV ♥ MEERA — S3D DATE BOARD ♥
         </div>
       </div>
 
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
         <button type="button" id="btn-save-date-setup" class="cyber-btn cyber-btn-secondary">💾 APPLY DECOR IN GARAGE</button>
-        <button type="button" id="btn-start-date-cruise" class="cyber-btn cyber-btn-love">🚗 START DELHI DATE CRUISE</button>
+        <button type="button" id="btn-start-date-cruise" class="cyber-btn cyber-btn-love">🚗 START SCENIC DATE CRUISE</button>
       </div>
       <button type="button" class="cyber-btn cyber-btn-ghost btn-close-modal">CLOSE</button>
     </div>
@@ -411,7 +424,7 @@
           <span id="music-time-label" style="font-family:'Orbitron'; font-size:11px; color:var(--text-muted);">--:-- / --:--</span>
         </div>
         <div id="music-now-title" style="font-family:'Orbitron'; font-size:15px; font-weight:800; color:#fff; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-          📻 Delhi Nightwave
+          📻 Midnight Synthwave
         </div>
         <div id="music-now-sub" style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">
           Dark Synthwave
@@ -556,10 +569,20 @@
           <div class="voice-cmd-header"><span class="voice-icon">🎥</span> <b>CAMERA</b></div>
           <div class="voice-cmd-phrases">"Camera", "View", "Cockpit", "Change Camera"</div>
         </div>
+
+        <div class="voice-cmd-card glass-panel">
+          <div class="voice-cmd-header"><span class="voice-icon">📢</span> <b>HORN &amp; INDICATORS</b></div>
+          <div class="voice-cmd-phrases">"Horn", "Beep", "Left Indicator", "Right Indicator", "Hazard"</div>
+        </div>
+
+        <div class="voice-cmd-card glass-panel">
+          <div class="voice-cmd-header"><span class="voice-icon">☝️</span> <b>FINGER SWIPE &amp; HAND CAM</b></div>
+          <div class="voice-cmd-phrases">Screen Drag Left/Right/Up/Down • Double-Tap Nitro • Webcam: 1 Finger Steer, 🖐️ Gas, ✊ Brake, ✌️ Nitro, 🤟 Drift</div>
+        </div>
       </div>
 
       <div style="background: rgba(0, 240, 255, 0.08); border: 1px solid var(--primary-neon); border-radius: 8px; padding: 10px; font-size: 11px; text-align: center; color: #fff;">
-        💡 <b>Tip:</b> Click <b>🎙️ MIC BUTTON</b> anytime or press <b>V</b> to toggle Voice Driving on/off.
+        💡 <b>Tip:</b> Press <b>V</b> for Voice Mic, <b>G</b> for Finger Cam, or drag your finger anywhere on screen while driving! Tune Voice &amp; Gesture Sensitivity inside <b>⚙️ SETTINGS</b>.
       </div>
 
       <button class="cyber-btn cyber-btn-primary btn-close-modal" style="margin-top:6px;">START DRIVING</button>
@@ -679,7 +702,7 @@
         </div>
         <div style="display:flex; align-items:center; gap:5px;">
           <div id="hud-btn-radio" class="hud-radio-widget glass-panel interactive" title="Click to Switch Radio / Next Track">
-            <span id="hud-radio-name">📻 Delhi Nightwave</span>
+            <span id="hud-radio-name">📻 Midnight Synthwave</span>
           </div>
           <button id="hud-btn-open-music" class="cyber-btn cyber-btn-ghost hud-icon-btn interactive" style="height:26px; font-size:12px;" title="Open Car Stereo (Live Radio & Device Songs)">🎛️</button>
         </div>
@@ -691,12 +714,13 @@
           60 FPS
         </div>
         <div id="hud-climate-pill" class="hud-stat-pill glass-panel" style="padding: 4px 10px; font-family:'Orbitron'; font-size:10px; font-weight:800; color:#ffd166;">
-          🇮🇳 DELHI LIVE
+          🌐 LIVE SKY
         </div>
         <div id="hud-mode-badge" class="hud-stat-pill glass-panel" style="padding: 4px 10px; font-family:'Orbitron'; font-size:11px; font-weight:800; color:var(--accent-gold);">
           GRAND PRIX
         </div>
-        <button id="hud-btn-climate" class="cyber-btn cyber-btn-ghost hud-icon-btn" title="Switch Delhi Weather &amp; Time">🌦️</button>
+        <button id="hud-btn-climate" class="cyber-btn cyber-btn-ghost hud-icon-btn" title="Switch Weather &amp; Time">🌦️</button>
+        <button id="hud-btn-gesture" class="cyber-btn cyber-btn-ghost hud-icon-btn gesture-cam-btn" title="Toggle Finger / Hand Cam (G)">🖐️</button>
         <button id="hud-btn-voice" class="cyber-btn cyber-btn-ghost hud-icon-btn voice-mic-btn" title="Toggle Voice Driving (V)">🎙️</button>
         <button id="hud-btn-cam" class="cyber-btn cyber-btn-ghost hud-icon-btn" title="Change Camera (C)">🎥</button>
         <button id="hud-btn-mute-sfx" class="cyber-btn cyber-btn-ghost hud-audio-toggle-btn" title="Car Engine &amp; SFX ON/OFF (M)"><span id="sfx-mute-icon">🏎️🔊</span><span>CAR</span></button>
@@ -897,10 +921,26 @@
         <div class="settings-grid">
           <div class="settings-row">
             <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
-              <span>SENSITIVITY</span>
+              <span>STEERING SENSITIVITY</span>
               <span data-profile-display="steerSensitivity" style="color:var(--primary-neon); font-family:'Orbitron';">1.00x</span>
             </div>
             <input type="range" data-profile-input="steerSensitivity" class="settings-slider" min="0.4" max="1.6" step="0.05" value="1.0">
+          </div>
+
+          <div class="settings-row">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+              <span>VOICE STEER SENSITIVITY</span>
+              <span data-profile-display="voiceSensitivity" style="color:var(--primary-neon); font-family:'Orbitron';">1.00x</span>
+            </div>
+            <input type="range" data-profile-input="voiceSensitivity" class="settings-slider" min="0.4" max="1.8" step="0.05" value="1.0">
+          </div>
+
+          <div class="settings-row">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+              <span>FINGER GESTURE SENSITIVITY</span>
+              <span data-profile-display="gestureSensitivity" style="color:var(--primary-neon); font-family:'Orbitron';">1.00x</span>
+            </div>
+            <input type="range" data-profile-input="gestureSensitivity" class="settings-slider" min="0.4" max="2.0" step="0.05" value="1.0">
           </div>
 
           <div class="settings-row">

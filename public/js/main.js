@@ -2,7 +2,7 @@
  * Velocity Rush: Neon Rebellion - Master Game Coordinator & AAA State Machine
  */
 import { GameRenderer } from './engine/Renderer.js';
-import { Track, TRACK_PRESETS, resolveDelhiPreset } from './engine/Track.js';
+import { Track, TRACK_PRESETS, resolveWorldPreset } from './engine/Track.js';
 import { Car } from './engine/Car.js';
 import { BotRacer, RIVAL_PROFILES } from './engine/BotAI.js';
 import { ParticleSystem } from './engine/Particles.js';
@@ -19,6 +19,7 @@ import { TelemetryManager } from './engine/Telemetry.js';
 import { ReplaySystem } from './engine/Replay.js';
 import { PhotoModeManager } from './engine/PhotoMode.js';
 import { VoiceControlManager } from './engine/VoiceControl.js';
+import { GestureControlManager } from './engine/GestureControl.js';
 
 class GameApp {
   constructor() {
@@ -31,14 +32,19 @@ class GameApp {
     this.dateArrivedNotified = false;
     this.lastLiveClockCheck = 0;
 
-    // Load Personalized Couple & Date Profile
-    this.coupleProfile = { partner1: 'Aarav', partner2: 'Meera', dateMode: 'off', showCharacters: 'couple' };
+    // Load Solo / Couple Cabin Profile (Solo Only Driver by default in Garage!)
+    this.coupleProfile = { partner1: 'Aarav', partner2: 'Meera', dateMode: 'off', showCharacters: 'driver_only', crewExplicit: false };
     try {
       const savedCouple = localStorage.getItem('s3d_couple_date_v1');
       if (savedCouple) {
         const parsed = JSON.parse(savedCouple);
-        if (parsed.showCharacters === true || parsed.showCharacters === 'true') parsed.showCharacters = 'couple';
-        else if (parsed.showCharacters === false || parsed.showCharacters === 'false') parsed.showCharacters = 'none';
+        if (!parsed.crewExplicit) {
+          parsed.showCharacters = 'driver_only';
+        } else if (parsed.showCharacters === true || parsed.showCharacters === 'true') {
+          parsed.showCharacters = 'couple';
+        } else if (parsed.showCharacters === false || parsed.showCharacters === 'false') {
+          parsed.showCharacters = 'none';
+        }
         this.coupleProfile = { ...this.coupleProfile, ...parsed };
       }
     } catch (e) { }
@@ -47,7 +53,7 @@ class GameApp {
     this.career = new CareerManager();
     this.renderer = new GameRenderer(document.getElementById('canvas-container'));
     this.track = new Track(this.renderer.scene);
-    this.track.buildTrack('delhi_live', 'clear', { coupleNames: this.coupleProfile });
+    this.track.buildTrack('city_live', 'clear', { coupleNames: this.coupleProfile });
 
     try {
       this.audio = new AudioManager();
@@ -73,7 +79,17 @@ class GameApp {
     }
 
     try {
-      this.input = new InputManager(this.voice);
+      this.gesture = new GestureControlManager();
+    } catch (e) {
+      console.warn('GestureControl fallback:', e);
+      this.gesture = {
+        isCamActive: false, toggleCamera: async () => false, setSensitivity: () => {},
+        attachSurface: () => {}, getState: () => ({ active: false, throttle: 0, brake: 0, steer: 0, nitro: false, handbrake: false })
+      };
+    }
+
+    try {
+      this.input = new InputManager(this.voice, this.gesture);
     } catch (e) {
       console.warn('Input fallback:', e);
       this.input = {
@@ -157,7 +173,7 @@ class GameApp {
     // Active Race Configuration
     this.activeRaceConfig = {
       mode: 'GP',
-      trackId: 'delhi_live',
+      trackId: 'city_live',
       weather: 'clear',
       laps: 3,
       careerCup: null,
@@ -171,6 +187,11 @@ class GameApp {
 
     this.initShowroom();
     this.bindUIHandlers();
+    this.gesture.attachSurface?.(
+      document.getElementById('canvas-container'),
+      this.ui?.gestureVideo || null,
+      this.ui?.gestureCanvas || null
+    );
     this.bindNetworkHandlers();
     CarBuilder.preloadRealModels();
 
@@ -191,7 +212,7 @@ class GameApp {
   }
 
   applyWorldVisualTheme(trackId) {
-    const preset = resolveDelhiPreset(trackId);
+    const preset = resolveWorldPreset(trackId);
     if (this.renderer && typeof this.renderer.setWorldTheme === 'function') {
       this.renderer.setWorldTheme(preset);
     }
@@ -199,9 +220,9 @@ class GameApp {
   }
 
   resolveCharMode(raw = this.coupleProfile?.showCharacters) {
-    if (raw === 'driver_only') return 'driver_only';
+    if (raw === 'couple') return 'couple';
     if (raw === false || raw === 'false' || raw === 'none') return 'none';
-    return 'couple';
+    return 'driver_only';
   }
 
   updateCoupleProfile(partial = {}) {
@@ -251,7 +272,7 @@ class GameApp {
       this.setPaused(false);
       this.ui.setChatVisible(false);
       this.track?.setShowroomStageVisible?.(true);
-      this.applyWorldVisualTheme(this.ui?.selectedTrackId || 'delhi_live');
+      this.applyWorldVisualTheme(this.ui?.selectedTrackId || 'city_live');
 
       if (this.cameraCtrl) this.cameraCtrl.setMode(CAMERA_MODES.SHOWROOM);
 
@@ -338,8 +359,8 @@ class GameApp {
       this.dateArrivedNotified = false;
       this.ui.setChatVisible(false);
 
-      const trackId = this.activeRaceConfig.trackId || this.ui?.selectedTrackId || 'delhi_live';
-      const preset = resolveDelhiPreset(trackId);
+      const trackId = this.activeRaceConfig.trackId || this.ui?.selectedTrackId || 'city_live';
+      const preset = resolveWorldPreset(trackId);
       const weather = preset.isRain ? 'rain' : (this.activeRaceConfig.weather || 'clear');
       this.activeRaceConfig.trackId = preset.id;
       this.activeRaceConfig.weather = weather;
@@ -413,7 +434,7 @@ class GameApp {
           }
         }
         this.audio?.startMusic?.();
-        this.ui.showToast(`❤️ ${coupleForRun.partner1} ♥ ${coupleForRun.partner2} — Cruise Kartavya Path & visit the Candlelight Pavilion!`);
+        this.ui.showToast(`❤️ ${coupleForRun.partner1} ♥ ${coupleForRun.partner2} — Cruise Emerald Boulevard & visit the Candlelight Pavilion!`);
         return;
       }
 
@@ -455,14 +476,14 @@ class GameApp {
   }
 
   // --- 4. Start Multiplayer Race ---
-  startMultiplayerRace(playersData, trackId = 'delhi_gp', laps = 3) {
+  startMultiplayerRace(playersData, trackId = 'city_live', laps = 3) {
     this.setPaused(false);
     this.audio.init();
     this.audio.resume();
     this.audio?.setPaused?.(false);
 
     this.mode = 'MP';
-    const weather = (trackId === 'delhi_monsoon' || trackId === 'cyber_rain') ? 'rain' : 'clear';
+    const weather = (trackId === 'city_monsoon' || trackId === 'cyber_rain') ? 'rain' : 'clear';
     this.track.buildTrack(trackId, weather);
     this.track?.setShowroomStageVisible?.(false);
     this.particles.reset();
@@ -621,7 +642,7 @@ class GameApp {
     };
 
     this.ui.onTrackSelect = (trackId) => {
-      const preset = resolveDelhiPreset(trackId);
+      const preset = resolveWorldPreset(trackId);
       const weather = preset.isRain ? 'rain' : 'clear';
       if (this.state === 'GARAGE') {
         this.track.buildTrack(preset.id, weather, { coupleNames: this.coupleProfile });
@@ -640,7 +661,7 @@ class GameApp {
       if (coupleCfg) this.updateCoupleProfile(coupleCfg);
       this.startRace({
         mode: 'DATE_DRIVE',
-        trackId: this.ui.selectedTrackId || 'delhi_live',
+        trackId: this.ui.selectedTrackId || 'city_live',
         laps: 99,
         coupleProfile: { ...this.coupleProfile }
       });
@@ -648,18 +669,18 @@ class GameApp {
 
     this.ui.onCycleClimate = () => {
       const ids = Object.keys(TRACK_PRESETS);
-      const curr = this.activeRaceConfig?.trackId || this.ui.selectedTrackId || 'delhi_live';
+      const curr = this.activeRaceConfig?.trackId || this.ui.selectedTrackId || 'city_live';
       const nextId = ids[(ids.indexOf(curr) + 1) % ids.length];
       this.ui.selectedTrackId = nextId;
       if (this.ui.trackSelect) this.ui.trackSelect.value = nextId;
-      const preset = resolveDelhiPreset(nextId);
+      const preset = resolveWorldPreset(nextId);
       const weather = preset.isRain ? 'rain' : 'clear';
       this.activeRaceConfig.trackId = nextId;
       this.activeRaceConfig.weather = weather;
       this.particles?.setWeather?.(weather);
       this.audio?.setWeatherAudio?.(weather);
       this.applyWorldVisualTheme(nextId);
-      this.ui.showToast(`🌦️ DELHI CLIMATE: ${preset.timeLabel || preset.name}`);
+      this.ui.showToast(`🌦️ CLIMATE: ${preset.timeLabel || preset.name}`);
     };
 
     this.ui.onStartRace = (raceConfig) => this.startRace(raceConfig);
@@ -846,7 +867,7 @@ class GameApp {
       this.indicatorSteerArmed = false;
       this.particles.reset();
       this.cleanUpEntities();
-      const preset = resolveDelhiPreset(this.ui.selectedTrackId || 'delhi_live');
+      const preset = resolveWorldPreset(this.ui.selectedTrackId || 'city_live');
       const weather = preset.isRain ? 'rain' : 'clear';
       this.track.buildTrack(preset.id, weather, { coupleNames: this.coupleProfile });
       this.particles.setWeather(weather);
@@ -884,6 +905,22 @@ class GameApp {
     };
 
     this.ui.onToggleVoice = () => this.voice.toggleListening();
+    this.ui.onToggleGestureCam = () => this.gesture.toggleCamera?.();
+    this.input.onToggleGestureCam = () => this.gesture.toggleCamera?.();
+
+    this.gesture.onCamStateChange = (active, statusText) => {
+      this.ui?.updateGestureCamUI?.(active, statusText);
+      if (active && statusText !== 'LOADING AI...') {
+        this.ui?.showToast?.(`🖐️ FINGER GESTURE CAM: ${statusText} (1 Finger=Steer, 🖐️=Gas, ✊=Brake, ✌️=Nitro)`);
+      }
+    };
+    this.gesture.onGestureFeedback = (title, desc, icon) => {
+      this.ui?.showVoiceFeedback?.(title, desc, icon, '');
+    };
+    this.gesture.onError = (err) => this.ui?.showToast?.(`⚠️ ${err}`);
+    this.gesture.onTouchVisual = (active, ax, ay, cx, cy) => {
+      this.ui?.updateTouchSwipeVisual?.(active, ax, ay, cx, cy);
+    };
 
     this.voice.onStateChange = (isListening) => this.ui.updateVoiceMicUI(isListening);
 
@@ -948,7 +985,7 @@ class GameApp {
     };
 
     this.network.onRaceStartCountdown = (data) => {
-      const trackId = this.network.currentRoom?.trackId || 'delhi_gp';
+      const trackId = this.network.currentRoom?.trackId || 'city_live';
       const laps = this.network.currentRoom?.laps || 3;
       this.startMultiplayerRace(data.players, trackId, laps);
     };
@@ -1203,9 +1240,9 @@ class GameApp {
         this.showroomCar.modelData.updateDateAnimations?.(dt, 0);
         this.showroomCar.modelData.setIndicatorVisual?.(fxState.mode, fxState.phaseOn);
       }
-      if ((this.ui?.selectedTrackId === 'delhi_live') && timestamp - this.lastLiveClockCheck > 30000) {
+      if ((this.ui?.selectedTrackId === 'city_live') && timestamp - this.lastLiveClockCheck > 30000) {
         this.lastLiveClockCheck = timestamp;
-        this.applyWorldVisualTheme('delhi_live');
+        this.applyWorldVisualTheme('city_live');
       }
     } else if (this.state === 'REPLAY') {
       const allOpponents = this.bots.length > 0 ? this.bots : Array.from(this.remotePlayers.values()).map(p => ({ car: p }));
@@ -1329,7 +1366,7 @@ class GameApp {
           if (isDecorated) {
             this.particles.emitPetal(this.playerCar.mesh.position);
           }
-          if (this.track?.preset?.isNight || this.track?.preset?.isFog || this.track?.preset?.id === 'delhi_sunset' || isDecorated) {
+          if (this.track?.preset?.isNight || this.track?.preset?.isFog || this.track?.preset?.id === 'city_sunset' || isDecorated) {
             this.particles.emitFirefly(this.playerCar.mesh.position);
           }
           if (this.mode === 'DATE_DRIVE' && this.track?.dateSpotPos) {
@@ -1337,7 +1374,7 @@ class GameApp {
             if (dSq < 780 && !this.dateArrivedNotified) {
               this.dateArrivedNotified = true;
               for (let k = 0; k < 18; k++) this.particles.emitPetal(this.track.dateSpotPos);
-              this.ui.showToast(`🕯️ ${this.coupleProfile.partner1} ♥ ${this.coupleProfile.partner2} at Lodhi Candlelight Pavilion!`);
+              this.ui.showToast(`🕯️ ${this.coupleProfile.partner1} ♥ ${this.coupleProfile.partner2} at Candlelight Pavilion!`);
             } else if (dSq > 1600) {
               this.dateArrivedNotified = false;
             }

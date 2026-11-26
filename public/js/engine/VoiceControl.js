@@ -20,8 +20,11 @@ export class VoiceControlManager {
       handbrake: false,
       nitro: false,
       changeCam: false,
-      reset: false
+      reset: false,
+      horn: false,
+      indicator: null
     };
+    this.voiceSensitivity = 1.0;
 
     this.steerTimer = null;
     this.throttleTimer = null;
@@ -120,9 +123,9 @@ export class VoiceControlManager {
   }
 
   stop() {
-    if (!this.recognition) return;
     this.isListening = false;
     this.resetVoiceInputs();
+    if (!this.recognition) return;
     try {
       this.recognition.stop();
     } catch (e) {}
@@ -130,6 +133,14 @@ export class VoiceControlManager {
   }
 
   resetVoiceInputs() {
+    [this.steerTimer, this.throttleTimer, this.nitroTimer, this.brakeTimer, this.handbrakeTimer].forEach((t) => {
+      if (t) clearTimeout(t);
+    });
+    this.steerTimer = null;
+    this.throttleTimer = null;
+    this.nitroTimer = null;
+    this.brakeTimer = null;
+    this.handbrakeTimer = null;
     this.voiceState.throttle = 0;
     this.voiceState.brake = 0;
     this.voiceState.steer = 0;
@@ -137,12 +148,23 @@ export class VoiceControlManager {
     this.voiceState.nitro = false;
     this.voiceState.changeCam = false;
     this.voiceState.reset = false;
+    this.voiceState.horn = false;
+    this.voiceState.indicator = null;
     this.currentCommand = null;
+  }
+
+  setSensitivity(val) {
+    const num = Number(val);
+    if (!Number.isNaN(num)) {
+      this.voiceSensitivity = Math.min(1.8, Math.max(0.4, num));
+    }
   }
 
   consumeAction(actionName) {
     if (actionName === 'changeCam') this.voiceState.changeCam = false;
     else if (actionName === 'reset') this.voiceState.reset = false;
+    else if (actionName === 'horn') this.voiceState.horn = false;
+    else if (actionName === 'indicator') this.voiceState.indicator = null;
   }
 
   shouldThrottleCommand(cmdKey, cooldownMs = 450) {
@@ -157,13 +179,49 @@ export class VoiceControlManager {
 
   processVoiceCommand(phrase) {
     const text = phrase.toLowerCase();
+    const isGentle = text.includes('slight') || text.includes('gentle') || text.includes('thoda') || text.includes('halka');
+    const isSharp = text.includes('sharp') || text.includes('hard') || text.includes('full') || text.includes('poora');
+    const turnBase = isGentle ? 0.36 : (isSharp ? 0.88 : 0.56);
+    const turnDur = isGentle ? 950 : (isSharp ? 1550 : 1250);
+
+    if (
+      text.includes('left indicator') || text.includes('indicator left') || text.includes('signal left')
+    ) {
+      if (this.shouldThrottleCommand('ind_left', 600)) return;
+      this.voiceState.indicator = 'left';
+      this.triggerFeedback('LEFT SIGNAL ◀', 'INDICATOR ON', '◀');
+      return;
+    }
+
+    if (
+      text.includes('right indicator') || text.includes('indicator right') || text.includes('signal right')
+    ) {
+      if (this.shouldThrottleCommand('ind_right', 600)) return;
+      this.voiceState.indicator = 'right';
+      this.triggerFeedback('RIGHT SIGNAL ▶', 'INDICATOR ON', '▶');
+      return;
+    }
+
+    if (text.includes('hazard') || text.includes('flasher')) {
+      if (this.shouldThrottleCommand('ind_hazard', 600)) return;
+      this.voiceState.indicator = 'hazard';
+      this.triggerFeedback('HAZARDS ⚠', 'FLASHERS ON', '⚠');
+      return;
+    }
+
+    if (text.includes('horn') || text.includes('honk') || text.includes('beep') || text.includes('baja')) {
+      if (this.shouldThrottleCommand('horn', 550)) return;
+      this.voiceState.horn = true;
+      this.triggerFeedback('HORN 📢', 'SOUNDING HORN', '📢');
+      return;
+    }
 
     if (
       text.includes('left') || text.includes('baayein') || text.includes('baaye') ||
       text.includes('baye') || text.includes('ulta') || text.includes('left mud')
     ) {
-      if (this.shouldThrottleCommand('left', 400)) return;
-      this.applySteer(-0.75, 1600, 'LEFT ◀', 'TURN LEFT', '◀');
+      if (this.shouldThrottleCommand('left', 360)) return;
+      this.applySteer(-turnBase, turnDur, 'LEFT ◀', 'TURN LEFT', '◀');
       return;
     }
 
@@ -171,8 +229,8 @@ export class VoiceControlManager {
       text.includes('right') || text.includes('daayein') || text.includes('daaye') ||
       text.includes('daye') || (text.includes('sidha') && text.includes('right')) || text.includes('right mud')
     ) {
-      if (this.shouldThrottleCommand('right', 400)) return;
-      this.applySteer(0.75, 1600, 'RIGHT ▶', 'TURN RIGHT', '▶');
+      if (this.shouldThrottleCommand('right', 360)) return;
+      this.applySteer(turnBase, turnDur, 'RIGHT ▶', 'TURN RIGHT', '▶');
       return;
     }
 
@@ -348,7 +406,9 @@ export class VoiceControlManager {
       handbrake: this.voiceState.handbrake,
       nitro: this.voiceState.nitro,
       changeCam: this.voiceState.changeCam,
-      reset: this.voiceState.reset
+      reset: this.voiceState.reset,
+      horn: this.voiceState.horn,
+      indicator: this.voiceState.indicator
     };
   }
 }

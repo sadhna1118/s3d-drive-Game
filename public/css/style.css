@@ -500,6 +500,69 @@ body, html {
   animation: pulseMic 1.2s infinite alternate ease-in-out;
 }
 
+.gesture-cam-btn.active {
+  background: linear-gradient(135deg, #00f0ff, #0284c7) !important;
+  color: #050a14 !important;
+  border-color: #00f0ff !important;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.85) !important;
+}
+
+.gesture-cam-box {
+  position: fixed;
+  top: 72px;
+  right: 16px;
+  z-index: 44;
+  padding: 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 240, 255, 0.55);
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.25);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+#gesture-canvas {
+  border-radius: 6px;
+  display: block;
+  background: #060b16;
+}
+
+.gesture-cam-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--primary-neon);
+  letter-spacing: 0.5px;
+}
+
+.finger-swipe-reticle {
+  position: fixed;
+  width: 78px;
+  height: 78px;
+  margin-left: -39px;
+  margin-top: -39px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 240, 255, 0.72);
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.14) 0%, transparent 70%);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.38);
+  z-index: 38;
+  pointer-events: none;
+}
+
+.finger-swipe-knob {
+  position: fixed;
+  width: 28px;
+  height: 28px;
+  margin-left: -14px;
+  margin-top: -14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, #00f0ff 80%);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.9);
+  pointer-events: none;
+}
+
 @keyframes pulseMic {
   from { transform: scale(1.0); box-shadow: 0 0 10px rgba(255, 0, 85, 0.5); }
   to { transform: scale(1.08); box-shadow: 0 0 25px rgba(255, 0, 85, 0.9), 0 0 40px rgba(255, 50, 0, 0.5); }

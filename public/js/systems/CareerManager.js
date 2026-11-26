@@ -68,38 +68,38 @@ export const ACHIEVEMENTS = [
 export const CAREER_CUPS = [
   {
     id: 'novice_cup',
-    name: 'Novice Delhi Cup',
+    name: 'Novice City Cup',
     tier: 'Bronze',
     entryFee: 0,
     prizeMoney: 8000,
     races: [
-      { track: 'delhi_sunny', weather: 'clear', laps: 2, name: 'India Gate Daylight Sprint' },
-      { track: 'delhi_sunset', weather: 'clear', laps: 2, name: 'Kartavya Path Golden Hour' }
+      { track: 'city_sunny', weather: 'clear', laps: 2, name: 'Grand Arch Daylight Sprint' },
+      { track: 'city_sunset', weather: 'clear', laps: 2, name: 'Emerald Boulevard Golden Hour' }
     ]
   },
   {
     id: 'pro_cup',
-    name: 'Pro India Championship',
+    name: 'Pro Express Championship',
     tier: 'Silver',
     entryFee: 2500,
     prizeMoney: 18000,
     races: [
-      { track: 'delhi_monsoon', weather: 'rain', laps: 3, name: 'Delhi Monsoon Rain GP' },
-      { track: 'delhi_fog', weather: 'clear', laps: 3, name: 'November Ridge Forest Mist' },
-      { track: 'delhi_night', weather: 'clear', laps: 3, name: 'Midnight Delhi Floodlights' }
+      { track: 'city_monsoon', weather: 'rain', laps: 3, name: 'Monsoon Express Rain GP' },
+      { track: 'city_fog', weather: 'clear', laps: 3, name: 'Highland Forest Morning Mist' },
+      { track: 'city_night', weather: 'clear', laps: 3, name: 'Midnight Floodlight Sprint' }
     ]
   },
   {
     id: 'apex_cup',
-    name: 'Apex Delhi Masters',
+    name: 'Apex Grand Masters',
     tier: 'Gold',
     entryFee: 6000,
     prizeMoney: 35000,
     races: [
-      { track: 'delhi_monsoon', weather: 'rain', laps: 3, name: 'Connaught Place Monsoon' },
-      { track: 'delhi_fog', weather: 'clear', laps: 4, name: 'Sanjay Van Winter Mist' },
-      { track: 'delhi_night', weather: 'clear', laps: 4, name: 'Red Fort & Signature Night' },
-      { track: 'delhi_live', weather: 'clear', laps: 5, name: 'Live Real-Time Delhi Finale' }
+      { track: 'city_monsoon', weather: 'rain', laps: 3, name: 'Apex Plaza Monsoon' },
+      { track: 'city_fog', weather: 'clear', laps: 4, name: 'Ridge Sanctuary Winter Mist' },
+      { track: 'city_night', weather: 'clear', laps: 4, name: 'Harbor Bridge & Skyline Night' },
+      { track: 'city_live', weather: 'clear', laps: 5, name: 'Live Real-Time Sky Finale' }
     ]
   }
 ];

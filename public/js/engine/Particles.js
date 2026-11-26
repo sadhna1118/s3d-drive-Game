@@ -63,7 +63,7 @@ export class ParticleSystem {
       p.mesh.material = this.petalMats[idx % this.petalMats.length];
     });
 
-    // Warm Golden 3D Glowing Fireflies / Forest Dust Motes (Delhi Ridge Forests & Parks)
+    // Warm Golden 3D Glowing Fireflies / Forest Dust Motes
     this.fireflyGeo = new THREE.IcosahedronGeometry(0.085, 1);
     this.fireflyMat = new THREE.MeshBasicMaterial({ color: 0xffe066, transparent: true, opacity: 0.9, depthWrite: false });
     this.fireflyPool = this.createPool(48, this.fireflyGeo, this.fireflyMat);

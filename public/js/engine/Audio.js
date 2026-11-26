@@ -4,9 +4,9 @@
  */
 
 export const RADIO_STATIONS = [
-  { id: 'cyberwave', name: '📻 Delhi Nightwave', genre: 'Dark Synthwave', tempo: 126 },
-  { id: 'sunset', name: '📻 Yamuna Sunset Dreams', genre: 'Chill Outrun', tempo: 108 },
-  { id: 'dnb', name: '📻 Connaught Bass', genre: 'Fast Neurofunk', tempo: 168 },
+  { id: 'cyberwave', name: '📻 Midnight Synthwave', genre: 'Dark Synthwave', tempo: 126 },
+  { id: 'sunset', name: '📻 Golden Sunset Dreams', genre: 'Chill Outrun', tempo: 108 },
+  { id: 'dnb', name: '📻 Apex Pulse Bass', genre: 'Fast Neurofunk', tempo: 168 },
   { id: 'romance', name: '🕯️ Velvet Date Acoustic', genre: 'Warm Lo-Fi Acoustic', tempo: 84 }
 ];
 
@@ -59,7 +59,7 @@ export const LIVE_RADIO_STREAMS = [
   {
     id: 'in_fever_fm',
     name: '🔴 Fever 104 FM / Asian Fever',
-    genre: 'Delhi Desi Pop & Club Beats',
+    genre: 'Desi Pop & Club Beats',
     tempo: 122,
     isLive: true,
     streamUrl: 'https://radio.canstream.co.uk:8115/live.mp3',

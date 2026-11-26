@@ -104,8 +104,9 @@ export const STEERING_PRESETS = {
 };
 
 export class InputManager {
-  constructor(voiceManager = null) {
+  constructor(voiceManager = null, gestureManager = null) {
     this.voiceManager = voiceManager;
+    this.gestureManager = gestureManager;
 
     this.keys = {
       forward: false,
@@ -127,6 +128,8 @@ export class InputManager {
     };
 
     this.filteredKeyboardSteer = 0;
+    this.filteredVoiceSteer = 0;
+    this.filteredGestureSteer = 0;
     this.lastUpdateTime = performance.now();
     this.prevGamepadShiftUp = false;
     this.prevGamepadShiftDown = false;
@@ -134,6 +137,8 @@ export class InputManager {
     this.drivingProfile = {
       steeringMode: 'arcade',
       steerSensitivity: 1.0,
+      voiceSensitivity: 1.0,
+      gestureSensitivity: 1.0,
       steerResponse: 1.0,
       steerLinearity: 'smooth',
       stabilityAssist: 0.85,
@@ -164,6 +169,10 @@ export class InputManager {
     this.onHornStart = null;
     this.onHornStop = null;
     this.onToggleIndicator = null;
+    this.onToggleGestureCam = null;
+
+    this.voiceManager?.setSensitivity?.(this.drivingProfile.voiceSensitivity);
+    this.gestureManager?.setSensitivity?.(this.drivingProfile.gestureSensitivity);
 
     this.initKeyboard();
     this.initTouchControls();
@@ -259,6 +268,8 @@ export class InputManager {
     this.drivingProfile = {
       steeringMode: 'arcade',
       steerSensitivity: 1.0,
+      voiceSensitivity: 1.0,
+      gestureSensitivity: 1.0,
       steerResponse: 1.0,
       steerLinearity: 'smooth',
       stabilityAssist: 0.85,
@@ -273,6 +284,8 @@ export class InputManager {
       finalDrive: 'balanced'
     };
     this.systemSettings = { ...DEFAULT_SYSTEM_SETTINGS };
+    this.voiceManager?.setSensitivity?.(1.0);
+    this.gestureManager?.setSensitivity?.(1.0);
     this.saveDrivingProfile();
     this.saveSystemSettings();
     return { driving: this.getDrivingProfile(), system: this.getSystemSettings() };
@@ -283,10 +296,14 @@ export class InputManager {
     if (!preset) return this.drivingProfile;
     this.drivingProfile.steeringMode = preset.id;
     this.drivingProfile.steerSensitivity = preset.steerSensitivity;
+    this.drivingProfile.voiceSensitivity = Math.max(0.75, Math.min(1.4, preset.steerSensitivity));
+    this.drivingProfile.gestureSensitivity = Math.max(0.75, Math.min(1.4, preset.steerSensitivity));
     this.drivingProfile.steerResponse = preset.steerResponse;
     this.drivingProfile.steerLinearity = preset.steerLinearity;
     this.drivingProfile.stabilityAssist = preset.stabilityAssist;
     this.drivingProfile.handbrakeMode = preset.handbrakeMode;
+    this.voiceManager?.setSensitivity?.(this.drivingProfile.voiceSensitivity);
+    this.gestureManager?.setSensitivity?.(this.drivingProfile.gestureSensitivity);
     this.saveDrivingProfile();
     return { ...this.drivingProfile };
   }
@@ -296,8 +313,12 @@ export class InputManager {
     const touchedSteering = steeringKeys.some((k) => partial[k] !== undefined && partial[k] !== this.drivingProfile[k]);
     this.drivingProfile = { ...this.drivingProfile, ...partial };
     this.drivingProfile.steerSensitivity = Math.max(0.4, Math.min(1.8, Number(this.drivingProfile.steerSensitivity) || 1.0));
+    this.drivingProfile.voiceSensitivity = Math.max(0.4, Math.min(1.8, Number(this.drivingProfile.voiceSensitivity) || 1.0));
+    this.drivingProfile.gestureSensitivity = Math.max(0.4, Math.min(2.0, Number(this.drivingProfile.gestureSensitivity) || 1.0));
     this.drivingProfile.steerResponse = Math.max(0.5, Math.min(2.0, Number(this.drivingProfile.steerResponse) || 1.0));
     this.drivingProfile.stabilityAssist = Math.max(0, Math.min(1, Number(this.drivingProfile.stabilityAssist) ?? 0.85));
+    this.voiceManager?.setSensitivity?.(this.drivingProfile.voiceSensitivity);
+    this.gestureManager?.setSensitivity?.(this.drivingProfile.gestureSensitivity);
     if (markCustomIfSteeringChanged && touchedSteering && !partial.steeringMode) {
       this.drivingProfile.steeringMode = 'custom';
     }
@@ -311,6 +332,12 @@ export class InputManager {
 
   setVoiceManager(vm) {
     this.voiceManager = vm;
+    this.voiceManager?.setSensitivity?.(this.drivingProfile.voiceSensitivity);
+  }
+
+  setGestureManager(gm) {
+    this.gestureManager = gm;
+    this.gestureManager?.setSensitivity?.(this.drivingProfile.gestureSensitivity);
   }
 
   setSteerSensitivity(val) {
@@ -426,6 +453,9 @@ export class InputManager {
           break;
         case 'KeyF':
           if (!e.repeat && this.onToggleIndicator) this.onToggleIndicator('hazard');
+          break;
+        case 'KeyG':
+          if (!e.repeat && this.onToggleGestureCam) this.onToggleGestureCam();
           break;
         case 'Escape':
           if (!e.repeat && this.onTogglePause) this.onTogglePause();
@@ -565,7 +595,10 @@ export class InputManager {
     }
 
     const voice = this.voiceManager ? this.voiceManager.getState() : {
-      throttle: 0, brake: 0, steer: 0, handbrake: false, nitro: false, changeCam: false, reset: false
+      throttle: 0, brake: 0, steer: 0, handbrake: false, nitro: false, changeCam: false, reset: false, horn: false, indicator: null
+    };
+    const gesture = this.gestureManager ? this.gestureManager.getState() : {
+      active: false, throttle: 0, brake: 0, steer: 0, handbrake: false, nitro: false
     };
 
     if (voice.changeCam) {
@@ -576,21 +609,49 @@ export class InputManager {
       this.voiceManager?.consumeAction?.('reset');
       if (this.onResetCar) this.onResetCar();
     }
+    if (voice.indicator) {
+      const side = voice.indicator;
+      this.voiceManager?.consumeAction?.('indicator');
+      this.onToggleIndicator?.(side);
+    }
+    if (voice.horn) {
+      this.voiceManager?.consumeAction?.('horn');
+      this.onHornStart?.();
+      setTimeout(() => { if (!this.keys.horn) this.onHornStop?.(); }, 350);
+    }
+
+    // Calibrated Voice & Finger Gesture Steering Smoothing + Sensitivity Curves
+    const voiceSens = (prof.voiceSensitivity || 1.0) * (0.72 + 0.28 * (prof.steerSensitivity || 1.0));
+    const voiceTarget = Math.max(-1, Math.min(1, (voice.steer || 0) * voiceSens));
+    this.filteredVoiceSteer += (voiceTarget - this.filteredVoiceSteer) * (1 - Math.exp(-6.5 * prof.steerResponse * dt));
+    if (Math.abs(this.filteredVoiceSteer) < 0.01 && voiceTarget === 0) this.filteredVoiceSteer = 0;
+
+    const gestureSens = (prof.gestureSensitivity || 1.0) * (0.72 + 0.28 * (prof.steerSensitivity || 1.0));
+    const gestureTarget = Math.max(-1, Math.min(1, (gesture.steer || 0) * gestureSens));
+    this.filteredGestureSteer += (gestureTarget - this.filteredGestureSteer) * (1 - Math.exp(-11.5 * prof.steerResponse * dt));
+    if (Math.abs(this.filteredGestureSteer) < 0.01 && gestureTarget === 0) this.filteredGestureSteer = 0;
 
     const gp = this.pollGamepad();
     let steer = this.applyLinearityCurve(this.filteredKeyboardSteer);
     if (this.touchInput.steer !== 0) steer = this.applyLinearityCurve(this.touchInput.steer);
     if (gp && gp.steer !== 0) steer = this.applyLinearityCurve(gp.steer * prof.steerSensitivity);
-    if (steer === 0 && voice.steer !== 0) steer = voice.steer;
+    if (steer === 0 && gesture.active && this.filteredGestureSteer !== 0) {
+      steer = this.applyLinearityCurve(this.filteredGestureSteer);
+    }
+    if (steer === 0 && this.filteredVoiceSteer !== 0) {
+      steer = this.applyLinearityCurve(this.filteredVoiceSteer);
+    }
 
     return {
-      throttle: Math.max(gp ? gp.throttle : 0, this.touchInput.throttle, this.keys.forward ? 1 : 0, voice.throttle),
-      brake: Math.max(gp ? gp.brake : 0, this.touchInput.brake, this.keys.backward ? 1 : 0, voice.brake),
+      throttle: Math.max(gp ? gp.throttle : 0, this.touchInput.throttle, this.keys.forward ? 1 : 0, voice.throttle, gesture.throttle || 0),
+      brake: Math.max(gp ? gp.brake : 0, this.touchInput.brake, this.keys.backward ? 1 : 0, voice.brake, gesture.brake || 0),
       steer: Math.max(-1, Math.min(1, steer)),
-      handbrake: (gp ? gp.handbrake : false) || this.touchInput.handbrake || this.keys.handbrake || voice.handbrake,
-      nitro: (gp ? gp.nitro : false) || this.touchInput.nitro || this.keys.nitro || voice.nitro,
+      handbrake: (gp ? gp.handbrake : false) || this.touchInput.handbrake || this.keys.handbrake || voice.handbrake || !!gesture.handbrake,
+      nitro: (gp ? gp.nitro : false) || this.touchInput.nitro || this.keys.nitro || voice.nitro || !!gesture.nitro,
       horn: !!(this.touchInput.horn || this.keys.horn),
       steerSensitivity: prof.steerSensitivity,
+      voiceSensitivity: prof.voiceSensitivity || 1.0,
+      gestureSensitivity: prof.gestureSensitivity || 1.0,
       stabilityAssist: prof.stabilityAssist,
       transmissionMode: prof.transmissionMode,
       nitroMode: prof.nitroMode,

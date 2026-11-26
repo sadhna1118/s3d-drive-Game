@@ -1,10 +1,10 @@
 /**
- * S3D Drive - Unified Real-Time New Delhi World & Weather/Climate System
- * Every climate & weather mode stays in the exact same New Delhi city, Central Vista parks,
- * Delhi Ridge forests, iconic landmarks, Delhi Metro, and Romantic Date Pavilion.
+ * S3D Drive - Unified Real-Time Metro World & Weather/Climate System
+ * Every climate & weather mode stays in the exact same emerald metropolis, central parklands,
+ * ridge forests, iconic landmarks, elevated Metro corridor, and Romantic Date Pavilion.
  */
 
-const DELHI_CIRCUIT_POINTS = [
+const CIRCUIT_WAYPOINTS = [
   new THREE.Vector3(0, 0, 0),
   new THREE.Vector3(0, 0, 180),
   new THREE.Vector3(60, 2, 280),
@@ -27,12 +27,12 @@ const DELHI_CIRCUIT_POINTS = [
   new THREE.Vector3(0, 0, -50)
 ];
 
-export function getLiveDelhiClimate(now = new Date()) {
+export function getLiveWorldClimate(now = new Date()) {
   const hour = now.getHours() + now.getMinutes() / 60;
   // Morning mist (5:00 - 8:30)
   if (hour >= 5 && hour < 8.5) {
     return {
-      timeLabel: 'DELHI DAWN MIST',
+      timeLabel: 'DAWN MIST',
       skyColor: 0x3b537a,
       horizonColor: 0xf7b98f,
       fogColor: 0x9aaec2,
@@ -53,10 +53,10 @@ export function getLiveDelhiClimate(now = new Date()) {
       isNight: false
     };
   }
-  // Clear Delhi Daylight (8:30 - 15:45)
+  // Clear Metro Daylight (8:30 - 15:45)
   if (hour >= 8.5 && hour < 15.75) {
     return {
-      timeLabel: 'DELHI CLEAR DAYLIGHT',
+      timeLabel: 'CLEAR DAYLIGHT',
       skyColor: 0x2c6db5,
       horizonColor: 0xc2e2f7,
       fogColor: 0xa4c9e3,
@@ -77,10 +77,10 @@ export function getLiveDelhiClimate(now = new Date()) {
       isNight: false
     };
   }
-  // Delhi Golden Sunset Hour (15:45 - 18:20) — cinematic November golden hour!
+  // Golden Sunset Hour (15:45 - 18:20) — cinematic autumn golden hour
   if (hour >= 15.75 && hour < 18.35) {
     return {
-      timeLabel: 'DELHI GOLDEN HOUR',
+      timeLabel: 'GOLDEN HOUR',
       skyColor: 0x283661,
       horizonColor: 0xf5955d,
       fogColor: 0xc47e5e,
@@ -101,10 +101,10 @@ export function getLiveDelhiClimate(now = new Date()) {
       isNight: false
     };
   }
-  // Delhi Evening Twilight / Dusk (18:20 - 20:00)
+  // Evening Twilight / Dusk (18:20 - 20:00)
   if (hour >= 18.35 && hour < 20.0) {
     return {
-      timeLabel: 'DELHI TWILIGHT DUSK',
+      timeLabel: 'TWILIGHT DUSK',
       skyColor: 0x16142e,
       horizonColor: 0xd96e52,
       fogColor: 0x3b2630,
@@ -125,9 +125,9 @@ export function getLiveDelhiClimate(now = new Date()) {
       isNight: true
     };
   }
-  // Midnight Illuminated Delhi (20:00 - 5:00)
+  // Midnight Illuminated City (20:00 - 5:00)
   return {
-    timeLabel: 'DELHI NIGHTLIGHTS',
+    timeLabel: 'NIGHTLIGHTS',
     skyColor: 0x080d1c,
     horizonColor: 0x1c253d,
     fogColor: 0x0c1322,
@@ -150,22 +150,22 @@ export function getLiveDelhiClimate(now = new Date()) {
 }
 
 export const TRACK_PRESETS = {
-  delhi_live: {
-    id: 'delhi_live',
-    name: '🇮🇳 Live Real-Time Delhi (Current Delhi Sky)',
-    description: 'Real-time synchronized New Delhi atmosphere across Kartavya Path, Lodhi Garden parks & Ridge forests.',
+  city_live: {
+    id: 'city_live',
+    name: '🌐 Live Real-Time Sky (Dynamic Clock)',
+    description: 'Real-time synchronized skyline atmosphere across Emerald Boulevard, parkways & Ridge forests.',
     trackWidth: 24,
     gravity: 9.8,
     dragMult: 1.0,
     gripMult: 1.0,
-    isDelhi: true,
+    isMetroCity: true,
     isLiveTime: true,
-    points: DELHI_CIRCUIT_POINTS
+    points: CIRCUIT_WAYPOINTS
   },
-  delhi_sunny: {
-    id: 'delhi_sunny',
-    name: '☀️ Sunny Delhi Afternoon (Lush Parks & Clear Sky)',
-    description: 'Crisp sunlit afternoon across India Gate lawns, Connaught Place & Sanjay Van Ridge canopy.',
+  city_sunny: {
+    id: 'city_sunny',
+    name: '☀️ Sunny Metro Afternoon (Lush Parks & Clear Sky)',
+    description: 'Crisp sunlit afternoon across Grand Arch lawns, Apex Plaza & Highland Ridge canopy.',
     skyColor: 0x2c6db5,
     horizonColor: 0xc4e4f7,
     fogColor: 0xa6cde6,
@@ -187,13 +187,13 @@ export const TRACK_PRESETS = {
     gravity: 9.8,
     dragMult: 1.0,
     gripMult: 1.02,
-    isDelhi: true,
-    points: DELHI_CIRCUIT_POINTS
+    isMetroCity: true,
+    points: CIRCUIT_WAYPOINTS
   },
-  delhi_sunset: {
-    id: 'delhi_sunset',
-    name: '🌅 Delhi Golden Sunset (Romantic Park Evening)',
-    description: 'Cinematic golden sunset glow over India Gate, Lodhi Garden & Yamuna Signature Bridge.',
+  city_sunset: {
+    id: 'city_sunset',
+    name: '🌅 Golden Sunset (Scenic Park Evening)',
+    description: 'Cinematic golden sunset glow over Grand Arch, Emerald Park & Bay Signature Bridge.',
     skyColor: 0x26325e,
     horizonColor: 0xf7945c,
     fogColor: 0xc27c5a,
@@ -215,13 +215,13 @@ export const TRACK_PRESETS = {
     gravity: 9.8,
     dragMult: 1.0,
     gripMult: 1.0,
-    isDelhi: true,
-    points: DELHI_CIRCUIT_POINTS
+    isMetroCity: true,
+    points: CIRCUIT_WAYPOINTS
   },
-  delhi_monsoon: {
-    id: 'delhi_monsoon',
-    name: '🌧️ Delhi Monsoon (Rain & Reflective Puddles)',
-    description: 'Tropical monsoon downpour over New Delhi boulevards & wet parkways with shimmering puddles.',
+  city_monsoon: {
+    id: 'city_monsoon',
+    name: '🌧️ Monsoon Storm (Rain & Reflective Puddles)',
+    description: 'Tropical monsoon downpour over emerald boulevards & wet parkways with shimmering puddles.',
     skyColor: 0x162233,
     horizonColor: 0x45586e,
     fogColor: 0x2b3b4e,
@@ -244,13 +244,13 @@ export const TRACK_PRESETS = {
     dragMult: 1.03,
     gripMult: 0.90,
     isRain: true,
-    isDelhi: true,
-    points: DELHI_CIRCUIT_POINTS
+    isMetroCity: true,
+    points: CIRCUIT_WAYPOINTS
   },
-  delhi_fog: {
-    id: 'delhi_fog',
-    name: '🌫️ Delhi Winter Fog (November Forest Mist)',
-    description: 'Atmospheric Delhi winter morning haze drifting through Sanjay Van Ridge forest & India Gate.',
+  city_fog: {
+    id: 'city_fog',
+    name: '🌫️ Winter Morning Fog (Forest Mist)',
+    description: 'Atmospheric winter morning haze drifting through Ridge forest & Grand Arch.',
     skyColor: 0x5b6a7a,
     horizonColor: 0xbac3cc,
     fogColor: 0x9aa4af,
@@ -273,13 +273,13 @@ export const TRACK_PRESETS = {
     dragMult: 1.0,
     gripMult: 0.95,
     isFog: true,
-    isDelhi: true,
-    points: DELHI_CIRCUIT_POINTS
+    isMetroCity: true,
+    points: CIRCUIT_WAYPOINTS
   },
-  delhi_night: {
-    id: 'delhi_night',
-    name: '🌙 Midnight Delhi (Illuminated City & Candlelights)',
-    description: 'Starlit Delhi night with illuminated monuments, warm avenue lamps, Metro lights & park candles.',
+  city_night: {
+    id: 'city_night',
+    name: '🌙 Midnight Neon City (Floodlights & Candlelights)',
+    description: 'Starlit night skyline with illuminated monuments, warm avenue lamps, Metro lights & park candles.',
     skyColor: 0x070b18,
     horizonColor: 0x182138,
     fogColor: 0x0b1220,
@@ -302,24 +302,25 @@ export const TRACK_PRESETS = {
     gravity: 9.8,
     dragMult: 1.0,
     gripMult: 1.0,
-    isDelhi: true,
-    points: DELHI_CIRCUIT_POINTS
+    isMetroCity: true,
+    points: CIRCUIT_WAYPOINTS
   }
 };
 
-export function resolveDelhiPreset(trackId = 'delhi_live') {
+export function resolveWorldPreset(trackId = 'city_live') {
+  const normalized = String(trackId || 'city_live').replace(/^[a-z]+_(live|sunny|sunset|monsoon|fog|night|gp)$/, 'city_$1');
   const aliasMap = {
-    delhi_gp: 'delhi_live',
-    neon_city: 'delhi_live',
-    cyber_rain: 'delhi_monsoon',
-    cyber_desert: 'delhi_sunset',
-    industrial_core: 'delhi_fog',
-    space_ring: 'delhi_night'
+    city_gp: 'city_live',
+    neon_city: 'city_live',
+    cyber_rain: 'city_monsoon',
+    cyber_desert: 'city_sunset',
+    industrial_core: 'city_fog',
+    space_ring: 'city_night'
   };
-  const key = TRACK_PRESETS[trackId] ? trackId : (aliasMap[trackId] || 'delhi_live');
-  const base = TRACK_PRESETS[key] || TRACK_PRESETS.delhi_live;
+  const key = TRACK_PRESETS[normalized] ? normalized : (aliasMap[normalized] || 'city_live');
+  const base = TRACK_PRESETS[key] || TRACK_PRESETS.city_live;
   if (base.isLiveTime) {
-    return { ...base, ...getLiveDelhiClimate() };
+    return { ...base, ...getLiveWorldClimate() };
   }
   return { ...base };
 }
@@ -327,9 +328,9 @@ export function resolveDelhiPreset(trackId = 'delhi_live') {
 export class Track {
   constructor(scene) {
     this.scene = scene;
-    this.trackId = 'delhi_live';
+    this.trackId = 'city_live';
     this.weather = 'clear';
-    this.preset = resolveDelhiPreset('delhi_live');
+    this.preset = resolveWorldPreset('city_live');
 
     this.curve = null;
     this.trackMesh = null;
@@ -386,8 +387,8 @@ export class Track {
     }
   }
 
-  buildTrack(trackId = 'delhi_live', weather = 'clear', options = {}) {
-    const preset = resolveDelhiPreset(trackId);
+  buildTrack(trackId = 'city_live', weather = 'clear', options = {}) {
+    const preset = resolveWorldPreset(trackId);
     this.trackId = preset.id;
     this.preset = preset;
     this.weather = preset.isRain ? 'rain' : (weather === 'rain' ? 'rain' : 'clear');
@@ -487,7 +488,7 @@ export class Track {
         asphaltTexture.repeat.set(1, 1);
         asphaltTexture.anisotropy = 8;
       }
-      roughnessMap = this.generateAsphaltRoughnessMap(this.trackId === 'delhi_monsoon' || this.weather === 'rain');
+      roughnessMap = this.generateAsphaltRoughnessMap(this.trackId === 'city_monsoon' || this.weather === 'rain');
       if (roughnessMap) {
         roughnessMap.wrapS = THREE.RepeatWrapping;
         roughnessMap.wrapT = THREE.RepeatWrapping;
@@ -498,7 +499,7 @@ export class Track {
       console.warn('asphaltTexture setup fallback:', e);
     }
 
-    const isWet = (this.trackId === 'delhi_monsoon' || this.weather === 'rain');
+    const isWet = (this.trackId === 'city_monsoon' || this.weather === 'rain');
     const roadMat = new THREE.MeshStandardMaterial({
       color: (this.trackId === 'cyber_desert') ? 0x42352a : (this.trackId === 'space_ring' ? 0x1e2536 : 0x2b2e35),
       map: asphaltTexture,
@@ -518,7 +519,7 @@ export class Track {
     this.buildBrakingBoards();
     this.buildStartGantry();
     this.buildGrandstandsAndFloodlights();
-    if (preset.isDelhi) this.buildDelhiHighwaySigns();
+    if (preset.isMetroCity) this.buildHighwaySigns();
     this.buildCheckpoints(20);
     this.buildBoostPads();
     this.buildWorldEnvironment(preset);
@@ -616,10 +617,10 @@ export class Track {
       ctx.fillRect(18, 0, 9, 1024);
       ctx.fillRect(485, 0, 9, 1024);
 
-      // Realistic Lutyens Dholpur sandstone / race kerbs (subtle real masonry on Delhi, contrast curbs on night GP)
-      const isDelhi = !!this.preset?.isDelhi;
-      const curbColorA = isDelhi ? '#b86b4b' : ((this.trackId === 'cyber_desert') ? '#ffaa00' : (this.trackId === 'space_ring' ? '#00f0ff' : '#ff0055'));
-      const curbColorB = isDelhi ? '#d8c5a3' : '#f1f5f9';
+      // Realistic sandstone / race kerbs
+      const isMetro = !!this.preset?.isMetroCity;
+      const curbColorA = isMetro ? '#b86b4b' : ((this.trackId === 'cyber_desert') ? '#ffaa00' : (this.trackId === 'space_ring' ? '#00f0ff' : '#ff0055'));
+      const curbColorB = isMetro ? '#d8c5a3' : '#f1f5f9';
       for (let y = 0; y < 1024; y += 64) {
         const step = Math.floor(y / 64);
         ctx.fillStyle = step % 2 === 0 ? curbColorA : curbColorB;
@@ -628,7 +629,7 @@ export class Track {
       }
 
       // Authentic Highway Center Dashed Divider + Reflective Amber Studs
-      const centerColor = isDelhi ? '#f5b83d' : ((this.trackId === 'cyber_desert') ? '#ffd066' : '#00f0ff');
+      const centerColor = isMetro ? '#f5b83d' : ((this.trackId === 'cyber_desert') ? '#ffd066' : '#00f0ff');
       for (let y = 0; y < 1024; y += 128) {
         ctx.fillStyle = centerColor;
         ctx.fillRect(252, y + 14, 8, 64);
@@ -727,7 +728,7 @@ export class Track {
       neonGeo.setAttribute('position', new THREE.Float32BufferAttribute(neonStripVerts, 3));
       neonGeo.setIndex(stripIndices);
 
-      const neonColor = this.preset?.isDelhi
+      const neonColor = this.preset?.isMetroCity
         ? (isInner ? 0xff9933 : 0x138808)
         : ((this.trackId === 'cyber_desert')
             ? (isInner ? 0xffaa00 : 0xff4400)
@@ -744,10 +745,10 @@ export class Track {
   buildRoadsideLightsAndChevrons() {
     const poleCount = 44;
     const poleGeo = new THREE.CylinderGeometry(0.11, 0.17, 6.2, 8);
-    const poleMat = new THREE.MeshStandardMaterial({ color: this.preset?.isDelhi ? 0x2c2420 : 0x1e2530, metalness: 0.82, roughness: 0.32 });
+    const poleMat = new THREE.MeshStandardMaterial({ color: this.preset?.isMetroCity ? 0x2c2420 : 0x1e2530, metalness: 0.82, roughness: 0.32 });
     const armGeo = new THREE.BoxGeometry(1.55, 0.14, 0.16);
     const lampGeo = new THREE.CylinderGeometry(0.24, 0.34, 0.38, 8);
-    const lampColor = this.preset?.isDelhi ? 0xffcc70 : (this.trackId === 'cyber_desert' ? 0xffaa33 : (this.trackId === 'industrial_core' ? 0xff6622 : 0x00f0ff));
+    const lampColor = this.preset?.isMetroCity ? 0xffcc70 : (this.trackId === 'cyber_desert' ? 0xffaa33 : (this.trackId === 'industrial_core' ? 0xff6622 : 0x00f0ff));
     const lampMat = new THREE.MeshBasicMaterial({ color: lampColor });
 
     const poleInst = new THREE.InstancedMesh(poleGeo, poleMat, poleCount * 2);
@@ -899,11 +900,11 @@ export class Track {
     group.position.copy(sp.position);
     group.rotation.y = yaw;
 
-    const concreteMat = new THREE.MeshStandardMaterial({ color: this.preset?.isDelhi ? 0x5c362c : 0x161c28, roughness: 0.78, metalness: 0.25 });
-    const trimCyanMat = new THREE.MeshBasicMaterial({ color: this.preset?.isDelhi ? 0xff9933 : 0x00f0ff });
-    const trimMagMat = new THREE.MeshBasicMaterial({ color: this.preset?.isDelhi ? 0x138808 : 0xff0055 });
+    const concreteMat = new THREE.MeshStandardMaterial({ color: this.preset?.isMetroCity ? 0x5c362c : 0x161c28, roughness: 0.78, metalness: 0.25 });
+    const trimCyanMat = new THREE.MeshBasicMaterial({ color: this.preset?.isMetroCity ? 0xff9933 : 0x00f0ff });
+    const trimMagMat = new THREE.MeshBasicMaterial({ color: this.preset?.isMetroCity ? 0x138808 : 0xff0055 });
     const poleMat = new THREE.MeshStandardMaterial({ color: 0x262e3d, metalness: 0.85, roughness: 0.25 });
-    const beamHeadMat = new THREE.MeshBasicMaterial({ color: this.preset?.isDelhi ? 0xffe4b5 : 0xf8fbff });
+    const beamHeadMat = new THREE.MeshBasicMaterial({ color: this.preset?.isMetroCity ? 0xffe4b5 : 0xf8fbff });
 
     [-1, 1].forEach((side) => {
       const xBase = side * (this.trackWidth / 2 + 8.5);
@@ -956,9 +957,9 @@ export class Track {
     bannerCanvas.width = 1024;
     bannerCanvas.height = 256;
     const bCtx = bannerCanvas.getContext('2d');
-    bCtx.fillStyle = this.preset?.isDelhi ? '#0d1118' : '#060a12';
+    bCtx.fillStyle = this.preset?.isMetroCity ? '#0d1118' : '#060a12';
     bCtx.fillRect(0, 0, 1024, 256);
-    if (this.preset?.isDelhi) {
+    if (this.preset?.isMetroCity) {
       bCtx.fillStyle = '#ff9933';
       bCtx.fillRect(0, 0, 1024, 18);
       bCtx.fillStyle = '#ffffff';
@@ -971,7 +972,7 @@ export class Track {
       bCtx.fillText(TRACK_PRESETS[this.trackId].name.toUpperCase(), 512, 112);
       bCtx.fillStyle = '#ffffff';
       bCtx.font = 'bold 34px Orbitron, sans-serif';
-      bCtx.fillText('★ NEW DELHI GP • KARTAVYA PATH ★', 512, 186);
+      bCtx.fillText('★ S3D GRAND PRIX • EMERALD CIRCUIT ★', 512, 186);
     } else {
       bCtx.strokeStyle = '#00f0ff';
       bCtx.lineWidth = 12;
@@ -1234,7 +1235,7 @@ export class Track {
     ctx.fillStyle = '#ffccd5';
     ctx.font = 'bold 26px Rajdhani, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('★ DELHI CANDLELIGHT DATE NIGHT ★', 384, 72);
+    ctx.fillText('★ CANDLELIGHT DATE NIGHT ★', 384, 72);
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 54px Orbitron, sans-serif';
@@ -1242,7 +1243,7 @@ export class Track {
 
     ctx.fillStyle = '#ffd166';
     ctx.font = 'bold 24px Rajdhani, sans-serif';
-    ctx.fillText('INDIA GATE • LODHI GARDENS • FOREVER VIBES', 384, 248);
+    ctx.fillText('GRAND ARCH • EMERALD GARDENS • FOREVER VIBES', 384, 248);
 
     const tex = new THREE.CanvasTexture(canvas);
     if (THREE.sRGBEncoding) tex.encoding = THREE.sRGBEncoding;
@@ -1288,7 +1289,7 @@ export class Track {
     return tex;
   }
 
-  generateDelhiTerrainTexture() {
+  generateTerrainTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 512;
@@ -1316,7 +1317,7 @@ export class Track {
     return tex;
   }
 
-  makeDelhiFacadeTexture(style = 'cp') {
+  makeFacadeTexture(style = 'cp') {
     const canvas = document.createElement('canvas');
     canvas.width = 512;
     canvas.height = 1024;
@@ -1365,12 +1366,12 @@ export class Track {
     return tex;
   }
 
-  buildDelhiHighwaySigns() {
+  buildHighwaySigns() {
     const signSpecs = [
-      { u: 0.05, title: 'INDIA GATE', sub: 'KARTAVYA PATH  ▲  150m' },
-      { u: 0.29, title: 'RED FORT • ITO', sub: 'YAMUNA MARG  ↗' },
-      { u: 0.56, title: 'QUTUB • CONNAUGHT PL', sub: 'SOUTH DELHI  ↑' },
-      { u: 0.84, title: 'START / FINISH', sub: 'CENTRAL VISTA GP  ▼' }
+      { u: 0.05, title: 'GRAND ARCH', sub: 'EMERALD BOULEVARD  ▲  150m' },
+      { u: 0.29, title: 'BAY BRIDGE', sub: 'HARBOR EXPRESSWAY  ↗' },
+      { u: 0.56, title: 'APEX PLAZA', sub: 'DOWNTOWN LOOP  ↑' },
+      { u: 0.84, title: 'START / FINISH', sub: 'S3D GRAND PRIX  ▼' }
     ];
     const poleMat = new THREE.MeshStandardMaterial({ color: 0x3b4252, metalness: 0.85, roughness: 0.25 });
 
@@ -1426,7 +1427,7 @@ export class Track {
     });
   }
 
-  getDelhiTerrainY(x, z) {
+  getTerrainY(x, z) {
     // Always keep a generous 32m corridor around the entire road curve safely below the asphalt!
     let minSq = Infinity;
     let nearestY = 0;
@@ -1475,7 +1476,7 @@ export class Track {
     return geo;
   }
 
-  createDelhiVisitor(outfitHex = 0x1d4ed8, skinHex = 0xd29268, isLongHair = false) {
+  createParkVisitor(outfitHex = 0x1d4ed8, skinHex = 0xd29268, isLongHair = false) {
     const g = new THREE.Group();
     const skinMat = new THREE.MeshStandardMaterial({ color: skinHex, roughness: 0.52 });
     const outfitMat = new THREE.MeshStandardMaterial({ color: outfitHex, roughness: 0.6 });
@@ -1536,8 +1537,8 @@ export class Track {
   }
 
   buildWorldEnvironment(preset) {
-    // 3D Sculpted Delhi Central Vista Lawns, Park Paths & Gentle Background Ridge Hills
-    const terrainTex = this.generateDelhiTerrainTexture();
+    // 3D Sculpted Central Lawns, Park Paths & Gentle Background Ridge Hills
+    const terrainTex = this.generateTerrainTexture();
     const isRain = (this.weather === 'rain' || !!preset?.isRain);
     const groundTint = isRain
       ? 0x76947a
@@ -1548,7 +1549,7 @@ export class Track {
     for (let i = 0; i < posAttr.count; i++) {
       const vx = posAttr.getX(i);
       const vz = posAttr.getZ(i);
-      posAttr.setY(i, this.getDelhiTerrainY(vx, vz));
+      posAttr.setY(i, this.getTerrainY(vx, vz));
     }
     groundGeo.computeVertexNormals();
     const groundMat = new THREE.MeshStandardMaterial({
@@ -1561,7 +1562,7 @@ export class Track {
     ground.receiveShadow = true;
     this.environmentGroup.add(ground);
 
-    // Subtle Night / Twilight Stars over Delhi Sky
+    // Subtle Night / Twilight Stars over Metro Sky
     const starCount = preset?.isNight ? 750 : 220;
     const starPositions = new Float32Array(starCount * 3);
     for (let i = 0; i < starCount; i++) {
@@ -1583,13 +1584,13 @@ export class Track {
     });
     this.environmentGroup.add(new THREE.Points(starGeo, starMat));
 
-    this.buildDelhiLandmarks();
-    this.buildDelhiFoliage();
-    this.buildDelhiSkyline();
-    this.buildDelhiMetroViaduct();
+    this.buildCityLandmarks();
+    this.buildCityFoliage();
+    this.buildCitySkyline();
+    this.buildMetroViaduct();
   }
 
-  buildDelhiLandmarks() {
+  buildCityLandmarks() {
     const sandstoneCreamMat = new THREE.MeshStandardMaterial({
       color: 0xe6caa0,
       map: this.makeSandstoneTexture('#d9b382', '#bd925d'),
@@ -1609,7 +1610,7 @@ export class Track {
     const whiteGlowMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
     const goldMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.85, roughness: 0.2 });
 
-    // 1. INDIA GATE & CHHATRI CANOPY (Set safely back in Central Vista lawns off Kartavya Path)
+    // 1. GRAND ARCH & PAVILION CANOPY (Set safely back in Central Park lawns)
     const ig = new THREE.Group();
     ig.position.set(-50, 0, 192);
     ig.rotation.y = 0.28;
@@ -1628,7 +1629,7 @@ export class Track {
     const crownTop = new THREE.Mesh(new THREE.BoxGeometry(22.5, 4.2, 9.2), sandstoneCreamMat);
     crownTop.position.y = 36.2;
 
-    // Tricolor Architectural Uplights on India Gate Frieze
+    // Tricolor Architectural Uplights on Grand Arch Frieze
     const triSaffron = new THREE.Mesh(new THREE.BoxGeometry(25.8, 0.5, 10.4), saffronMat);
     triSaffron.position.y = 32.0;
     const triWhite = new THREE.Mesh(new THREE.BoxGeometry(25.8, 0.4, 10.4), whiteGlowMat);
@@ -1716,9 +1717,9 @@ export class Track {
     }
     this.environmentGroup.add(lotus);
 
-    // 3. QUTUB MINAR (South-West Fluted Sandstone Victory Tower)
-    const qutub = new THREE.Group();
-    qutub.position.set(-345, 0, -165);
+    // 3. SOUTH-WEST FLUTED SANDSTONE TOWER
+    const towerGroup = new THREE.Group();
+    towerGroup.position.set(-345, 0, -165);
     let qY = 0;
     const tiers = [
       { rBot: 7.4, rTop: 6.0, h: 16, mat: redSandstoneMat },
@@ -1733,11 +1734,11 @@ export class Track {
       qY += t.h;
       const balc = new THREE.Mesh(new THREE.CylinderGeometry(t.rTop + 1.0, t.rTop + 0.2, 1.0, 16), sandstoneCreamMat);
       balc.position.y = qY;
-      qutub.add(seg, balc);
+      towerGroup.add(seg, balc);
     });
-    this.environmentGroup.add(qutub);
+    this.environmentGroup.add(towerGroup);
 
-    // 4. RED FORT (LAL QILA Ramparts, Lahori Gate & Indian Flag on East Horizon)
+    // 4. EAST HORIZON HERITAGE FORTRESS & EMBLEM TOWER
     const fort = new THREE.Group();
     fort.position.set(402, 0, 68);
     fort.rotation.y = -Math.PI / 2;
@@ -1766,7 +1767,7 @@ export class Track {
     fort.add(flagpole, fSaf, fWh, fGr);
     this.environmentGroup.add(fort);
 
-    // 5. SIGNATURE BRIDGE (Yamuna Tilted Bow Pylon + Stay Cables at North-East Riverbank)
+    // 5. BAY SIGNATURE BRIDGE (Tilted Bow Pylon + Stay Cables at North-East Riverbank)
     const sig = new THREE.Group();
     sig.position.set(410, 0, -185);
     sig.rotation.y = -0.65;
@@ -1815,7 +1816,7 @@ export class Track {
     }
     this.environmentGroup.add(sansad);
 
-    // 7. KARTAVYA PATH 3D REFLECTING CANALS, FOUNTAINS & LODHI GARDEN MUGHAL BARADARI GAZEBOS
+    // 7. CENTRAL PARKWAY REFLECTING CANALS, FOUNTAINS & STONE GAZEBOS
     const canalWaterMat = new THREE.MeshStandardMaterial({ color: 0x0f4c75, roughness: 0.08, metalness: 0.78 });
     const mistMat = new THREE.MeshBasicMaterial({ color: 0xdbeafe, transparent: true, opacity: 0.62 });
     [
@@ -1837,7 +1838,7 @@ export class Track {
       });
     });
 
-    // Lodhi Garden Baradari Sandstone Park Gazebos
+    // Park Sandstone Baradari Gazebos
     [[118, 175], [82, -110]].forEach(([gx, gz]) => {
       const gaz = new THREE.Group();
       gaz.position.set(gx, 0, gz);
@@ -1855,7 +1856,7 @@ export class Track {
       this.environmentGroup.add(gaz);
     });
 
-    // 8. ROMANTIC CANDLELIGHT DATE PAVILION & CUSTOM HEART BOARD (Beside Kartavya Park Pull-Off)
+    // 8. ROMANTIC CANDLELIGHT DATE PAVILION & CUSTOM HEART BOARD (Beside Park Pull-Off)
     this.buildDatePavilion();
   }
 
@@ -1937,8 +1938,8 @@ export class Track {
     pavBack.position.set(0, 1.24, -1.84);
     pav.add(tableLeg, tableTop, vase, pavBench, pavBack);
 
-    // 3D Pavilion Musician / Host welcoming the Couple at the Date Pavilion Entrance
-    const hostChar = this.createDelhiVisitor(0xb45309, 0xd4966c, false);
+    // 3D Pavilion Musician / Host welcoming visitors at the Date Pavilion Entrance
+    const hostChar = this.createParkVisitor(0xb45309, 0xd4966c, false);
     hostChar.group.position.set(3.2, 0.5, 4.8);
     hostChar.group.rotation.y = -0.35;
     pav.add(hostChar.group);
@@ -1972,7 +1973,7 @@ export class Track {
     this.environmentGroup.add(pav);
   }
 
-  buildDelhiFoliage() {
+  buildCityFoliage() {
     // 380 Natural Organic-Crown Neem/Ashoka/Banyan/Gulmohar/Amaltas 3D Trees + 3D Park Benches + Strolling Visitors
     const maxTrees = 380;
     const trunkGeo = new THREE.CylinderGeometry(0.28, 0.56, 4.8, 8);
@@ -2007,7 +2008,7 @@ export class Track {
     const bushMat = new THREE.MeshStandardMaterial({ color: 0x234d22, roughness: 0.9 });
     const bushInst = new THREE.InstancedMesh(bushGeo, bushMat, 160);
 
-    // 3D Carved Wood & Cast-Iron Park Benches in Central Vista & Lodhi Parks
+    // 3D Carved Wood & Cast-Iron Park Benches in Central Lawns & Parkways
     const benchCount = 48;
     const benchSeatGeo = new THREE.BoxGeometry(2.4, 0.16, 0.78);
     const benchWoodMat = new THREE.MeshStandardMaterial({ color: 0x6b4226, roughness: 0.78 });
@@ -2031,7 +2032,7 @@ export class Track {
 
       if (!this.isPointClearOfTrack(x, z, 11.5)) continue;
 
-      const groundY = this.getDelhiTerrainY(x, z);
+      const groundY = this.getTerrainY(x, z);
       const s = 0.85 + (placed % 5) * 0.24;
       dummy.position.set(x, groundY + 2.3 * s, z);
       dummy.scale.set(s, s, s);
@@ -2102,22 +2103,22 @@ export class Track {
     ];
     strollSpots.forEach((spCfg) => {
       if (!this.isPointClearOfTrack(spCfg.x, spCfg.z, spCfg.r + 6)) return;
-      const visitor = this.createDelhiVisitor(spCfg.color, 0xd29268, spCfg.long);
+      const visitor = this.createParkVisitor(spCfg.color, 0xd29268, spCfg.long);
       visitor.homeX = spCfg.x;
       visitor.homeZ = spCfg.z;
       visitor.walkRadius = spCfg.r;
-      visitor.group.position.set(spCfg.x, this.getDelhiTerrainY(spCfg.x, spCfg.z) + 0.2, spCfg.z);
+      visitor.group.position.set(spCfg.x, this.getTerrainY(spCfg.x, spCfg.z) + 0.2, spCfg.z);
       this.environmentGroup.add(visitor.group);
       this.parkCharacters.push(visitor);
     });
   }
 
-  buildDelhiSkyline() {
-    // 1. Textured Georgian Connaught Place Heritage Colonnades Strictly Outside Road Clearance
+  buildCitySkyline() {
+    // 1. Textured Heritage Plaza Colonnades Strictly Outside Road Clearance
     const cpMax = 36;
     const unitBox = new THREE.BoxGeometry(1, 1, 1);
     const cpMat = new THREE.MeshStandardMaterial({
-      map: this.makeDelhiFacadeTexture('cp'),
+      map: this.makeFacadeTexture('cp'),
       roughness: 0.62,
       metalness: 0.08
     });
@@ -2134,7 +2135,7 @@ export class Track {
       const z = Math.sin(ang) * dist;
       if (!this.isPointClearOfTrack(x, z, 30)) continue;
 
-      const gy = this.getDelhiTerrainY(x, z);
+      const gy = this.getTerrainY(x, z);
       const h = 16 + (i % 3) * 4;
       dummy.position.set(x, gy + h * 0.5, z);
       dummy.scale.set(30, h, 15);
@@ -2154,10 +2155,10 @@ export class Track {
     cpRoofInst.instanceMatrix.needsUpdate = true;
     this.environmentGroup.add(cpInst, cpRoofInst);
 
-    // 2. Realistic Multi-Tiered Outer NCR Architectural Skyscrapers (Podium + Tower + Setback Crown + Beacon)
+    // 2. Realistic Multi-Tiered Outer Skyline Towers
     const towerMax = 76;
     const towerMat = new THREE.MeshStandardMaterial({
-      map: this.makeDelhiFacadeTexture('tower'),
+      map: this.makeFacadeTexture('tower'),
       metalness: 0.65,
       roughness: 0.28
     });
@@ -2176,7 +2177,7 @@ export class Track {
       const z = Math.sin(ang) * dist;
       if (!this.isPointClearOfTrack(x, z, 36)) continue;
 
-      const gy = this.getDelhiTerrainY(x, z);
+      const gy = this.getTerrainY(x, z);
       const h = 54 + ((i * 29) % 124);
       const w = 18 + ((i * 11) % 20);
       const podH = 12;
@@ -2213,8 +2214,8 @@ export class Track {
     this.environmentGroup.add(pInst, tInst, sInst, cInst);
   }
 
-  buildDelhiMetroViaduct() {
-    // Elevated Concrete Delhi Metro Corridor + Passing Blue-Line Train along z = -345
+  buildMetroViaduct() {
+    // Elevated Concrete Metro Corridor + Passing Blue-Line Train along z = -345
     const concMat = new THREE.MeshStandardMaterial({ color: 0x6b7280, roughness: 0.82 });
     const railSpan = new THREE.Mesh(new THREE.BoxGeometry(760, 1.8, 7.2), concMat);
     railSpan.position.set(0, 14.5, -345);
@@ -2233,7 +2234,7 @@ export class Track {
     pierInst.instanceMatrix.needsUpdate = true;
     this.environmentGroup.add(pierInst);
 
-    // Animated Silver & Blue-Line Delhi Metro 4-Coach Train
+    // Animated Silver & Blue-Line Metro 4-Coach Train
     const trainGroup = new THREE.Group();
     trainGroup.position.set(-180, 17.2, -345);
     const bodyMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.75, roughness: 0.22 });

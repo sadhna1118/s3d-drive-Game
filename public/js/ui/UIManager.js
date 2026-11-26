@@ -25,7 +25,7 @@ export class UIManager {
 
     this.selectedCarIndex = 0;
     this.selectedColor = CAR_CONFIGS[0]?.defaultColor || '#ff0022';
-    this.selectedTrackId = 'delhi_live';
+    this.selectedTrackId = 'city_live';
     this.selectedWeather = 'clear';
     this.playerName = 'Rebel ' + Math.floor(100 + Math.random() * 900);
 
@@ -65,6 +65,7 @@ export class UIManager {
     this.onOpenPhotoMode = null;
     this.onExitPhotoMode = null;
     this.onToggleVoice = null;
+    this.onToggleGestureCam = null;
     this.onTogglePause = null;
     this.onSensitivityChange = null;
     this.onQualityChange = null;
@@ -143,9 +144,17 @@ export class UIManager {
     this.panelReplayControls = document.getElementById('panel-replay-controls');
     this.panelPhotoMode = document.getElementById('panel-photo-mode');
 
-    // Voice Driving Controls
+    // Voice & Finger Gesture Driving Controls
     this.btnVoiceGarage = document.getElementById('btn-toggle-voice-garage');
     this.btnVoiceHud = document.getElementById('hud-btn-voice');
+    this.btnGestureGarage = document.getElementById('btn-toggle-gesture-garage');
+    this.btnGestureHud = document.getElementById('hud-btn-gesture');
+    this.gestureCamBox = document.getElementById('gesture-cam-box');
+    this.gestureVideo = document.getElementById('gesture-video');
+    this.gestureCanvas = document.getElementById('gesture-canvas');
+    this.gestureCamLabel = document.getElementById('gesture-cam-label');
+    this.fingerSwipeReticle = document.getElementById('finger-swipe-reticle');
+    this.fingerSwipeKnob = document.getElementById('finger-swipe-knob');
     this.hudVoicePill = document.getElementById('hud-voice-pill');
     this.hudVoiceTitle = document.getElementById('hud-voice-title');
     this.hudVoiceDesc = document.getElementById('hud-voice-desc');
@@ -249,6 +258,8 @@ export class UIManager {
       const key = el.dataset.profileDisplay;
       if (key === 'steeringBadge') el.textContent = presetName;
       else if (key === 'steerSensitivity') el.textContent = `${Number(profile.steerSensitivity).toFixed(2)}x`;
+      else if (key === 'voiceSensitivity') el.textContent = `${Number(profile.voiceSensitivity ?? 1.0).toFixed(2)}x`;
+      else if (key === 'gestureSensitivity') el.textContent = `${Number(profile.gestureSensitivity ?? 1.0).toFixed(2)}x`;
       else if (key === 'steerResponse') el.textContent = `${Number(profile.steerResponse).toFixed(2)}x`;
       else if (key === 'stabilityAssist') el.textContent = `${Math.round(Number(profile.stabilityAssist) * 100)}%`;
     });
@@ -354,9 +365,9 @@ export class UIManager {
     if (this.dateName2) this.dateName2.value = profile.partner2 || 'Meera';
     if (this.dateDecorSelect) this.dateDecorSelect.value = profile.dateMode || 'off';
     const rawC = profile.showCharacters;
-    const charMode = rawC === 'driver_only'
-      ? 'driver_only'
-      : (rawC === false || rawC === 'false' || rawC === 'none' ? 'none' : 'couple');
+    const charMode = rawC === 'couple'
+      ? 'couple'
+      : (rawC === false || rawC === 'false' || rawC === 'none' ? 'none' : 'driver_only');
     if (this.dateCharsSelect) this.dateCharsSelect.value = charMode;
     document.querySelectorAll('.crew-chip').forEach((chip) => {
       chip.classList.toggle('active', chip.dataset.crew === charMode);
@@ -364,15 +375,15 @@ export class UIManager {
     if (this.dateBoardPreview) {
       const n1 = (profile.partner1 || 'Aarav').trim().toUpperCase();
       const n2 = (profile.partner2 || 'Meera').trim().toUpperCase();
-      this.dateBoardPreview.textContent = `♥ ${n1} ♥ ${n2} — DELHI DATE BOARD ♥`;
+      this.dateBoardPreview.textContent = `♥ ${n1} ♥ ${n2} — S3D DATE BOARD ♥`;
     }
   }
 
   updateClimateBadge(preset) {
     if (!preset) return;
-    const label = preset.timeLabel || (preset.name ? preset.name.replace(/^[^\w\u0900-\u097F]+/, '').split('(')[0].trim() : 'DELHI');
+    const label = preset.timeLabel || (preset.name ? preset.name.replace(/^[^\w\u0900-\u097F]+/, '').split('(')[0].trim() : 'LIVE SKY');
     if (this.garageClimateBadge) this.garageClimateBadge.textContent = label.toUpperCase();
-    if (this.hudClimatePill) this.hudClimatePill.textContent = `🇮🇳 ${label.toUpperCase()}`;
+    if (this.hudClimatePill) this.hudClimatePill.textContent = `🌐 ${label.toUpperCase()}`;
   }
 
   setCinemaBarsVisible(visible) {
@@ -528,7 +539,7 @@ export class UIManager {
     });
 
     document.getElementById('btn-mode-drift')?.addEventListener('click', () => {
-      if (this.onStartRace) this.onStartRace({ mode: 'DRIFT_ARENA', trackId: 'delhi_sunset', laps: 3 });
+      if (this.onStartRace) this.onStartRace({ mode: 'DRIFT_ARENA', trackId: 'city_sunset', laps: 3 });
     });
 
     document.getElementById('btn-mode-time-attack')?.addEventListener('click', () => {
@@ -540,7 +551,7 @@ export class UIManager {
     });
 
     document.getElementById('btn-mode-boss')?.addEventListener('click', () => {
-      if (this.onStartRace) this.onStartRace({ mode: 'BOSS_BATTLE', trackId: 'delhi_night', laps: 3, isBoss: true });
+      if (this.onStartRace) this.onStartRace({ mode: 'BOSS_BATTLE', trackId: 'city_night', laps: 3, isBoss: true });
     });
 
     // Personalized Couple Date Modal & Garage Cabin Crew Toggle
@@ -548,16 +559,17 @@ export class UIManager {
       partner1: (this.dateName1?.value || 'Aarav').trim() || 'Aarav',
       partner2: (this.dateName2?.value || 'Meera').trim() || 'Meera',
       dateMode: this.dateDecorSelect?.value || 'romance',
-      showCharacters: this.dateCharsSelect?.value || 'couple'
+      showCharacters: this.dateCharsSelect?.value || 'driver_only',
+      crewExplicit: true
     });
     document.querySelectorAll('.crew-chip').forEach((chip) => {
       chip.addEventListener('click', () => {
-        const mode = chip.dataset.crew || 'couple';
+        const mode = chip.dataset.crew || 'driver_only';
         document.querySelectorAll('.crew-chip').forEach((c) => c.classList.remove('active'));
         chip.classList.add('active');
         if (this.dateCharsSelect) this.dateCharsSelect.value = mode;
-        if (this.onCoupleProfileChange) this.onCoupleProfileChange({ showCharacters: mode });
-        const label = mode === 'driver_only' ? 'ONLY DRIVER MODE' : (mode === 'none' ? 'EMPTY CABIN' : 'COUPLE IN CAR');
+        if (this.onCoupleProfileChange) this.onCoupleProfileChange({ showCharacters: mode, crewExplicit: true });
+        const label = mode === 'driver_only' ? 'ONLY DRIVER MODE (SOLO)' : (mode === 'none' ? 'EMPTY CABIN' : 'COUPLE IN CAR');
         this.showToast(`👤 Garage Cabin: ${label}`);
       });
     });
@@ -613,6 +625,13 @@ export class UIManager {
     };
     this.btnVoiceGarage?.addEventListener('click', handleVoiceToggle);
     this.btnVoiceHud?.addEventListener('click', handleVoiceToggle);
+
+    const handleGestureToggle = () => {
+      this.onToggleGestureCam?.();
+      this.btnGestureHud?.blur?.();
+    };
+    this.btnGestureGarage?.addEventListener('click', handleGestureToggle);
+    this.btnGestureHud?.addEventListener('click', handleGestureToggle);
 
     document.querySelectorAll('.btn-close-modal').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -1356,6 +1375,40 @@ export class UIManager {
     } else {
       this.showToast('🎙️ VOICE DRIVING: MUTED');
     }
+  }
+
+  updateGestureCamUI(isActive, statusLabel = 'OFF') {
+    if (this.btnGestureGarage) {
+      this.btnGestureGarage.textContent = isActive ? '🖐️ HAND: ON' : '🖐️ HAND: OFF';
+      this.btnGestureGarage.classList.toggle('active', !!isActive);
+    }
+    if (this.btnGestureHud) {
+      this.btnGestureHud.classList.toggle('active', !!isActive);
+    }
+    if (this.gestureCamBox) {
+      this.gestureCamBox.classList.toggle('hidden', !isActive);
+    }
+    if (this.gestureCamLabel) {
+      this.gestureCamLabel.textContent = isActive ? `🖐️ ${statusLabel}` : '🖐️ OFF';
+    }
+  }
+
+  updateTouchSwipeVisual(active, ax, ay, cx, cy) {
+    if (!this.fingerSwipeReticle || !this.fingerSwipeKnob) return;
+    if (!active) {
+      this.fingerSwipeReticle.classList.add('hidden');
+      return;
+    }
+    this.fingerSwipeReticle.classList.remove('hidden');
+    this.fingerSwipeReticle.style.left = `${ax}px`;
+    this.fingerSwipeReticle.style.top = `${ay}px`;
+    const maxR = 48;
+    const dx = cx - ax;
+    const dy = cy - ay;
+    const dist = Math.hypot(dx, dy);
+    const clampScale = dist > maxR ? maxR / dist : 1;
+    this.fingerSwipeKnob.style.left = `${ax + dx * clampScale}px`;
+    this.fingerSwipeKnob.style.top = `${ay + dy * clampScale}px`;
   }
 
   showVoiceFeedback(title, desc, icon, rawText) {

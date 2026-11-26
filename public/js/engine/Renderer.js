@@ -183,7 +183,7 @@ export class GameRenderer {
   }
 
   generateEnvironmentMap() {
-    // High-resolution studio + Delhi golden-hour HDRI reflection map for automotive clearcoat paint & chrome
+    // High-resolution studio + golden-hour HDRI reflection map for automotive clearcoat paint & chrome
     const canvas = document.createElement('canvas');
     canvas.width = 2048;
     canvas.height = 1024;
@@ -230,7 +230,7 @@ export class GameRenderer {
     ctx.fillStyle = hor;
     ctx.fillRect(0, 492, 2048, 36);
 
-    // Subtle Delhi skyline horizon bounce
+    // Subtle city skyline horizon bounce
     ctx.fillStyle = 'rgba(24, 22, 30, 0.72)';
     for (let x = 0; x < 2048; x += 64) {
       const h = 30 + ((x * 53) % 72);

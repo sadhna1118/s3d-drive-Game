@@ -194,7 +194,7 @@ io.on('connection', (socket) => {
       name: cleanText(data.name, `Grand Prix ${code}`, 28),
       hostId: socket.id,
       maxPlayers: Math.min(Math.max(Math.trunc(finiteNum(data.maxPlayers, 6, 2, 8)), 2), 8),
-      trackId: cleanText(data.trackId, 'delhi_live', 32),
+      trackId: cleanText(data.trackId, 'city_live', 32),
       laps: Math.min(Math.max(Math.trunc(finiteNum(data.laps, 3, 1, 10)), 1), 10),
       state: 'lobby', // 'lobby' | 'countdown' | 'racing' | 'finished'
       startTime: null,
