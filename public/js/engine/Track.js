@@ -2227,33 +2227,32 @@ export class Track {
     tableMatRunner.position.set(0, 1.455, 0);
     pav.add(tableMatRunner);
     const crystalMat = new THREE.MeshPhysicalMaterial({ color: 0xeef8ff, metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.72 });
-    [-0.36, 0.36].forEach((gx, idx) => {
-      const zOff = idx === 0 ? 0.56 : -0.56;
+    [-0.42, 0.42].forEach((gx) => {
       const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.06, 0.16, 8), crystalMat);
-      stem.position.set(gx, 1.53, zOff);
+      stem.position.set(gx, 1.53, -0.44);
       const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.028, 0.14, 10), crystalMat);
-      cup.position.set(gx, 1.67, zOff);
+      cup.position.set(gx, 1.67, -0.44);
       pav.add(stem, cup);
     });
     const vase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.22, 10), crystalMat);
-    vase.position.set(-0.62, 1.56, 0);
+    vase.position.set(0, 1.56, 0.48);
     for (let r = 0; r < 3; r++) {
       const rBulb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), roseMat);
-      rBulb.position.set(-0.62 + (r - 1) * 0.06, 1.72 + (r === 1 ? 0.04 : 0), 0);
+      rBulb.position.set((r - 1) * 0.06, 1.72 + (r === 1 ? 0.04 : 0), 0.48);
       pav.add(rBulb);
     }
     pav.add(tableLeg, tableTop, vase);
 
-    // 2 INDIVIDUAL MOVABLE VELVET DINING CHAIRS (Boy pulls Girl's chair before seating her!)
-    const girlChairRestLocal = new THREE.Vector3(0, 0.50, -1.16);
-    const boyChairRestLocal = new THREE.Vector3(0, 0.50, 1.16);
+    // 2 INDIVIDUAL MOVABLE VELVET DINING CHAIRS SIDE-BY-SIDE (Cozy Sweetheart Date Seating!)
+    const girlChairRestLocal = new THREE.Vector3(0.40, 0.50, -1.04);
+    const boyChairRestLocal = new THREE.Vector3(-0.40, 0.50, -1.04);
     const girlChair = this.createVelvetChair(chairVelvetMat, goldMat);
     girlChair.position.copy(girlChairRestLocal);
-    girlChair.rotation.y = 0; // faces +Z toward table
+    girlChair.rotation.y = -0.32; // angled lovingly toward partner & table
 
     const boyChair = this.createVelvetChair(chairVelvetMat, goldMat);
     boyChair.position.copy(boyChairRestLocal);
-    boyChair.rotation.y = Math.PI; // faces -Z toward table
+    boyChair.rotation.y = 0.32; // angled lovingly beside girlfriend & table
     pav.add(girlChair, boyChair);
 
     // Build Dedicated "Will You Marry Me?" Proposing Corner Gate & Red Heart Balloons
@@ -2317,11 +2316,11 @@ export class Track {
       valetWaitPos: pav.localToWorld(new THREE.Vector3(-4.6, 0.08, 10.6)),
       entryApproachPos: pav.localToWorld(new THREE.Vector3(0, 0.52, 6.4)),
       tablePos: pav.localToWorld(new THREE.Vector3(0, 1.46, 0)),
-      seatBoyPos: pav.localToWorld(new THREE.Vector3(0, 0.50, 1.08)),
-      seatGirlPos: pav.localToWorld(new THREE.Vector3(0, 0.50, -1.08)),
-      girlChairPullPos: pav.localToWorld(new THREE.Vector3(-0.78, 0.50, -1.78)),
-      standCutBoyPos: pav.localToWorld(new THREE.Vector3(-0.42, 0.50, -1.25)),
-      standCutGirlPos: pav.localToWorld(new THREE.Vector3(0.42, 0.50, -1.25)),
+      seatBoyPos: pav.localToWorld(new THREE.Vector3(-0.38, 0.50, -1.00)),
+      seatGirlPos: pav.localToWorld(new THREE.Vector3(0.38, 0.50, -1.00)),
+      girlChairPullPos: pav.localToWorld(new THREE.Vector3(1.02, 0.50, -1.55)),
+      standCutBoyPos: pav.localToWorld(new THREE.Vector3(-0.42, 0.50, -1.15)),
+      standCutGirlPos: pav.localToWorld(new THREE.Vector3(0.42, 0.50, -1.15)),
       danceCenterPos: pav.localToWorld(new THREE.Vector3(-4.2, 0.50, 2.2)),
       proposeCenterPos: proposeCorner.localToWorld(new THREE.Vector3(0, 0.06, 0.65)),
       proposeBoyPos: proposeCorner.localToWorld(new THREE.Vector3(-0.65, 0.06, 0.95)),

@@ -548,19 +548,27 @@ export class DateExperienceManager {
     const handR = new THREE.Mesh(handGeo, skinMat);
     handR.position.y = -0.45;
 
-    // Removable Dining Spoon / Bite + Ring Box + Knife props attached neatly to Right Hand!
-    const spoonProp = new THREE.Group();
-    const spHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.22, 6), goldMat);
-    spHandle.rotation.x = Math.PI / 2;
-    spHandle.position.z = 0.09;
-    const spScoop = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 8), goldMat);
-    spScoop.scale.set(1.1, 0.45, 1.3);
-    spScoop.position.z = 0.21;
-    const spTreat = new THREE.Mesh(new THREE.SphereGeometry(0.026, 8, 8), new THREE.MeshStandardMaterial({ color: 0xf59e0b }));
-    spTreat.position.set(0, 0.02, 0.21);
-    spoonProp.add(spHandle, spScoop, spTreat);
-    spoonProp.position.set(0, -0.45, 0.03);
-    spoonProp.visible = false;
+    const spoonMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, roughness: 0.3 });
+    const makeSpoonMesh = () => {
+      const sp = new THREE.Group();
+      const spHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.22, 6), goldMat);
+      spHandle.rotation.x = Math.PI / 2;
+      spHandle.position.z = 0.09;
+      const spScoop = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 8), goldMat);
+      spScoop.scale.set(1.1, 0.45, 1.3);
+      spScoop.position.z = 0.21;
+      const spTreat = new THREE.Mesh(new THREE.SphereGeometry(0.030, 8, 8), spoonMat.clone());
+      spTreat.position.set(0, 0.022, 0.21);
+      sp.add(spHandle, spScoop, spTreat);
+      sp.position.set(0, -0.45, 0.03);
+      sp.userData.treatMesh = spTreat;
+      sp.visible = false;
+      return sp;
+    };
+
+    const spoonProp = makeSpoonMesh();
+    const spoonPropL = makeSpoonMesh();
+    armL.add(armLMesh, handL, spoonPropL);
 
     const ringBoxProp = new THREE.Group();
     const rBox = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.07, 0.09), dressMat);
@@ -588,7 +596,7 @@ export class DateExperienceManager {
       legL: leftLeg.leg, legR: rightLeg.leg,
       kneeL: leftLeg.knee, kneeR: rightLeg.knee,
       armL, armR, handL, handR,
-      spoonProp, ringBoxProp, knifeProp,
+      spoonProp, spoonPropL, ringBoxProp, knifeProp,
       torsoGroup, head
     };
   }
@@ -596,6 +604,7 @@ export class DateExperienceManager {
   setPersonPosture(rig, posture = 'stand') {
     if (!rig) return;
     rig.spoonProp.visible = false;
+    if (rig.spoonPropL) rig.spoonPropL.visible = false;
     rig.ringBoxProp.visible = false;
     rig.knifeProp.visible = false;
 
@@ -765,6 +774,12 @@ export class DateExperienceManager {
     this.orderedDishes.push({ ...dish, orderedAt: Date.now() });
     this.placeDishOnTable(dish, this.orderedDishes.length - 1);
     this.activeFoodLabel = dish.name;
+    if (this.boyRig?.spoonPropL?.userData?.treatMesh?.material) {
+      this.boyRig.spoonPropL.userData.treatMesh.material.color.setHex(dish.color || 0xf59e0b);
+    }
+    if (this.girlRig?.spoonProp?.userData?.treatMesh?.material) {
+      this.girlRig.spoonProp.userData.treatMesh.material.color.setHex(dish.color || 0xf59e0b);
+    }
     this.audio?.playCelebrateChime?.();
     this.spawnFloatingHearts(4, this.getWorldVenueData().tablePos);
 
@@ -1248,10 +1263,10 @@ export class DateExperienceManager {
       const midCenter = worldVenue.entryApproachPos;
       const girlBehindChairPos = worldVenue.girlChairPullPos || worldVenue.seatGirlPos;
       const boyBesideHerChairPos = worldVenue.pavGroup
-        ? worldVenue.pavGroup.localToWorld(new THREE.Vector3(-0.78, 0.50, -1.78))
+        ? worldVenue.pavGroup.localToWorld(new THREE.Vector3(1.05, 0.50, -1.65))
         : worldVenue.girlChairPullPos;
       const boyWalkAroundPos = worldVenue.pavGroup
-        ? worldVenue.pavGroup.localToWorld(new THREE.Vector3(-1.45, 0.50, 0.25))
+        ? worldVenue.pavGroup.localToWorld(new THREE.Vector3(0.0, 0.50, -1.78))
         : worldVenue.seatBoyPos;
 
       // Stage 1 (2.4 - 4.6s): Boy steps out driver side -> walks around nose to her passenger door
@@ -1686,36 +1701,57 @@ export class DateExperienceManager {
         return;
       }
 
-      // Seated Intimate Candlelight Dinner across the table (Dine, Feed Each Other, Toast, Sing)
+      // Seated Side-by-Side Sweetheart Candlelight Dinner (Dine, Close Mutual Feeding, Toast, Sing)
       this.setPersonPosture(this.boyRig, 'sit');
       this.setPersonPosture(this.girlRig, 'sit');
       this.boyRig.root.position.copy(worldVenue.seatBoyPos);
       this.girlRig.root.position.copy(worldVenue.seatGirlPos);
-      this.boyRig.root.lookAt(worldVenue.tablePos.x, worldVenue.seatBoyPos.y, worldVenue.tablePos.z);
-      this.girlRig.root.lookAt(worldVenue.tablePos.x, worldVenue.seatGirlPos.y, worldVenue.tablePos.z);
       this.boyRig.torsoGroup.rotation.z = 0;
       this.girlRig.torsoGroup.rotation.z = 0;
       this.boyRig.armL.rotation.z = 0;
       this.girlRig.armR.rotation.z = 0;
 
+      // Natural warm look targets: turn closer toward each other when feeding side-by-side!
+      const feedMixBoy = this.activityMode === 'feed' ? worldVenue.tablePos.clone().lerp(worldVenue.seatGirlPos, 0.68) : worldVenue.tablePos.clone().lerp(worldVenue.seatGirlPos, 0.22);
+      const feedMixGirl = this.activityMode === 'feed' ? worldVenue.tablePos.clone().lerp(worldVenue.seatBoyPos, 0.68) : worldVenue.tablePos.clone().lerp(worldVenue.seatBoyPos, 0.22);
+      this.boyRig.root.lookAt(feedMixBoy.x, worldVenue.seatBoyPos.y, feedMixBoy.z);
+      this.girlRig.root.lookAt(feedMixGirl.x, worldVenue.seatGirlPos.y, feedMixGirl.z);
+
       if (this.activityMode === 'feed') {
         const phaseFeed = Math.max(0, 5.0 - this.activityTimer);
         if (phaseFeed < 2.5) {
-          // Boy reaches spoon/bite lovingly across candlelit table toward Girl's smile
-          this.boyRig.spoonProp.visible = true;
-          this.boyRig.armR.rotation.x = -1.52 + Math.sin(nowSec * 4.5) * 0.14;
-          this.boyRig.torsoGroup.rotation.x = 0.18;
-          this.girlRig.torsoGroup.rotation.x = 0.14;
-          this.girlRig.head.rotation.x = Math.sin(nowSec * 5) * 0.1;
-          this.girlRig.armR.rotation.x = -0.8;
-        } else {
-          // Girl lovingly feeds Boy back across the candles!
-          this.girlRig.spoonProp.visible = true;
-          this.girlRig.armR.rotation.x = -1.52 + Math.sin(nowSec * 4.5) * 0.14;
-          this.girlRig.torsoGroup.rotation.x = 0.18;
+          // Boy uses his inner arm (armL right beside Girl!) to scoop from dish & feed Girl mouth-level!
+          this.boyRig.spoonPropL.visible = true;
+          const scoopU = Math.min(1, phaseFeed / 0.75);
+          const feedArmX = phaseFeed < 0.75
+            ? (-0.95 - 0.78 * scoopU)
+            : (-1.73 + Math.sin((phaseFeed - 0.75) * 4.2) * 0.08);
+          this.boyRig.armL.rotation.x = feedArmX;
+          this.boyRig.armL.rotation.z = -0.18;
+          this.boyRig.armR.rotation.x = -0.65;
           this.boyRig.torsoGroup.rotation.x = 0.14;
-          this.boyRig.head.rotation.x = Math.sin(nowSec * 5) * 0.1;
-          this.boyRig.armR.rotation.x = -0.8;
+          this.girlRig.torsoGroup.rotation.x = 0.16;
+          this.girlRig.head.rotation.x = 0.06 + Math.sin(nowSec * 5.2) * 0.09;
+          this.girlRig.head.rotation.y = 0.18;
+          this.boyRig.head.rotation.y = -0.14;
+          this.girlRig.armR.rotation.x = -0.75;
+        } else {
+          // Girl uses her inner arm (armR right beside Boy!) to scoop & feed Boy right back!
+          const gTime = phaseFeed - 2.5;
+          this.girlRig.spoonProp.visible = true;
+          const scoopU = Math.min(1, gTime / 0.75);
+          const feedArmX = gTime < 0.75
+            ? (-0.95 - 0.78 * scoopU)
+            : (-1.73 + Math.sin((gTime - 0.75) * 4.2) * 0.08);
+          this.girlRig.armR.rotation.x = feedArmX;
+          this.girlRig.armR.rotation.z = 0.18;
+          this.girlRig.armL.rotation.x = -0.65;
+          this.girlRig.torsoGroup.rotation.x = 0.14;
+          this.boyRig.torsoGroup.rotation.x = 0.16;
+          this.boyRig.head.rotation.x = 0.06 + Math.sin(nowSec * 5.2) * 0.09;
+          this.boyRig.head.rotation.y = -0.18;
+          this.girlRig.head.rotation.y = 0.14;
+          this.boyRig.armL.rotation.x = -0.75;
         }
       } else if (this.activityMode === 'toast') {
         this.boyRig.torsoGroup.rotation.x = 0;
@@ -1742,25 +1778,26 @@ export class DateExperienceManager {
         this.boyRig.armL.rotation.x = -1.05 + Math.sin(nowSec * 4) * 0.2;
         this.girlRig.armR.rotation.x = -1.05 + Math.cos(nowSec * 4) * 0.2;
       } else {
-        this.boyRig.torsoGroup.rotation.x = 0.06;
-        this.girlRig.torsoGroup.rotation.x = 0.06;
-        this.boyRig.head.rotation.y = Math.sin(nowSec * 1.4) * 0.12;
-        this.girlRig.head.rotation.y = Math.cos(nowSec * 1.3) * 0.14;
+        this.boyRig.torsoGroup.rotation.x = 0.08;
+        this.girlRig.torsoGroup.rotation.x = 0.08;
+        this.boyRig.head.rotation.y = -0.15 + Math.sin(nowSec * 1.4) * 0.10;
+        this.girlRig.head.rotation.y = 0.15 + Math.cos(nowSec * 1.3) * 0.10;
         this.boyRig.armR.rotation.x = -0.85 + Math.sin(nowSec * 2.4) * 0.12;
         this.girlRig.armL.rotation.x = -0.85 + Math.cos(nowSec * 2.1) * 0.12;
       }
 
-      // Close, crisp romantic candle-night table camera showing BOTH faces, food, and candles clearly
-      this.cameraOrbitAngle += dt * 0.10;
-      const sideBias = Math.cos(this.cameraOrbitAngle * 0.5) * 3.1;
-      const lookCenter = worldVenue.tablePos.clone().add(new THREE.Vector3(0, 0.24, 0));
+      // Intimate Close-Up Camera looking from table front straight at BOTH side-by-side faces & dishes!
+      this.cameraOrbitAngle += dt * 0.12;
+      const frontDir = new THREE.Vector3(0, 0, 1).applyEuler(new THREE.Euler(0, worldVenue.facingAngle || 0, 0));
       const sideRight = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, worldVenue.facingAngle || 0, 0));
-      const fwd = new THREE.Vector3(0, 0, 1).applyEuler(new THREE.Euler(0, worldVenue.facingAngle || 0, 0));
-      const camPos = lookCenter.clone()
-        .addScaledVector(sideRight, sideBias >= 0 ? Math.max(2.3, sideBias) : Math.min(-2.3, sideBias))
-        .addScaledVector(fwd, Math.sin(this.cameraOrbitAngle) * 1.4)
-        .add(new THREE.Vector3(0, 1.05, 0));
-      this.cameraCtrl?.setExternalCameraPose?.(camPos, lookCenter, dt);
+      const focusTarget = worldVenue.tablePos.clone()
+        .addScaledVector(frontDir, -0.35)
+        .add(new THREE.Vector3(0, 0.26, 0));
+      const camPos = worldVenue.tablePos.clone()
+        .addScaledVector(frontDir, 2.55)
+        .addScaledVector(sideRight, Math.sin(this.cameraOrbitAngle) * 1.05)
+        .add(new THREE.Vector3(0, 0.92, 0));
+      this.cameraCtrl?.setExternalCameraPose?.(camPos, focusTarget, dt);
     }
   }
 
