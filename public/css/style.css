@@ -1140,6 +1140,36 @@ body, html {
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
+.date-actions-row-multi {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.date-actions-row-multi .cyber-btn {
+  padding: 6px 10px;
+  font-size: 11px;
+  flex: 1 1 auto;
+}
+.date-menu-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.date-cat-chip {
+  padding: 4px 9px;
+  border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(15, 23, 42, 0.72);
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.date-cat-chip.active {
+  border-color: #ff4d88;
+  background: rgba(255, 77, 136, 0.24);
+  color: #fff;
+}
 .date-lyric-bubble {
   padding: 8px 14px;
   border-radius: 10px;

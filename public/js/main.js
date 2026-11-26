@@ -692,12 +692,23 @@ class GameApp {
       this.dateExperience?.selectVenue?.(venueId, this.state === 'RACING' && this.mode === 'DATE_DRIVE');
     };
     this.ui.onDateParkNow = () => this.dateExperience?.triggerArrivalCutscene?.(false);
-    this.ui.onDateSkipWalk = () => this.dateExperience?.triggerArrivalCutscene?.(true);
+    this.ui.onDateSkipWalk = () => {
+      if (this.dateExperience?.phase === 'CUTSCENE_RETURN') {
+        this.dateExperience.returnToCarAndDrive(true);
+      } else {
+        this.dateExperience?.triggerArrivalCutscene?.(true);
+      }
+    };
     this.ui.onDateOrderDish = (dishId) => this.dateExperience?.orderDish?.(dishId);
+    this.ui.onDateFeed = () => this.dateExperience?.triggerFeedEachOther?.();
+    this.ui.onDateCutCake = () => this.dateExperience?.triggerCutCake?.();
+    this.ui.onDatePropose = () => this.dateExperience?.triggerProposal?.();
+    this.ui.onDateReturnToTable = () => this.dateExperience?.triggerReturnToTable?.();
+    this.ui.onDateTwirl = () => this.dateExperience?.triggerDanceTwirl?.();
     this.ui.onDateCelebrate = () => this.dateExperience?.triggerCelebrate?.();
     this.ui.onDateSing = () => this.dateExperience?.triggerSingDuet?.();
     this.ui.onDateDance = () => this.dateExperience?.triggerSlowDance?.();
-    this.ui.onDateBackToCar = () => this.dateExperience?.returnToCarAndDrive?.();
+    this.ui.onDateBackToCar = () => this.dateExperience?.returnToCarAndDrive?.(false);
 
     this.ui.onCycleClimate = () => {
       const ids = Object.keys(TRACK_PRESETS);
@@ -1296,7 +1307,12 @@ class GameApp {
         const isDateCutscene = (
           this.mode === 'DATE_DRIVE'
           && this.dateExperience
-          && (this.dateExperience.phase === 'CUTSCENE_WALK' || this.dateExperience.phase === 'CAFE_DINING')
+          && (
+            this.dateExperience.phase === 'CUTSCENE_WALK'
+            || this.dateExperience.phase === 'CAFE_DINING'
+            || this.dateExperience.phase === 'CUTSCENE_RETURN'
+            || this.dateExperience.phase === 'HOME_ARRIVED'
+          )
         );
         const carFrameInput = isDateCutscene
           ? { ...inputState, throttle: 0, brake: 0, steer: 0, nitro: false, handbrake: true }
@@ -1304,6 +1320,7 @@ class GameApp {
         this.playerCar.update(simDt, carFrameInput, this.particles, this.audio);
         if (this.mode === 'DATE_DRIVE' && this.state === 'RACING') {
           this.dateExperience?.update?.(dt);
+          this.track?.updateWorldAnimations?.(simDt);
         }
         this.cameraCtrl.update(dt, this.playerCar.mesh, this.playerCar.physics);
         this.renderer.updateShadowTarget(this.playerCar.mesh.position);

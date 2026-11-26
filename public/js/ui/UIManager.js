@@ -29,7 +29,8 @@ export class UIManager {
     this.selectedTrackId = 'city_live';
     this.selectedWeather = 'clear';
     this.selectedDateVenueId = 'shah_rasoi';
-    this._renderedCafeVenueId = null;
+    this.selectedMenuCategory = 'All';
+    this._renderedCafeMenuKey = null;
     this.playerName = 'Rebel ' + Math.floor(100 + Math.random() * 900);
 
     this.visualMods = {
@@ -156,6 +157,9 @@ export class UIManager {
     this.cafeStudioFavBadge = document.getElementById('cafe-studio-fav-badge');
     this.cafeStudioSub = document.getElementById('cafe-studio-sub');
     this.btnDateBackCar = document.getElementById('btn-date-back-car');
+    this.btnDateReturnTable = document.getElementById('btn-date-return-table');
+    this.dateHomeCard = document.getElementById('date-home-card');
+    this.dateHomeSub = document.getElementById('date-home-sub');
     this.dateLyricBubble = document.getElementById('date-lyric-bubble');
     this.dateLyricSong = document.getElementById('date-lyric-song');
     this.dateLyricLine = document.getElementById('date-lyric-line');
@@ -602,6 +606,36 @@ export class UIManager {
     });
     this.btnDateBackCar?.addEventListener('click', () => {
       this.onDateBackToCar?.();
+    });
+    this.btnDateReturnTable?.addEventListener('click', () => {
+      this.onDateReturnToTable?.();
+    });
+    document.getElementById('btn-date-feed')?.addEventListener('click', () => {
+      this.onDateFeed?.();
+    });
+    document.getElementById('btn-date-cut-cake')?.addEventListener('click', () => {
+      this.onDateCutCake?.();
+    });
+    document.getElementById('btn-date-propose')?.addEventListener('click', () => {
+      this.onDatePropose?.();
+    });
+    document.getElementById('btn-date-twirl')?.addEventListener('click', () => {
+      this.onDateTwirl?.();
+    });
+    document.getElementById('btn-home-another-date')?.addEventListener('click', () => {
+      this.onDateBackToCar?.();
+    });
+    document.getElementById('btn-home-back-garage')?.addEventListener('click', () => {
+      this.onReturnToGarage?.();
+    });
+    document.querySelectorAll('.date-cat-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        this.selectedMenuCategory = chip.dataset.cat || 'All';
+        document.querySelectorAll('.date-cat-chip').forEach((c) => c.classList.toggle('active', c === chip));
+        this._renderedCafeMenuKey = null;
+        const st = window.gameApp?.dateExperience;
+        st?.emitUIState?.();
+      });
     });
     document.getElementById('btn-date-celebrate')?.addEventListener('click', () => {
       this.onDateCelebrate?.();
@@ -1678,37 +1712,57 @@ export class UIManager {
 
     const venue = state.venue || getVenueById(this.selectedDateVenueId);
     const couple = state.coupleNames || { partner1: 'Aarav', partner2: 'Meera' };
-    const isDriving = state.phase === 'DRIVING';
-    const isCutscene = state.phase === 'CUTSCENE_WALK';
+    const isDriving = state.phase === 'DRIVING' || state.phase === 'DRIVE_HOME';
+    const isCutscene = state.phase === 'CUTSCENE_WALK' || state.phase === 'CUTSCENE_RETURN';
     const isCafe = state.phase === 'CAFE_DINING';
+    const isHomeArrived = state.phase === 'HOME_ARRIVED';
 
     this.hudDateNavPill?.classList.toggle('hidden', !isDriving);
     if (isDriving) {
       if (this.hudDateVenueLabel) {
-        this.hudDateVenueLabel.textContent = `❤️ ${venue.shortName.toUpperCase()}`;
+        this.hudDateVenueLabel.textContent = state.phase === 'DRIVE_HOME'
+          ? '🏡 DRIVE HOME SWEET HOME ♥'
+          : `❤️ ${venue.shortName.toUpperCase()}`;
       }
       if (this.hudDateDistLabel) {
         const arrow = Math.abs(state.headingDeg) < 25 ? '⬆' : (state.headingDeg > 0 ? '↗' : '↖');
         this.hudDateDistLabel.textContent = state.canPark ? `ARRIVED! (${state.distance}m)` : `${state.distance}m ${arrow}`;
       }
-      if (this.hudDateVenueSelect && this.hudDateVenueSelect.value !== venue.id) {
-        this.hudDateVenueSelect.value = venue.id;
+      if (this.btnHudParkCafe) {
+        this.btnHudParkCafe.textContent = state.phase === 'DRIVE_HOME'
+          ? '🏡 PARK AT HOME'
+          : '🅿️ PARK & OPEN HER DOOR';
+      }
+      if (this.hudDateVenueSelect) {
+        this.hudDateVenueSelect.classList.toggle('hidden', state.phase === 'DRIVE_HOME');
+        if (state.phase !== 'DRIVE_HOME' && this.hudDateVenueSelect.value !== venue.id) {
+          this.hudDateVenueSelect.value = venue.id;
+        }
       }
     }
 
-    this.panelDateCafe?.classList.toggle('hidden', !(isCutscene || isCafe));
+    this.panelDateCafe?.classList.toggle('hidden', !(isCutscene || isCafe || isHomeArrived));
     this.dateCutsceneBanner?.classList.toggle('hidden', !isCutscene);
     this.dateCafeStudio?.classList.toggle('hidden', !isCafe);
+    this.dateHomeCard?.classList.toggle('hidden', !isHomeArrived);
 
     if (isCutscene && this.dateCutsceneText) {
-      this.dateCutsceneText.textContent = `💖 ${couple.partner1} steps out to open ${couple.partner2}'s door at ${venue.name}...`;
+      this.dateCutsceneText.textContent = state.phase === 'CUTSCENE_RETURN'
+        ? `🚗 Returning to car — ${couple.partner1} seats ${couple.partner2} inside first before driving home...`
+        : `💖 Arriving at ${venue.name} — ${couple.partner1} opens her car door & pulls out her chair first...`;
+    }
+    if (isHomeArrived && this.dateHomeSub) {
+      this.dateHomeSub.textContent = `${couple.partner1} ♥ ${couple.partner2} drove safely home with sweet pure-veg date memories!`;
     }
 
     if (isCafe) {
       if (this.cafeStudioTitle) this.cafeStudioTitle.textContent = venue.shortName.toUpperCase();
       this.cafeStudioFavBadge?.classList.toggle('hidden', !venue.isFavorite);
+      this.btnDateReturnTable?.classList.toggle('hidden', !(state.activityMode === 'propose' || state.activityMode === 'dance'));
       if (this.cafeStudioSub) {
-        this.cafeStudioSub.textContent = `${couple.partner1} ♥ ${couple.partner2} • ${venue.tagline}`;
+        this.cafeStudioSub.textContent = state.activityMode === 'propose'
+          ? `💍 "Will You Marry Me?" Proposing Corner • ${couple.partner1} ♥ ${couple.partner2}`
+          : `${couple.partner1} ♥ ${couple.partner2} • ${venue.tagline}`;
       }
       if (this.cafeOrderedCount) {
         const count = Array.isArray(state.orderedDishes) ? state.orderedDishes.length : 0;
@@ -1718,17 +1772,21 @@ export class UIManager {
       if (this.dateLyricBubble) {
         if (state.lyric) {
           this.dateLyricBubble.classList.remove('hidden');
-          if (this.dateLyricSong) this.dateLyricSong.textContent = `🎤 ${state.lyric.songTitle}`;
+          if (this.dateLyricSong) this.dateLyricSong.textContent = state.lyric.songTitle;
           if (this.dateLyricLine) this.dateLyricLine.textContent = `${state.lyric.singerName}: ${state.lyric.text}`;
         } else {
           this.dateLyricBubble.classList.add('hidden');
         }
       }
 
-      if (this.dateCafeMenuGrid && this._renderedCafeVenueId !== venue.id) {
-        this._renderedCafeVenueId = venue.id;
+      const menuKey = `${venue.id}::${this.selectedMenuCategory}`;
+      if (this.dateCafeMenuGrid && this._renderedCafeMenuKey !== menuKey) {
+        this._renderedCafeMenuKey = menuKey;
         this.dateCafeMenuGrid.innerHTML = '';
-        venue.menu.forEach((dish) => {
+        const items = this.selectedMenuCategory === 'All'
+          ? venue.menu
+          : venue.menu.filter((d) => d.cat === this.selectedMenuCategory);
+        items.forEach((dish) => {
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'date-dish-btn';
@@ -1736,7 +1794,7 @@ export class UIManager {
             <span style="font-size:18px;">${dish.icon}</span>
             <div>
               <div style="color:#fff;">${this.escapeHtml(dish.name)}</div>
-              <div style="font-size:9px; color:#4ade80;">${this.escapeHtml(dish.cat)} • Pure Veg</div>
+              <div style="font-size:9px; color:${dish.isMustCake ? '#ff8cb8' : '#4ade80'};">${this.escapeHtml(dish.cat)} • Pure Veg</div>
             </div>
           `;
           btn.addEventListener('click', () => this.onDateOrderDish?.(dish.id));

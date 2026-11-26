@@ -877,12 +877,21 @@
   </div>
 
   <!-- =========================================
-       8b. ROMANTIC PURE-VEG CAFÉ DINING, SING & DANCE OVERLAY
+       8b. ROMANTIC PURE-VEG CAFÉ DINING, PROPOSING, CAKE CUTTING & DANCE OVERLAY
   ========================================= -->
   <div id="panel-date-cafe" class="ui-layer hidden">
     <div id="date-cutscene-banner" class="date-cutscene-banner glass-panel hidden">
       <span id="date-cutscene-text">💖 Opening car door &amp; walking into the Pure Veg Café...</span>
-      <button id="btn-date-skip-walk" type="button" class="cyber-btn cyber-btn-love" style="padding:5px 12px; font-size:11px;">SKIP TO TABLE ▸</button>
+      <button id="btn-date-skip-walk" type="button" class="cyber-btn cyber-btn-love" style="padding:5px 12px; font-size:11px;">SKIP ▸</button>
+    </div>
+
+    <div id="date-home-card" class="date-cutscene-banner glass-panel hidden" style="flex-direction:column; gap:10px; border-radius:16px; padding:18px 26px;">
+      <div id="date-home-title" style="font-family:'Orbitron'; font-size:16px; font-weight:900; color:#4ade80;">🏡 HOME SWEET HOME ♥</div>
+      <div id="date-home-sub" style="font-size:12px; color:#f8fafc;">Safe drive home after an unforgettable Pure Veg Date Night!</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+        <button id="btn-home-another-date" type="button" class="cyber-btn cyber-btn-love">💐 ANOTHER PURE VEG DATE</button>
+        <button id="btn-home-back-garage" type="button" class="cyber-btn cyber-btn-secondary">🏠 RETURN TO GARAGE</button>
+      </div>
     </div>
 
     <div id="date-cafe-studio" class="date-cafe-studio glass-panel hidden">
@@ -894,12 +903,17 @@
             <span id="cafe-studio-fav-badge" class="fav-heart-badge">♥ OUR FAVORITE</span>
           </div>
           <div id="cafe-studio-sub" style="font-size:11px; color:var(--text-muted); margin-top:2px;">
-            Aarav ♥ Meera • Royal Candlelit Dining Table
+            Aarav ♥ Meera • Romantic Candlelight Dinner
           </div>
         </div>
-        <button id="btn-date-back-car" type="button" class="cyber-btn cyber-btn-secondary" style="padding:7px 14px; font-size:11px;">
-          🚗 BACK TO CAR
-        </button>
+        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+          <button id="btn-date-return-table" type="button" class="cyber-btn cyber-btn-ghost hidden" style="padding:6px 11px; font-size:10px;">
+            🕯️ BACK TO TABLE
+          </button>
+          <button id="btn-date-back-car" type="button" class="cyber-btn cyber-btn-secondary" style="padding:7px 13px; font-size:11px;">
+            🚗 GO BACK TO CAR &amp; HOME
+          </button>
+        </div>
       </div>
 
       <div id="date-lyric-bubble" class="date-lyric-bubble hidden">
@@ -907,15 +921,26 @@
         <div id="date-lyric-line" style="font-size:13px; font-weight:700; color:#fff;">♫ ...</div>
       </div>
 
-      <div class="date-actions-row">
-        <button id="btn-date-celebrate" type="button" class="cyber-btn cyber-btn-gold">🥂 CELEBRATE &amp; TOAST</button>
+      <div class="date-actions-row-multi">
+        <button id="btn-date-feed" type="button" class="cyber-btn cyber-btn-gold">🥄 FEED EACH OTHER</button>
+        <button id="btn-date-cut-cake" type="button" class="cyber-btn cyber-btn-love">🎂 CUT CAKE TOGETHER</button>
+        <button id="btn-date-propose" type="button" class="cyber-btn cyber-btn-love" style="border-color:#ff4d88;">💍 PROPOSING CORNER</button>
+        <button id="btn-date-celebrate" type="button" class="cyber-btn cyber-btn-gold">🥂 CELEBRATE</button>
         <button id="btn-date-sing" type="button" class="cyber-btn cyber-btn-love">🎤 SING DUET</button>
         <button id="btn-date-dance" type="button" class="cyber-btn cyber-btn-primary">💃 SLOW DANCE</button>
+        <button id="btn-date-twirl" type="button" class="cyber-btn cyber-btn-primary" style="border-color:#c084fc; color:#f0abfc;">💫 TWIRL PARTNER</button>
       </div>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; font-weight:800; color:var(--text-muted); margin-top:4px;">
-        <span>🍽️ ORDER PURE VEG DISHES TO YOUR TABLE</span>
-        <span id="cafe-ordered-count" style="color:#4ade80;">Served: 0 items</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-top:2px;">
+        <div id="date-menu-tabs" class="date-menu-tabs">
+          <button type="button" class="date-cat-chip active" data-cat="All">✨ ALL</button>
+          <button type="button" class="date-cat-chip" data-cat="Dosa">🥞 DOSA</button>
+          <button type="button" class="date-cat-chip" data-cat="Chaat & Snacks">🥘 CHAAT</button>
+          <button type="button" class="date-cat-chip" data-cat="Pizza & Mains">🍕 PIZZA &amp; MAINS</button>
+          <button type="button" class="date-cat-chip" data-cat="Shakes & Juices">🍫 SHAKES &amp; JUICES</button>
+          <button type="button" class="date-cat-chip" data-cat="Cakes">🎂 CAKES ★</button>
+        </div>
+        <span id="cafe-ordered-count" style="font-size:11px; font-weight:800; color:#4ade80;">Served: 0 items</span>
       </div>
       <div id="date-cafe-menu-grid" class="date-cafe-menu-grid"></div>
     </div>

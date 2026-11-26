@@ -339,8 +339,10 @@ export class Track {
     this.movingObstacles = [];
     this.candleFlames = [];
     this.parkCharacters = [];
+    this.redBalloons = [];
     this.dateHeartBoardMesh = null;
     this.dateVenues = {};
+    this.homeVenue = null;
     this.activeDateVenueId = 'shah_rasoi';
     this.dateBeaconGroup = null;
     this.dateSpotPos = new THREE.Vector3(-10, 0, 108);
@@ -407,8 +409,10 @@ export class Track {
     this.movingObstacles = [];
     this.candleFlames = [];
     this.parkCharacters = [];
+    this.redBalloons = [];
     this.dateHeartBoardMesh = null;
     this.dateVenues = {};
+    this.homeVenue = null;
     this.dateBeaconGroup = null;
     this.metroTrain = null;
 
@@ -1180,7 +1184,15 @@ export class Track {
     }
     if (this.dateBeaconGroup && this.dateBeaconGroup.visible) {
       this.dateBeaconGroup.rotation.y += dt * 1.45;
-      this.dateBeaconGroup.position.y = 12.2 + Math.sin(t * 0.45) * 0.85;
+      this.dateBeaconGroup.position.y = 12.6 + Math.sin(t * 0.45) * 0.85;
+    }
+    if (this.redBalloons && this.redBalloons.length) {
+      for (let i = 0; i < this.redBalloons.length; i++) {
+        const b = this.redBalloons[i];
+        if (!b?.mesh) continue;
+        b.mesh.position.y = b.baseY + Math.sin(t * 0.55 + i * 0.8) * 0.14;
+        b.mesh.rotation.z = Math.sin(t * 0.42 + i * 1.1) * 0.08;
+      }
     }
     if (this.parkCharacters && this.parkCharacters.length) {
       for (let i = 0; i < this.parkCharacters.length; i++) {
@@ -1910,14 +1922,174 @@ export class Track {
 
   setActiveDateVenue(venueId = 'shah_rasoi') {
     this.activeDateVenueId = venueId;
-    const targetVenue = this.dateVenues?.[venueId] || this.dateVenues?.shah_rasoi;
+    const targetVenue = (venueId === 'home_villa' && this.homeVenue)
+      ? this.homeVenue
+      : (this.dateVenues?.[venueId] || this.dateVenues?.shah_rasoi);
     if (targetVenue) {
       this.dateSpotPos.copy(targetVenue.parkingPos);
       if (this.dateBeaconGroup) {
-        this.dateBeaconGroup.position.set(targetVenue.pavilionPos.x, 12.2, targetVenue.pavilionPos.z);
+        this.dateBeaconGroup.position.set(targetVenue.pavilionPos.x, 12.6, targetVenue.pavilionPos.z);
         this.dateBeaconGroup.visible = true;
       }
     }
+  }
+
+  makeProposeBannerTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 768;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    const bg = ctx.createLinearGradient(0, 0, 768, 256);
+    bg.addColorStop(0, '#4a041d');
+    bg.addColorStop(0.5, '#880e3b');
+    bg.addColorStop(1, '#4a041d');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, 768, 256);
+
+    ctx.strokeStyle = '#ffd166';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(10, 10, 748, 236);
+    ctx.strokeStyle = '#ff8cb8';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(22, 22, 724, 212);
+
+    ctx.fillStyle = '#ffd166';
+    ctx.font = 'bold 24px Rajdhani, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('♥  FOREVER & ALWAYS  ♥', 384, 62);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = '#ff2a6d';
+    ctx.shadowBlur = 16;
+    ctx.font = 'bold 54px Georgia, serif';
+    ctx.fillText('Will you marry me?', 384, 152);
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffc2d9';
+    ctx.font = 'bold 24px Rajdhani, sans-serif';
+    ctx.fillText('💍  OUR SPECIAL MOMENT  💍', 384, 212);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    if (THREE.sRGBEncoding) tex.encoding = THREE.sRGBEncoding;
+    return tex;
+  }
+
+  createVelvetChair(chairMat, goldMat) {
+    const chair = new THREE.Group();
+    const legGeo = new THREE.CylinderGeometry(0.032, 0.024, 0.44, 8);
+    [[-0.20, -0.20], [0.20, -0.20], [-0.20, 0.20], [0.20, 0.20]].forEach(([lx, lz]) => {
+      const leg = new THREE.Mesh(legGeo, goldMat);
+      leg.position.set(lx, 0.22, lz);
+      chair.add(leg);
+    });
+    const cushion = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.09, 0.48), chairMat);
+    cushion.position.set(0, 0.46, 0);
+    const backPostGeo = new THREE.CylinderGeometry(0.025, 0.028, 0.62, 8);
+    [-0.20, 0.20].forEach((bx) => {
+      const post = new THREE.Mesh(backPostGeo, goldMat);
+      post.position.set(bx, 0.78, -0.21);
+      chair.add(post);
+    });
+    const backPad = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.42, 0.07), chairMat);
+    backPad.position.set(0, 0.85, -0.21);
+    const heartCrest = new THREE.Mesh(this.create3DHeartGeo(0.14, 0.04), goldMat);
+    heartCrest.position.set(0, 1.12, -0.21);
+    chair.add(cushion, backPad, heartCrest);
+    return chair;
+  }
+
+  buildProposingCorner(parentPav, goldMat, roseMat, flameMat) {
+    const corner = new THREE.Group();
+    corner.position.set(4.9, 0.5, 3.8);
+    corner.rotation.y = -0.62;
+
+    const rubyBalloonMat = new THREE.MeshPhysicalMaterial({
+      color: 0xe11d48,
+      emissive: 0x6b0b25,
+      emissiveIntensity: 0.42,
+      roughness: 0.16,
+      metalness: 0.15,
+      clearcoat: 1.0
+    });
+    const softPinkRoseMat = new THREE.MeshStandardMaterial({ color: 0xfb7185, roughness: 0.42 });
+    const stringMat = new THREE.MeshBasicMaterial({ color: 0xfef3c7 });
+    const petalCarpetMat = new THREE.MeshStandardMaterial({ color: 0x9f1239, roughness: 0.8 });
+    const fairyMat = new THREE.MeshBasicMaterial({ color: 0xffe48f });
+
+    // Petal circle platform under proposing arch
+    const floorPad = new THREE.Mesh(new THREE.CylinderGeometry(2.55, 2.75, 0.06, 24), petalCarpetMat);
+    floorPad.position.set(0, 0.03, 0.4);
+    corner.add(floorPad);
+
+    // Gate Side Pillars & Gold Bases
+    [-1.75, 1.75].forEach((px) => {
+      const ped = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.32, 0.46), goldMat);
+      ped.position.set(px, 0.16, 0);
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.14, 3.4, 10), goldMat);
+      col.position.set(px, 1.85, 0);
+      corner.add(ped, col);
+      // Floral wrap rings + fairy bulbs along gate pillars
+      for (let h = 0.65; h <= 3.35; h += 0.45) {
+        const flw = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 8), Math.round(h * 10) % 2 === 0 ? roseMat : softPinkRoseMat);
+        flw.position.set(px + (px > 0 ? -0.06 : 0.06), h, 0.08);
+        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.055, 6, 6), fairyMat);
+        bulb.position.set(px, h + 0.18, 0.14);
+        corner.add(flw, bulb);
+      }
+    });
+
+    // Heart-Shaped Grand Top Arch Frame around the Gate
+    [-1, 1].forEach((s) => {
+      const lobe = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.11, 10, 24, Math.PI * 1.15), roseMat);
+      lobe.position.set(s * 0.88, 3.45, 0);
+      lobe.rotation.z = s > 0 ? -0.18 : 0.18;
+      corner.add(lobe);
+    });
+    const archHeartCrest = new THREE.Mesh(this.create3DHeartGeo(0.75, 0.22), rubyBalloonMat);
+    archHeartCrest.position.set(0, 4.75, 0.04);
+    corner.add(archHeartCrest);
+
+    // "Will you marry me?" Romantic Illuminated Banner
+    const signFrame = new THREE.Mesh(new THREE.BoxGeometry(3.45, 1.18, 0.14), goldMat);
+    signFrame.position.set(0, 3.45, -0.02);
+    const signMat = new THREE.MeshBasicMaterial({ map: this.makeProposeBannerTexture() });
+    const signFace = new THREE.Mesh(new THREE.PlaneGeometry(3.28, 1.04), signMat);
+    signFace.position.set(0, 3.45, 0.06);
+    corner.add(signFrame, signFace);
+
+    // SO MANY Floating 3D Red Heart Balloons (22 balloons arching left, right, and crown!)
+    const balloonHeartGeo = this.create3DHeartGeo(0.32, 0.16);
+    const balloonCoords = [
+      [-2.15, 2.35, 0.25], [-2.45, 2.85, -0.15], [-1.95, 3.35, 0.35], [-2.55, 3.75, 0.1],
+      [-2.15, 4.25, -0.2], [-1.55, 4.55, 0.25], [-1.05, 4.95, -0.15], [-0.55, 5.15, 0.2],
+      [2.15, 2.35, 0.25], [2.45, 2.85, -0.15], [1.95, 3.35, 0.35], [2.55, 3.75, 0.1],
+      [2.15, 4.25, -0.2], [1.55, 4.55, 0.25], [1.05, 4.95, -0.15], [0.55, 5.15, 0.2],
+      [0, 5.45, 0.15], [-2.35, 1.85, 0.45], [2.35, 1.85, 0.45], [-1.45, 2.55, 0.55], [1.45, 2.55, 0.55], [0, 4.95, -0.25]
+    ];
+    balloonCoords.forEach(([bx, by, bz], idx) => {
+      const bGroup = new THREE.Group();
+      bGroup.position.set(bx, by, bz);
+      const heart = new THREE.Mesh(balloonHeartGeo, rubyBalloonMat);
+      heart.scale.setScalar(0.85 + (idx % 3) * 0.16);
+      const string = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 1.15, 4), stringMat);
+      string.position.y = -0.68;
+      bGroup.add(heart, string);
+      corner.add(bGroup);
+      this.redBalloons.push({ mesh: bGroup, baseY: by });
+    });
+
+    // Heart candle arrangement at base
+    [[-1.15, 0.9], [1.15, 0.9], [-0.75, 1.45], [0.75, 1.45]].forEach(([cx, cz]) => {
+      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.18, 6), flameMat);
+      flame.position.set(cx, 0.28, cz);
+      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, 0.2, 8), fairyMat);
+      pillar.position.set(cx, 0.1, cz);
+      corner.add(pillar, flame);
+      this.candleFlames.push(flame);
+    });
+
+    parentPav.add(corner);
+    return corner;
   }
 
   buildSingleCafePavilion(spec) {
@@ -1928,32 +2100,54 @@ export class Track {
     const facingAngle = Math.atan2(dirToPark.x, dirToPark.z);
     pav.rotation.y = facingAngle;
 
-    const marbleMat = new THREE.MeshStandardMaterial({ color: spec.isFavorite ? 0xf4efe6 : 0xedf2f7, roughness: 0.25, metalness: 0.1 });
-    const velvetMat = new THREE.MeshStandardMaterial({ color: spec.accentColorHex, roughness: 0.85 });
-    const goldMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.88, roughness: 0.2 });
-    const roseMat = new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.5 });
+    const marbleMat = new THREE.MeshStandardMaterial({ color: spec.isFavorite ? 0xf6f0e8 : 0xedf2f7, roughness: 0.28, metalness: 0.08 });
+    const velvetMat = new THREE.MeshStandardMaterial({ color: spec.accentColorHex, roughness: 0.78 });
+    const chairVelvetMat = new THREE.MeshStandardMaterial({ color: 0xbe123c, roughness: 0.55 });
+    const goldMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.85, roughness: 0.22 });
+    const roseMat = new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.45 });
     const waxMat = new THREE.MeshStandardMaterial({ color: 0xfff8e7, roughness: 0.45 });
     const flameMat = new THREE.MeshBasicMaterial({ color: 0xffaa22 });
     const glowMat = new THREE.MeshBasicMaterial({ color: spec.accentColorHex });
+    const fairyMat = new THREE.MeshBasicMaterial({ color: 0xffe48f });
 
-    const deck = new THREE.Mesh(new THREE.CylinderGeometry(8.5, 9.2, 0.5, 24), marbleMat);
+    // Expansive Marble Terrace Deck + Carpet Entryway
+    const deck = new THREE.Mesh(new THREE.CylinderGeometry(10.5, 11.2, 0.5, 28), marbleMat);
     deck.position.y = 0.25;
-    const carpet = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.08, 12.5), velvetMat);
-    carpet.position.set(0, 0.52, 2.2);
+    deck.receiveShadow = true;
+    const carpet = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.08, 13.5), velvetMat);
+    carpet.position.set(0, 0.52, 2.8);
     pav.add(deck, carpet);
 
-    [-3.6, 3.6].forEach((px) => {
-      [-2.8, 2.8].forEach((pz) => {
-        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 5.2, 10), marbleMat);
-        col.position.set(px, 2.8, pz);
-        const garland = new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 8), roseMat);
-        garland.position.set(px, 5.0, pz);
+    // 4 Wide Pillars + Overhead Golden Fairy-Light Chandelier Grid (keeps center crystal clear)
+    [-4.3, 4.3].forEach((px) => {
+      [-3.4, 3.4].forEach((pz) => {
+        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 5.4, 10), marbleMat);
+        col.position.set(px, 2.9, pz);
+        const garland = new THREE.Mesh(new THREE.SphereGeometry(0.45, 8, 8), roseMat);
+        garland.position.set(px, 5.2, pz);
         pav.add(col, garland);
       });
     });
 
-    const archBeam = new THREE.Mesh(new THREE.BoxGeometry(8.2, 0.4, 0.6), goldMat);
-    archBeam.position.set(0, 5.4, -2.8);
+    // Chandelier & Warm Fairy String Lights Canopy
+    [-2.8, 0, 2.8].forEach((cz) => {
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(8.8, 0.08, 0.08), goldMat);
+      bar.position.set(0, 5.45, cz);
+      pav.add(bar);
+      for (let bx = -3.8; bx <= 3.8; bx += 1.25) {
+        const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 8), fairyMat);
+        bulb.position.set(bx, 5.32 - Math.cos(bx * 0.4) * 0.14, cz);
+        pav.add(bulb);
+      }
+    });
+    const chandelier = new THREE.Mesh(new THREE.TorusGeometry(0.65, 0.05, 8, 20), goldMat);
+    chandelier.rotation.x = Math.PI / 2;
+    chandelier.position.set(0, 4.35, 0);
+    pav.add(chandelier);
+
+    // Restaurant Illuminated Marquee Signboard
+    const archBeam = new THREE.Mesh(new THREE.BoxGeometry(9.2, 0.4, 0.6), goldMat);
+    archBeam.position.set(0, 5.6, -3.4);
     const boardFaceMat = new THREE.MeshStandardMaterial({
       map: this.makeVenueSignTexture(spec.name, spec.badgeText, spec.accentCss, spec.isFavorite),
       roughness: 0.35,
@@ -1962,96 +2156,209 @@ export class Track {
     if (spec.isFavorite) boardFaceMat.userData = { isHeartFace: true };
 
     const signBoard = new THREE.Mesh(
-      new THREE.BoxGeometry(7.2, 3.0, 0.34),
+      new THREE.BoxGeometry(7.6, 3.0, 0.34),
       [goldMat, goldMat, goldMat, goldMat, boardFaceMat, boardFaceMat]
     );
-    signBoard.position.set(0, 6.9, -2.55);
+    signBoard.position.set(0, 7.1, -3.25);
     if (spec.isFavorite) this.dateHeartBoardMesh = signBoard;
 
-    const heartBorder = new THREE.Mesh(new THREE.BoxGeometry(7.65, 3.45, 0.22), glowMat);
-    heartBorder.position.set(0, 6.9, -2.56);
+    const heartBorder = new THREE.Mesh(new THREE.BoxGeometry(8.05, 3.45, 0.22), glowMat);
+    heartBorder.position.set(0, 7.1, -3.26);
     const topHeart = new THREE.Mesh(this.create3DHeartGeo(spec.isFavorite ? 1.05 : 0.78, 0.38), glowMat);
-    topHeart.position.set(0, 9.25, -2.55);
+    topHeart.position.set(0, 9.45, -3.25);
     pav.add(archBeam, heartBorder, signBoard, topHeart);
 
+    // Candlelit Marble Dining Table + Twin Crystal Goblets + Center Rose Candelabra
     const tableLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.28, 1.05, 8), goldMat);
     tableLeg.position.set(0, 0.85, 0);
-    const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(1.18, 1.18, 0.1, 18), marbleMat);
+    const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(1.18, 1.18, 0.1, 20), marbleMat);
     tableTop.position.set(0, 1.4, 0);
-    const crystalMat = new THREE.MeshPhysicalMaterial({ color: 0xeef8ff, metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.65 });
-    [-0.36, 0.36].forEach((gx) => {
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.06, 0.18, 8), crystalMat);
-      stem.position.set(gx, 1.54, 0.36);
-      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.03, 0.16, 10), crystalMat);
-      cup.position.set(gx, 1.70, 0.36);
+    const crystalMat = new THREE.MeshPhysicalMaterial({ color: 0xeef8ff, metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.72 });
+    [-0.36, 0.36].forEach((gx, idx) => {
+      const zOff = idx === 0 ? 0.56 : -0.56;
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.06, 0.16, 8), crystalMat);
+      stem.position.set(gx, 1.53, zOff);
+      const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.028, 0.14, 10), crystalMat);
+      cup.position.set(gx, 1.67, zOff);
       pav.add(stem, cup);
     });
-    const vase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.26, 10), crystalMat);
-    vase.position.set(0, 1.58, -0.35);
+    const vase = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, 0.22, 10), crystalMat);
+    vase.position.set(-0.62, 1.56, 0);
     for (let r = 0; r < 3; r++) {
-      const rBulb = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 8), roseMat);
-      rBulb.position.set((r - 1) * 0.07, 1.75 + (r === 1 ? 0.04 : 0), -0.35);
+      const rBulb = new THREE.Mesh(new THREE.SphereGeometry(0.06, 8, 8), roseMat);
+      rBulb.position.set(-0.62 + (r - 1) * 0.06, 1.72 + (r === 1 ? 0.04 : 0), 0);
       pav.add(rBulb);
     }
-    const benchMat = new THREE.MeshStandardMaterial({ color: 0x5c3a21, roughness: 0.72 });
-    const benchBack = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.14, 0.65), benchMat);
-    benchBack.position.set(0, 0.92, -1.55);
-    const benchRest = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.58, 0.12), benchMat);
-    benchRest.position.set(0, 1.24, -1.84);
-    pav.add(tableLeg, tableTop, vase, benchBack, benchRest);
+    pav.add(tableLeg, tableTop, vase);
 
+    // 2 INDIVIDUAL MOVABLE VELVET DINING CHAIRS (Boy pulls Girl's chair before seating her!)
+    const girlChairRestLocal = new THREE.Vector3(0, 0.50, -1.16);
+    const boyChairRestLocal = new THREE.Vector3(0, 0.50, 1.16);
+    const girlChair = this.createVelvetChair(chairVelvetMat, goldMat);
+    girlChair.position.copy(girlChairRestLocal);
+    girlChair.rotation.y = 0; // faces +Z toward table
+
+    const boyChair = this.createVelvetChair(chairVelvetMat, goldMat);
+    boyChair.position.copy(boyChairRestLocal);
+    boyChair.rotation.y = Math.PI; // faces -Z toward table
+    pav.add(girlChair, boyChair);
+
+    // Build Dedicated "Will You Marry Me?" Proposing Corner Gate & Red Heart Balloons
+    const proposeCorner = this.buildProposingCorner(pav, goldMat, roseMat, flameMat);
+
+    // Welcoming Pure Veg Host beside entrance carpet
     const hostChar = this.createParkVisitor(spec.accentColorHex, 0xd4966c, false);
-    hostChar.group.position.set(3.2, 0.5, 4.8);
-    hostChar.group.rotation.y = -0.35;
+    hostChar.group.position.set(-3.4, 0.5, 5.4);
+    hostChar.group.rotation.y = 0.4;
     pav.add(hostChar.group);
     this.parkCharacters.push(hostChar);
 
+    // Flickering Table & Pathway Candles
     const candleSpots = [
-      [0, 1.45, 0], [-0.45, 1.45, 0.2], [0.45, 1.45, -0.2],
-      [-2.1, 0.55, 6.2], [2.1, 0.55, 6.2],
-      [-2.1, 0.55, 4.4], [2.1, 0.55, 4.4],
-      [-2.1, 0.55, 2.6], [2.1, 0.55, 2.6],
-      [-2.1, 0.55, 0.8], [2.1, 0.55, 0.8],
-      [-3.5, 0.55, -1.2], [3.5, 0.55, -1.2],
-      [-3.5, 0.55, -3.2], [3.5, 0.55, -3.2],
-      [-1.5, 0.55, -3.6], [1.5, 0.55, -3.6], [0, 0.55, 7.6]
+      [0.62, 1.45, 0], [0.55, 1.45, 0.24], [0.55, 1.45, -0.24],
+      [-2.1, 0.55, 6.8], [2.1, 0.55, 6.8],
+      [-2.1, 0.55, 4.8], [2.1, 0.55, 4.8],
+      [-2.1, 0.55, 2.8], [2.1, 0.55, 2.8],
+      [-4.1, 0.55, -1.4], [4.1, 0.55, -1.4],
+      [-4.1, 0.55, -3.4], [4.1, 0.55, -3.4],
+      [-1.5, 0.55, -3.8], [1.5, 0.55, -3.8], [0, 0.55, 8.2]
     ];
     candleSpots.forEach(([cx, cy, cz], idx) => {
-      const h = idx < 3 ? 0.28 : (0.38 + (idx % 3) * 0.14);
-      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.11, h, 8), waxMat);
+      const h = idx < 3 ? 0.24 : (0.36 + (idx % 3) * 0.12);
+      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.09, h, 8), waxMat);
       pillar.position.set(cx, cy + h * 0.5, cz);
-      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.065, 0.22, 6), flameMat);
-      flame.position.set(cx, cy + h + 0.12, cz);
+      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.20, 6), flameMat);
+      flame.position.set(cx, cy + h + 0.10, cz);
       pav.add(pillar, flame);
       this.candleFlames.push(flame);
     });
 
-    // Illuminated roadside parking bay pad so couple knows right where to pull over
+    // Roadside Parking Bay Ring
     const padGeo = new THREE.RingGeometry(2.6, 3.3, 28);
     padGeo.rotateX(-Math.PI / 2);
-    const pad = new THREE.Mesh(padGeo, new THREE.MeshBasicMaterial({ color: spec.accentColorHex, side: THREE.DoubleSide, transparent: true, opacity: 0.8 }));
+    const pad = new THREE.Mesh(padGeo, new THREE.MeshBasicMaterial({ color: spec.accentColorHex, side: THREE.DoubleSide, transparent: true, opacity: 0.85 }));
     pad.position.set(spec.parkingPos.x, 0.08, spec.parkingPos.z);
     this.environmentGroup.add(pad);
 
-    const warmGlow = new THREE.PointLight(spec.isFavorite ? 0xff9e54 : spec.accentColorHex, 2.2, 34);
-    warmGlow.position.set(0, 4.2, 0);
-    pav.add(warmGlow);
-
     this.environmentGroup.add(pav);
     pav.updateMatrixWorld(true);
+    proposeCorner.updateMatrixWorld(true);
 
     return {
       id: spec.id,
       name: spec.name,
       isFavorite: spec.isFavorite,
+      pavGroup: pav,
       pavilionPos: spec.pavilionPos.clone(),
       parkingPos: spec.parkingPos.clone(),
       facingAngle,
-      entryApproachPos: pav.localToWorld(new THREE.Vector3(0, 0.52, 6.2)),
+      girlChair,
+      boyChair,
+      girlChairRestLocal: girlChairRestLocal.clone(),
+      boyChairRestLocal: boyChairRestLocal.clone(),
+      entryApproachPos: pav.localToWorld(new THREE.Vector3(0, 0.52, 6.4)),
       tablePos: pav.localToWorld(new THREE.Vector3(0, 1.46, 0)),
-      seatBoyPos: pav.localToWorld(new THREE.Vector3(0, 0.50, 1.25)),
-      seatGirlPos: pav.localToWorld(new THREE.Vector3(0, 0.50, -1.25)),
-      danceCenterPos: pav.localToWorld(new THREE.Vector3(-3.4, 0.50, 1.8))
+      seatBoyPos: pav.localToWorld(new THREE.Vector3(0, 0.50, 1.08)),
+      seatGirlPos: pav.localToWorld(new THREE.Vector3(0, 0.50, -1.08)),
+      girlChairPullPos: pav.localToWorld(new THREE.Vector3(-0.78, 0.50, -1.78)),
+      standCutBoyPos: pav.localToWorld(new THREE.Vector3(-0.42, 0.50, -1.25)),
+      standCutGirlPos: pav.localToWorld(new THREE.Vector3(0.42, 0.50, -1.25)),
+      danceCenterPos: pav.localToWorld(new THREE.Vector3(-4.2, 0.50, 2.2)),
+      proposeCenterPos: proposeCorner.localToWorld(new THREE.Vector3(0, 0.06, 0.65)),
+      proposeBoyPos: proposeCorner.localToWorld(new THREE.Vector3(-0.65, 0.06, 0.95)),
+      proposeGirlPos: proposeCorner.localToWorld(new THREE.Vector3(0.65, 0.06, 0.85)),
+      proposeLookPos: proposeCorner.localToWorld(new THREE.Vector3(0, 2.5, 0))
+    };
+  }
+
+  buildHomeVilla() {
+    // Scenic Home Sweet Home Villa off clear lawn near end of lap
+    const idx = Math.floor(0.93 * (this.samplePoints.length - 1)) % this.samplePoints.length;
+    const sp = this.samplePoints[idx];
+    let chosenSign = 1;
+    for (const s of [1, -1]) {
+      const tp = sp.position.clone().addScaledVector(sp.normal, s * 28);
+      if (this.isPointClearOfTrack(tp.x, tp.z, 17)) {
+        chosenSign = s;
+        break;
+      }
+    }
+    const villaPos = sp.position.clone().addScaledVector(sp.normal, chosenSign * 28).setY(0);
+    const parkPos = sp.position.clone().addScaledVector(sp.normal, chosenSign * 14.2).setY(0);
+
+    const home = new THREE.Group();
+    home.position.copy(villaPos);
+    const dir = parkPos.clone().sub(villaPos).setY(0);
+    const facingAngle = Math.atan2(dir.x, dir.z);
+    home.rotation.y = facingAngle;
+
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0xfef3e2, roughness: 0.65 });
+    const roofMat = new THREE.MeshStandardMaterial({ color: 0x7c2d12, roughness: 0.72 });
+    const windowGlowMat = new THREE.MeshBasicMaterial({ color: 0xffdf85 });
+    const porchMat = new THREE.MeshStandardMaterial({ color: 0xe7d8c3, roughness: 0.45 });
+    const doorMat = new THREE.MeshStandardMaterial({ color: 0x5c2e14, roughness: 0.55 });
+    const goldMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.82, roughness: 0.2 });
+
+    const patio = new THREE.Mesh(new THREE.BoxGeometry(11.5, 0.4, 9.5), porchMat);
+    patio.position.set(0, 0.2, 0.8);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(9.6, 5.2, 6.4), wallMat);
+    body.position.set(0, 2.9, -1.2);
+    const roof = new THREE.Mesh(new THREE.ConeGeometry(7.8, 3.2, 4), roofMat);
+    roof.rotation.y = Math.PI * 0.25;
+    roof.position.set(0, 7.0, -1.2);
+    const mainDoor = new THREE.Mesh(new THREE.BoxGeometry(1.7, 2.8, 0.16), doorMat);
+    mainDoor.position.set(0, 1.8, 2.02);
+    [-2.8, 2.8].forEach((wx) => {
+      const win1 = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.4, 0.16), windowGlowMat);
+      win1.position.set(wx, 2.5, 2.02);
+      const win2 = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.2, 0.16), windowGlowMat);
+      win2.position.set(wx, 4.4, 2.02);
+      home.add(win1, win2);
+    });
+
+    // "HOME SWEET HOME" Sign above Porch
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 160;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#3b0a22';
+    ctx.fillRect(0, 0, 512, 160);
+    ctx.strokeStyle = '#ffd166';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(8, 8, 496, 144);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 40px Orbitron, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('🏡 HOME SWEET HOME', 256, 78);
+    ctx.fillStyle = '#ff8cb8';
+    ctx.font = 'bold 24px Rajdhani, sans-serif';
+    ctx.fillText('♥ SAFE ARRIVAL • FOREVER TOGETHER ♥', 256, 124);
+    const signTex = new THREE.CanvasTexture(canvas);
+    if (THREE.sRGBEncoding) signTex.encoding = THREE.sRGBEncoding;
+    const signBoard = new THREE.Mesh(new THREE.BoxGeometry(4.6, 1.35, 0.2), [goldMat, goldMat, goldMat, goldMat, new THREE.MeshBasicMaterial({ map: signTex }), goldMat]);
+    signBoard.position.set(0, 4.35, 2.15);
+
+    const drivewayRing = new THREE.Mesh(
+      new THREE.RingGeometry(2.7, 3.4, 28).rotateX(-Math.PI / 2),
+      new THREE.MeshBasicMaterial({ color: 0x4ade80, side: THREE.DoubleSide, transparent: true, opacity: 0.85 })
+    );
+    drivewayRing.position.set(parkPos.x, 0.08, parkPos.z);
+
+    home.add(patio, body, roof, mainDoor, signBoard);
+    this.environmentGroup.add(home, drivewayRing);
+    home.updateMatrixWorld(true);
+
+    this.homeVenue = {
+      id: 'home_villa',
+      name: 'Home Sweet Home',
+      isFavorite: true,
+      pavilionPos: villaPos.clone(),
+      parkingPos: parkPos.clone(),
+      facingAngle,
+      tablePos: home.localToWorld(new THREE.Vector3(0, 1.2, 3.4)),
+      porchBoyPos: home.localToWorld(new THREE.Vector3(-0.45, 0.42, 3.2)),
+      porchGirlPos: home.localToWorld(new THREE.Vector3(0.45, 0.42, 3.2)),
+      entryApproachPos: home.localToWorld(new THREE.Vector3(0, 0.42, 4.8))
     };
   }
 
@@ -2063,7 +2370,7 @@ export class Track {
       const sp = this.samplePoints[idx];
       let chosenSign = 1;
       for (const s of [1, -1]) {
-        const testPav = sp.position.clone().addScaledVector(sp.normal, s * 29);
+        const testPav = sp.position.clone().addScaledVector(sp.normal, s * 30);
         if (this.isPointClearOfTrack(testPav.x, testPav.z, 17)) {
           chosenSign = s;
           break;
@@ -2076,7 +2383,7 @@ export class Track {
         accentCss,
         accentColorHex,
         isFavorite,
-        pavilionPos: sp.position.clone().addScaledVector(sp.normal, chosenSign * 29).setY(0),
+        pavilionPos: sp.position.clone().addScaledVector(sp.normal, chosenSign * 30).setY(0),
         parkingPos: sp.position.clone().addScaledVector(sp.normal, chosenSign * 14.5).setY(0)
       };
     };
@@ -2089,7 +2396,7 @@ export class Track {
         accentCss: '#ff4d88',
         accentColorHex: 0xff4d88,
         isFavorite: true,
-        pavilionPos: new THREE.Vector3(-36, 0, 108),
+        pavilionPos: new THREE.Vector3(-37, 0, 108),
         parkingPos: new THREE.Vector3(-14.5, 0, 108)
       },
       { ...findSideSpot(0.28, 'Velvet Brew Café', 'ARTISANAL PURE VEG CAFÉ', '#fb923c', 0xfb923c, false), id: 'velvet_brew' },
@@ -2100,8 +2407,8 @@ export class Track {
     specs.forEach((spec) => {
       this.dateVenues[spec.id] = this.buildSingleCafePavilion(spec);
     });
+    this.buildHomeVilla();
 
-    // Floating ruby beacon above the selected café/restaurant
     const beacon = new THREE.Group();
     const bHeart = new THREE.Mesh(this.create3DHeartGeo(1.3, 0.45), new THREE.MeshBasicMaterial({ color: 0xff3b78 }));
     beacon.add(bHeart);
