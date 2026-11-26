@@ -20,6 +20,7 @@ import { ReplaySystem } from './engine/Replay.js';
 import { PhotoModeManager } from './engine/PhotoMode.js';
 import { VoiceControlManager } from './engine/VoiceControl.js';
 import { GestureControlManager } from './engine/GestureControl.js';
+import { DateExperienceManager, PURE_VEG_VENUES } from './systems/DateExperience.js';
 
 class GameApp {
   constructor() {
@@ -162,6 +163,21 @@ class GameApp {
       this.minimap = new Minimap(minimapCanvas, this.track);
     } catch (e) {
       this.minimap = { calculateBounds: () => { }, render: () => { } };
+    }
+
+    try {
+      this.dateExperience = new DateExperienceManager(
+        this.renderer.scene,
+        this.track,
+        this.cameraCtrl,
+        this.particles,
+        this.audio
+      );
+      this.dateExperience.onStateChange = (st) => this.ui?.syncDateExperienceUI?.(st);
+      this.dateExperience.onToast = (msg) => this.ui?.showToast?.(msg);
+    } catch (e) {
+      console.warn('DateExperience fallback:', e);
+      this.dateExperience = null;
     }
 
     // Entities
@@ -349,6 +365,7 @@ class GameApp {
   startRace(raceConfig = {}) {
     try {
       this.setPaused(false);
+      this.dateExperience?.stopSession?.();
       this.audio?.init?.();
       this.audio?.resume?.();
       this.audio?.setPaused?.(false);
@@ -434,7 +451,10 @@ class GameApp {
           }
         }
         this.audio?.startMusic?.();
-        this.ui.showToast(`❤️ ${coupleForRun.partner1} ♥ ${coupleForRun.partner2} — Cruise Emerald Boulevard & visit the Candlelight Pavilion!`);
+        const chosenVenueId = this.activeRaceConfig.venueId || this.ui?.selectedDateVenueId || 'shah_rasoi';
+        this.dateExperience?.startSession?.(this.playerCar, coupleForRun, chosenVenueId);
+        const venueObj = this.dateExperience?.getVenueConfig?.() || PURE_VEG_VENUES[0];
+        this.ui.showToast(`❤️ ${coupleForRun.partner1} ♥ ${coupleForRun.partner2} — Drive together to ${venueObj.name} (100% Pure Veg)!`);
         return;
       }
 
@@ -663,9 +683,21 @@ class GameApp {
         mode: 'DATE_DRIVE',
         trackId: this.ui.selectedTrackId || 'city_live',
         laps: 99,
+        venueId: coupleCfg?.venueId || this.ui?.selectedDateVenueId || 'shah_rasoi',
         coupleProfile: { ...this.coupleProfile }
       });
     };
+
+    this.ui.onSelectDateVenue = (venueId) => {
+      this.dateExperience?.selectVenue?.(venueId, this.state === 'RACING' && this.mode === 'DATE_DRIVE');
+    };
+    this.ui.onDateParkNow = () => this.dateExperience?.triggerArrivalCutscene?.(false);
+    this.ui.onDateSkipWalk = () => this.dateExperience?.triggerArrivalCutscene?.(true);
+    this.ui.onDateOrderDish = (dishId) => this.dateExperience?.orderDish?.(dishId);
+    this.ui.onDateCelebrate = () => this.dateExperience?.triggerCelebrate?.();
+    this.ui.onDateSing = () => this.dateExperience?.triggerSingDuet?.();
+    this.ui.onDateDance = () => this.dateExperience?.triggerSlowDance?.();
+    this.ui.onDateBackToCar = () => this.dateExperience?.returnToCarAndDrive?.();
 
     this.ui.onCycleClimate = () => {
       const ids = Object.keys(TRACK_PRESETS);
@@ -860,6 +892,7 @@ class GameApp {
 
     this.ui.onReturnToGarage = () => {
       this.setPaused(false);
+      this.dateExperience?.stopSession?.();
       this.ui.setCinemaBarsVisible?.(false);
       this.audio.stopMusic();
       this.audio?.stopHorn?.();
@@ -1260,7 +1293,18 @@ class GameApp {
       }
 
       if (this.playerCar) {
-        this.playerCar.update(simDt, inputState, this.particles, this.audio);
+        const isDateCutscene = (
+          this.mode === 'DATE_DRIVE'
+          && this.dateExperience
+          && (this.dateExperience.phase === 'CUTSCENE_WALK' || this.dateExperience.phase === 'CAFE_DINING')
+        );
+        const carFrameInput = isDateCutscene
+          ? { ...inputState, throttle: 0, brake: 0, steer: 0, nitro: false, handbrake: true }
+          : inputState;
+        this.playerCar.update(simDt, carFrameInput, this.particles, this.audio);
+        if (this.mode === 'DATE_DRIVE' && this.state === 'RACING') {
+          this.dateExperience?.update?.(dt);
+        }
         this.cameraCtrl.update(dt, this.playerCar.mesh, this.playerCar.physics);
         this.renderer.updateShadowTarget(this.playerCar.mesh.position);
 
@@ -1368,16 +1412,6 @@ class GameApp {
           }
           if (this.track?.preset?.isNight || this.track?.preset?.isFog || this.track?.preset?.id === 'city_sunset' || isDecorated) {
             this.particles.emitFirefly(this.playerCar.mesh.position);
-          }
-          if (this.mode === 'DATE_DRIVE' && this.track?.dateSpotPos) {
-            const dSq = this.playerCar.physics.position.distanceToSquared(this.track.dateSpotPos);
-            if (dSq < 780 && !this.dateArrivedNotified) {
-              this.dateArrivedNotified = true;
-              for (let k = 0; k < 18; k++) this.particles.emitPetal(this.track.dateSpotPos);
-              this.ui.showToast(`🕯️ ${this.coupleProfile.partner1} ♥ ${this.coupleProfile.partner2} at Candlelight Pavilion!`);
-            } else if (dSq > 1600) {
-              this.dateArrivedNotified = false;
-            }
           }
         }
       }

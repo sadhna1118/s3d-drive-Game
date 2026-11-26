@@ -1040,3 +1040,137 @@ body, html {
     grid-template-columns: 1fr;
   }
 }
+
+/* Romantic Pure-Veg Date Venues & Interactive Café Studio */
+.date-venue-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.date-venue-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(15, 23, 42, 0.72);
+  color: #f8fafc;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, transform 0.15s;
+}
+.date-venue-card:hover { transform: translateY(-1px); border-color: rgba(255, 107, 157, 0.65); }
+.date-venue-card.active {
+  border-color: #ff4d88;
+  background: linear-gradient(135deg, rgba(255, 77, 136, 0.22), rgba(255, 183, 3, 0.12));
+  box-shadow: 0 0 16px rgba(255, 77, 136, 0.25);
+}
+.pure-veg-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.5);
+}
+.fav-heart-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 99px;
+  font-size: 9px;
+  font-weight: 900;
+  background: rgba(255, 77, 136, 0.24);
+  color: #ff8cb8;
+  border: 1px solid rgba(255, 77, 136, 0.6);
+}
+.hud-date-nav-pill {
+  padding: 7px 14px;
+  border-radius: 99px;
+  border-color: rgba(255, 77, 136, 0.55) !important;
+  background: rgba(24, 10, 22, 0.85) !important;
+  pointer-events: auto;
+}
+.date-cutscene-banner {
+  position: fixed;
+  bottom: 42px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 22px;
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-weight: 700;
+  color: #ffe4ef;
+  border-color: rgba(255, 77, 136, 0.65);
+  pointer-events: auto;
+  z-index: 65;
+}
+.date-cafe-studio {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(760px, 95vw);
+  max-height: 46vh;
+  overflow-y: auto;
+  padding: 14px 16px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-color: rgba(255, 77, 136, 0.55);
+  background: linear-gradient(180deg, rgba(20, 10, 24, 0.92), rgba(10, 14, 26, 0.95));
+  pointer-events: auto;
+  z-index: 65;
+}
+.date-cafe-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.date-actions-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.date-lyric-bubble {
+  padding: 8px 14px;
+  border-radius: 10px;
+  text-align: center;
+  background: rgba(255, 77, 136, 0.14);
+  border: 1px solid rgba(255, 183, 3, 0.45);
+}
+.date-cafe-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: 6px;
+}
+.date-dish-btn {
+  padding: 7px 9px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(30, 41, 59, 0.65);
+  color: #f8fafc;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  transition: border-color 0.15s, background 0.15s;
+}
+.date-dish-btn:hover {
+  border-color: #4ade80;
+  background: rgba(34, 197, 94, 0.16);
+}
+@media (max-width: 680px) {
+  .date-venue-grid, .date-actions-row { grid-template-columns: 1fr; }
+}

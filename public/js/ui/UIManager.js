@@ -7,6 +7,7 @@ import { CAR_CONFIGS, NITRO_MODES } from '../engine/CarBuilder.js';
 import { STEERING_PRESETS, GRAPHICS_PRESETS } from '../engine/Input.js';
 import { UPGRADE_TIERS, ACHIEVEMENTS, CAREER_CUPS } from '../systems/CareerManager.js';
 import { RADIO_STATIONS, LIVE_RADIO_STREAMS } from '../engine/Audio.js';
+import { PURE_VEG_VENUES, getVenueById } from '../systems/DateExperience.js';
 
 export class UIManager {
   constructor(careerManager) {
@@ -27,6 +28,8 @@ export class UIManager {
     this.selectedColor = CAR_CONFIGS[0]?.defaultColor || '#ff0022';
     this.selectedTrackId = 'city_live';
     this.selectedWeather = 'clear';
+    this.selectedDateVenueId = 'shah_rasoi';
+    this._renderedCafeVenueId = null;
     this.playerName = 'Rebel ' + Math.floor(100 + Math.random() * 900);
 
     this.visualMods = {
@@ -138,6 +141,26 @@ export class UIManager {
     this.dateDecorSelect = document.getElementById('date-decor-select');
     this.dateCharsSelect = document.getElementById('date-chars-select');
     this.dateBoardPreview = document.getElementById('date-board-preview');
+    this.dateVenueCards = document.getElementById('date-venue-cards');
+    this.hudDateNavPill = document.getElementById('hud-date-nav-pill');
+    this.hudDateVenueLabel = document.getElementById('hud-date-venue-label');
+    this.hudDateDistLabel = document.getElementById('hud-date-dist-label');
+    this.hudDateVenueSelect = document.getElementById('hud-date-venue-select');
+    this.btnHudParkCafe = document.getElementById('btn-hud-park-cafe');
+    this.panelDateCafe = document.getElementById('panel-date-cafe');
+    this.dateCutsceneBanner = document.getElementById('date-cutscene-banner');
+    this.dateCutsceneText = document.getElementById('date-cutscene-text');
+    this.btnDateSkipWalk = document.getElementById('btn-date-skip-walk');
+    this.dateCafeStudio = document.getElementById('date-cafe-studio');
+    this.cafeStudioTitle = document.getElementById('cafe-studio-title');
+    this.cafeStudioFavBadge = document.getElementById('cafe-studio-fav-badge');
+    this.cafeStudioSub = document.getElementById('cafe-studio-sub');
+    this.btnDateBackCar = document.getElementById('btn-date-back-car');
+    this.dateLyricBubble = document.getElementById('date-lyric-bubble');
+    this.dateLyricSong = document.getElementById('date-lyric-song');
+    this.dateLyricLine = document.getElementById('date-lyric-line');
+    this.cafeOrderedCount = document.getElementById('cafe-ordered-count');
+    this.dateCafeMenuGrid = document.getElementById('date-cafe-menu-grid');
     this.garageClimateBadge = document.getElementById('garage-climate-badge');
     this.hudClimatePill = document.getElementById('hud-climate-pill');
     this.cinemaBars = document.getElementById('cinema-bars');
@@ -555,12 +578,39 @@ export class UIManager {
     });
 
     // Personalized Couple Date Modal & Garage Cabin Crew Toggle
+    this.renderDateVenueCards();
     const readDateForm = () => ({
       partner1: (this.dateName1?.value || 'Aarav').trim() || 'Aarav',
       partner2: (this.dateName2?.value || 'Meera').trim() || 'Meera',
       dateMode: this.dateDecorSelect?.value || 'romance',
       showCharacters: this.dateCharsSelect?.value || 'driver_only',
+      venueId: this.selectedDateVenueId || 'shah_rasoi',
       crewExplicit: true
+    });
+    this.hudDateVenueSelect?.addEventListener('change', (e) => {
+      this.selectedDateVenueId = e.target.value || 'shah_rasoi';
+      this.renderDateVenueCards();
+      this.onSelectDateVenue?.(this.selectedDateVenueId);
+      e.target.blur?.();
+    });
+    this.btnHudParkCafe?.addEventListener('click', () => {
+      this.onDateParkNow?.();
+      this.btnHudParkCafe?.blur?.();
+    });
+    this.btnDateSkipWalk?.addEventListener('click', () => {
+      this.onDateSkipWalk?.();
+    });
+    this.btnDateBackCar?.addEventListener('click', () => {
+      this.onDateBackToCar?.();
+    });
+    document.getElementById('btn-date-celebrate')?.addEventListener('click', () => {
+      this.onDateCelebrate?.();
+    });
+    document.getElementById('btn-date-sing')?.addEventListener('click', () => {
+      this.onDateSing?.();
+    });
+    document.getElementById('btn-date-dance')?.addEventListener('click', () => {
+      this.onDateDance?.();
     });
     document.querySelectorAll('.crew-chip').forEach((chip) => {
       chip.addEventListener('click', () => {
@@ -1087,6 +1137,10 @@ export class UIManager {
     this.screenResults?.classList.add('hidden');
     this.panelReplayControls?.classList.add('hidden');
     this.panelPhotoMode?.classList.add('hidden');
+    if (screenName !== 'hud') {
+      this.hudDateNavPill?.classList.add('hidden');
+      this.panelDateCafe?.classList.add('hidden');
+    }
 
     switch (screenName) {
       case 'garage': this.screenGarage?.classList.remove('hidden'); break;
@@ -1588,5 +1642,107 @@ export class UIManager {
     this.hudBtnIndRight?.classList.toggle('lit', !!phaseOn && rightActive);
     this.hudBtnHazard?.classList.toggle('hazard-lit', !!phaseOn && indicatorMode === 'hazard');
     this.hudBtnHorn?.classList.toggle('active', !!hornActive);
+  }
+
+  renderDateVenueCards() {
+    if (!this.dateVenueCards) return;
+    this.dateVenueCards.innerHTML = '';
+    PURE_VEG_VENUES.forEach((v) => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = `date-venue-card${this.selectedDateVenueId === v.id ? ' active' : ''}`;
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+          <span style="font-family:'Orbitron'; font-size:12px; font-weight:800; color:${v.accentColor};">${this.escapeHtml(v.name)}</span>
+          ${v.isFavorite ? '<span class="fav-heart-badge">★ FAVORITE ♥</span>' : '<span class="pure-veg-badge">PURE VEG</span>'}
+        </div>
+        <div style="font-size:10px; color:#4ade80; font-weight:700;">${this.escapeHtml(v.cuisineTag)}</div>
+        <div style="font-size:10px; color:var(--text-muted); line-height:1.25;">${this.escapeHtml(v.tagline)}</div>
+      `;
+      card.addEventListener('click', () => {
+        this.selectedDateVenueId = v.id;
+        if (this.hudDateVenueSelect) this.hudDateVenueSelect.value = v.id;
+        this.renderDateVenueCards();
+        this.onSelectDateVenue?.(v.id);
+      });
+      this.dateVenueCards.appendChild(card);
+    });
+  }
+
+  syncDateExperienceUI(state) {
+    if (!state || !state.active) {
+      this.hudDateNavPill?.classList.add('hidden');
+      this.panelDateCafe?.classList.add('hidden');
+      return;
+    }
+
+    const venue = state.venue || getVenueById(this.selectedDateVenueId);
+    const couple = state.coupleNames || { partner1: 'Aarav', partner2: 'Meera' };
+    const isDriving = state.phase === 'DRIVING';
+    const isCutscene = state.phase === 'CUTSCENE_WALK';
+    const isCafe = state.phase === 'CAFE_DINING';
+
+    this.hudDateNavPill?.classList.toggle('hidden', !isDriving);
+    if (isDriving) {
+      if (this.hudDateVenueLabel) {
+        this.hudDateVenueLabel.textContent = `❤️ ${venue.shortName.toUpperCase()}`;
+      }
+      if (this.hudDateDistLabel) {
+        const arrow = Math.abs(state.headingDeg) < 25 ? '⬆' : (state.headingDeg > 0 ? '↗' : '↖');
+        this.hudDateDistLabel.textContent = state.canPark ? `ARRIVED! (${state.distance}m)` : `${state.distance}m ${arrow}`;
+      }
+      if (this.hudDateVenueSelect && this.hudDateVenueSelect.value !== venue.id) {
+        this.hudDateVenueSelect.value = venue.id;
+      }
+    }
+
+    this.panelDateCafe?.classList.toggle('hidden', !(isCutscene || isCafe));
+    this.dateCutsceneBanner?.classList.toggle('hidden', !isCutscene);
+    this.dateCafeStudio?.classList.toggle('hidden', !isCafe);
+
+    if (isCutscene && this.dateCutsceneText) {
+      this.dateCutsceneText.textContent = `💖 ${couple.partner1} steps out to open ${couple.partner2}'s door at ${venue.name}...`;
+    }
+
+    if (isCafe) {
+      if (this.cafeStudioTitle) this.cafeStudioTitle.textContent = venue.shortName.toUpperCase();
+      this.cafeStudioFavBadge?.classList.toggle('hidden', !venue.isFavorite);
+      if (this.cafeStudioSub) {
+        this.cafeStudioSub.textContent = `${couple.partner1} ♥ ${couple.partner2} • ${venue.tagline}`;
+      }
+      if (this.cafeOrderedCount) {
+        const count = Array.isArray(state.orderedDishes) ? state.orderedDishes.length : 0;
+        this.cafeOrderedCount.textContent = `Served to Table: ${count} item${count === 1 ? '' : 's'}`;
+      }
+
+      if (this.dateLyricBubble) {
+        if (state.lyric) {
+          this.dateLyricBubble.classList.remove('hidden');
+          if (this.dateLyricSong) this.dateLyricSong.textContent = `🎤 ${state.lyric.songTitle}`;
+          if (this.dateLyricLine) this.dateLyricLine.textContent = `${state.lyric.singerName}: ${state.lyric.text}`;
+        } else {
+          this.dateLyricBubble.classList.add('hidden');
+        }
+      }
+
+      if (this.dateCafeMenuGrid && this._renderedCafeVenueId !== venue.id) {
+        this._renderedCafeVenueId = venue.id;
+        this.dateCafeMenuGrid.innerHTML = '';
+        venue.menu.forEach((dish) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'date-dish-btn';
+          btn.innerHTML = `
+            <span style="font-size:18px;">${dish.icon}</span>
+            <div>
+              <div style="color:#fff;">${this.escapeHtml(dish.name)}</div>
+              <div style="font-size:9px; color:#4ade80;">${this.escapeHtml(dish.cat)} • Pure Veg</div>
+            </div>
+          `;
+          btn.addEventListener('click', () => this.onDateOrderDish?.(dish.id));
+          this.dateCafeMenuGrid.appendChild(btn);
+        });
+      }
+    }
   }
 }

@@ -340,6 +340,9 @@ export class Track {
     this.candleFlames = [];
     this.parkCharacters = [];
     this.dateHeartBoardMesh = null;
+    this.dateVenues = {};
+    this.activeDateVenueId = 'shah_rasoi';
+    this.dateBeaconGroup = null;
     this.dateSpotPos = new THREE.Vector3(-10, 0, 108);
     this.coupleNames = { partner1: 'Aarav', partner2: 'Meera' };
     this.metroTrain = null;
@@ -405,6 +408,8 @@ export class Track {
     this.candleFlames = [];
     this.parkCharacters = [];
     this.dateHeartBoardMesh = null;
+    this.dateVenues = {};
+    this.dateBeaconGroup = null;
     this.metroTrain = null;
 
     this.trackWidth = preset.trackWidth;
@@ -1173,6 +1178,10 @@ export class Track {
         f.scale.set(0.92 + (s - 0.9) * 0.3, s * 1.15, 0.92 + (s - 0.9) * 0.3);
       }
     }
+    if (this.dateBeaconGroup && this.dateBeaconGroup.visible) {
+      this.dateBeaconGroup.rotation.y += dt * 1.45;
+      this.dateBeaconGroup.position.y = 12.2 + Math.sin(t * 0.45) * 0.85;
+    }
     if (this.parkCharacters && this.parkCharacters.length) {
       for (let i = 0; i < this.parkCharacters.length; i++) {
         const pc = this.parkCharacters[i];
@@ -1860,18 +1869,72 @@ export class Track {
     this.buildDatePavilion();
   }
 
-  buildDatePavilion() {
-    const pav = new THREE.Group();
-    pav.position.set(-36, 0, 108);
-    pav.rotation.y = Math.PI * 0.38;
+  makeVenueSignTexture(venueName = 'Shah Rasoi', badgeText = '100% PURE VEG', accentHex = '#ff4d88', isFav = false) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 768;
+    canvas.height = 320;
+    const ctx = canvas.getContext('2d');
+    const bg = ctx.createLinearGradient(0, 0, 768, 320);
+    bg.addColorStop(0, '#1e0918');
+    bg.addColorStop(0.5, isFav ? '#4c0f28' : '#162038');
+    bg.addColorStop(1, '#190b1d');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, 768, 320);
 
-    const marbleMat = new THREE.MeshStandardMaterial({ color: 0xf4efe6, roughness: 0.25, metalness: 0.1 });
-    const velvetMat = new THREE.MeshStandardMaterial({ color: 0x991b38, roughness: 0.85 });
+    ctx.strokeStyle = accentHex;
+    ctx.lineWidth = 10;
+    ctx.strokeRect(10, 10, 748, 300);
+    ctx.strokeStyle = '#ffd166';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(22, 22, 724, 276);
+
+    ctx.fillStyle = '#4ade80';
+    ctx.font = 'bold 26px Rajdhani, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(isFav ? '♥ OUR FAVORITE • 100% PURE VEG ♥' : '🌿 100% PURE VEG ROMANTIC CAFÉ 🌿', 384, 72);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 56px Orbitron, sans-serif';
+    ctx.fillText(venueName.toUpperCase(), 384, 174);
+
+    ctx.fillStyle = '#ffd166';
+    ctx.font = 'bold 25px Rajdhani, sans-serif';
+    const n1 = (this.coupleNames?.partner1 || 'Aarav').toUpperCase();
+    const n2 = (this.coupleNames?.partner2 || 'Meera').toUpperCase();
+    ctx.fillText(`${n1} ♥ ${n2}  •  ${badgeText.toUpperCase()}`, 384, 248);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    if (THREE.sRGBEncoding) tex.encoding = THREE.sRGBEncoding;
+    return tex;
+  }
+
+  setActiveDateVenue(venueId = 'shah_rasoi') {
+    this.activeDateVenueId = venueId;
+    const targetVenue = this.dateVenues?.[venueId] || this.dateVenues?.shah_rasoi;
+    if (targetVenue) {
+      this.dateSpotPos.copy(targetVenue.parkingPos);
+      if (this.dateBeaconGroup) {
+        this.dateBeaconGroup.position.set(targetVenue.pavilionPos.x, 12.2, targetVenue.pavilionPos.z);
+        this.dateBeaconGroup.visible = true;
+      }
+    }
+  }
+
+  buildSingleCafePavilion(spec) {
+    const pav = new THREE.Group();
+    pav.position.copy(spec.pavilionPos);
+    const dirToPark = spec.parkingPos.clone().sub(spec.pavilionPos);
+    dirToPark.y = 0;
+    const facingAngle = Math.atan2(dirToPark.x, dirToPark.z);
+    pav.rotation.y = facingAngle;
+
+    const marbleMat = new THREE.MeshStandardMaterial({ color: spec.isFavorite ? 0xf4efe6 : 0xedf2f7, roughness: 0.25, metalness: 0.1 });
+    const velvetMat = new THREE.MeshStandardMaterial({ color: spec.accentColorHex, roughness: 0.85 });
     const goldMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.88, roughness: 0.2 });
     const roseMat = new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.5 });
     const waxMat = new THREE.MeshStandardMaterial({ color: 0xfff8e7, roughness: 0.45 });
     const flameMat = new THREE.MeshBasicMaterial({ color: 0xffaa22 });
-    const heartGlowMat = new THREE.MeshBasicMaterial({ color: 0xff3b78 });
+    const glowMat = new THREE.MeshBasicMaterial({ color: spec.accentColorHex });
 
     const deck = new THREE.Mesh(new THREE.CylinderGeometry(8.5, 9.2, 0.5, 24), marbleMat);
     deck.position.y = 0.25;
@@ -1879,7 +1942,6 @@ export class Track {
     carpet.position.set(0, 0.52, 2.2);
     pav.add(deck, carpet);
 
-    // 4 Floral Arch Pillars
     [-3.6, 3.6].forEach((px) => {
       [-2.8, 2.8].forEach((pz) => {
         const col = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 5.2, 10), marbleMat);
@@ -1890,31 +1952,31 @@ export class Track {
       });
     });
 
-    // Illuminated 3D Sculpted Heart Board Marquee + True 3D Extruded Ruby Heart Crown
     const archBeam = new THREE.Mesh(new THREE.BoxGeometry(8.2, 0.4, 0.6), goldMat);
     archBeam.position.set(0, 5.4, -2.8);
     const boardFaceMat = new THREE.MeshStandardMaterial({
-      map: this.makeHeartBoardTexture(this.coupleNames.partner1, this.coupleNames.partner2),
+      map: this.makeVenueSignTexture(spec.name, spec.badgeText, spec.accentCss, spec.isFavorite),
       roughness: 0.35,
       metalness: 0.12
     });
-    boardFaceMat.userData = { isHeartFace: true };
-    this.dateHeartBoardMesh = new THREE.Mesh(
+    if (spec.isFavorite) boardFaceMat.userData = { isHeartFace: true };
+
+    const signBoard = new THREE.Mesh(
       new THREE.BoxGeometry(7.2, 3.0, 0.34),
       [goldMat, goldMat, goldMat, goldMat, boardFaceMat, boardFaceMat]
     );
-    this.dateHeartBoardMesh.position.set(0, 6.9, -2.55);
+    signBoard.position.set(0, 6.9, -2.55);
+    if (spec.isFavorite) this.dateHeartBoardMesh = signBoard;
 
-    const heartBorder = new THREE.Mesh(new THREE.BoxGeometry(7.65, 3.45, 0.22), heartGlowMat);
+    const heartBorder = new THREE.Mesh(new THREE.BoxGeometry(7.65, 3.45, 0.22), glowMat);
     heartBorder.position.set(0, 6.9, -2.56);
-    const topHeart = new THREE.Mesh(this.create3DHeartGeo(0.95, 0.38), heartGlowMat);
+    const topHeart = new THREE.Mesh(this.create3DHeartGeo(spec.isFavorite ? 1.05 : 0.78, 0.38), glowMat);
     topHeart.position.set(0, 9.25, -2.55);
-    pav.add(archBeam, heartBorder, this.dateHeartBoardMesh, topHeart);
+    pav.add(archBeam, heartBorder, signBoard, topHeart);
 
-    // Romantic Bistro Table + Twin 3D Crystal Goblets + 3D Rose Vase + Wooden Bench
     const tableLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.28, 1.05, 8), goldMat);
     tableLeg.position.set(0, 0.85, 0);
-    const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.1, 18), marbleMat);
+    const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(1.18, 1.18, 0.1, 18), marbleMat);
     tableTop.position.set(0, 1.4, 0);
     const crystalMat = new THREE.MeshPhysicalMaterial({ color: 0xeef8ff, metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.65 });
     [-0.36, 0.36].forEach((gx) => {
@@ -1932,20 +1994,18 @@ export class Track {
       pav.add(rBulb);
     }
     const benchMat = new THREE.MeshStandardMaterial({ color: 0x5c3a21, roughness: 0.72 });
-    const pavBench = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.14, 0.65), benchMat);
-    pavBench.position.set(0, 0.92, -1.55);
-    const pavBack = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.58, 0.12), benchMat);
-    pavBack.position.set(0, 1.24, -1.84);
-    pav.add(tableLeg, tableTop, vase, pavBench, pavBack);
+    const benchBack = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.14, 0.65), benchMat);
+    benchBack.position.set(0, 0.92, -1.55);
+    const benchRest = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.58, 0.12), benchMat);
+    benchRest.position.set(0, 1.24, -1.84);
+    pav.add(tableLeg, tableTop, vase, benchBack, benchRest);
 
-    // 3D Pavilion Musician / Host welcoming visitors at the Date Pavilion Entrance
-    const hostChar = this.createParkVisitor(0xb45309, 0xd4966c, false);
+    const hostChar = this.createParkVisitor(spec.accentColorHex, 0xd4966c, false);
     hostChar.group.position.set(3.2, 0.5, 4.8);
     hostChar.group.rotation.y = -0.35;
     pav.add(hostChar.group);
     this.parkCharacters.push(hostChar);
 
-    // 18 Flickering Pillar & Pathway Candles
     const candleSpots = [
       [0, 1.45, 0], [-0.45, 1.45, 0.2], [0.45, 1.45, -0.2],
       [-2.1, 0.55, 6.2], [2.1, 0.55, 6.2],
@@ -1966,11 +2026,89 @@ export class Track {
       this.candleFlames.push(flame);
     });
 
-    const warmGlow = new THREE.PointLight(0xff9e54, 2.2, 34);
+    // Illuminated roadside parking bay pad so couple knows right where to pull over
+    const padGeo = new THREE.RingGeometry(2.6, 3.3, 28);
+    padGeo.rotateX(-Math.PI / 2);
+    const pad = new THREE.Mesh(padGeo, new THREE.MeshBasicMaterial({ color: spec.accentColorHex, side: THREE.DoubleSide, transparent: true, opacity: 0.8 }));
+    pad.position.set(spec.parkingPos.x, 0.08, spec.parkingPos.z);
+    this.environmentGroup.add(pad);
+
+    const warmGlow = new THREE.PointLight(spec.isFavorite ? 0xff9e54 : spec.accentColorHex, 2.2, 34);
     warmGlow.position.set(0, 4.2, 0);
     pav.add(warmGlow);
 
     this.environmentGroup.add(pav);
+    pav.updateMatrixWorld(true);
+
+    return {
+      id: spec.id,
+      name: spec.name,
+      isFavorite: spec.isFavorite,
+      pavilionPos: spec.pavilionPos.clone(),
+      parkingPos: spec.parkingPos.clone(),
+      facingAngle,
+      entryApproachPos: pav.localToWorld(new THREE.Vector3(0, 0.52, 6.2)),
+      tablePos: pav.localToWorld(new THREE.Vector3(0, 1.46, 0)),
+      seatBoyPos: pav.localToWorld(new THREE.Vector3(0, 0.50, 1.25)),
+      seatGirlPos: pav.localToWorld(new THREE.Vector3(0, 0.50, -1.25)),
+      danceCenterPos: pav.localToWorld(new THREE.Vector3(-3.4, 0.50, 1.8))
+    };
+  }
+
+  buildDatePavilion() {
+    this.dateVenues = {};
+
+    const findSideSpot = (uFrac, name, badgeText, accentCss, accentColorHex, isFavorite = false) => {
+      const idx = Math.floor(uFrac * (this.samplePoints.length - 1)) % this.samplePoints.length;
+      const sp = this.samplePoints[idx];
+      let chosenSign = 1;
+      for (const s of [1, -1]) {
+        const testPav = sp.position.clone().addScaledVector(sp.normal, s * 29);
+        if (this.isPointClearOfTrack(testPav.x, testPav.z, 17)) {
+          chosenSign = s;
+          break;
+        }
+      }
+      return {
+        id: name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/_cafe$/, ''),
+        name,
+        badgeText,
+        accentCss,
+        accentColorHex,
+        isFavorite,
+        pavilionPos: sp.position.clone().addScaledVector(sp.normal, chosenSign * 29).setY(0),
+        parkingPos: sp.position.clone().addScaledVector(sp.normal, chosenSign * 14.5).setY(0)
+      };
+    };
+
+    const specs = [
+      {
+        id: 'shah_rasoi',
+        name: 'Shah Rasoi',
+        badgeText: '100% PURE VEG • FAVORITE',
+        accentCss: '#ff4d88',
+        accentColorHex: 0xff4d88,
+        isFavorite: true,
+        pavilionPos: new THREE.Vector3(-36, 0, 108),
+        parkingPos: new THREE.Vector3(-14.5, 0, 108)
+      },
+      { ...findSideSpot(0.28, 'Velvet Brew Café', 'ARTISANAL PURE VEG CAFÉ', '#fb923c', 0xfb923c, false), id: 'velvet_brew' },
+      { ...findSideSpot(0.55, 'Moonlight Courtyard', 'PURE VEG STARLIGHT LOUNGE', '#38bdf8', 0x38bdf8, false), id: 'moonlight_courtyard' },
+      { ...findSideSpot(0.81, 'Rosewood Bistro', 'ACOUSTIC PURE VEG BISTRO', '#c084fc', 0xc084fc, false), id: 'rosewood_bistro' }
+    ];
+
+    specs.forEach((spec) => {
+      this.dateVenues[spec.id] = this.buildSingleCafePavilion(spec);
+    });
+
+    // Floating ruby beacon above the selected café/restaurant
+    const beacon = new THREE.Group();
+    const bHeart = new THREE.Mesh(this.create3DHeartGeo(1.3, 0.45), new THREE.MeshBasicMaterial({ color: 0xff3b78 }));
+    beacon.add(bHeart);
+    this.dateBeaconGroup = beacon;
+    this.environmentGroup.add(beacon);
+
+    this.setActiveDateVenue(this.activeDateVenueId || 'shah_rasoi');
   }
 
   buildCityFoliage() {

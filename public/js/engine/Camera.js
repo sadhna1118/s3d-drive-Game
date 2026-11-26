@@ -18,6 +18,7 @@ export class CameraController {
     this.camera = camera;
     this.scene = scene;
     this.mode = CAMERA_MODES.SHOWROOM;
+    this.externalOverride = false;
 
     this.baseFov = 64;
     this.currentFov = 64;
@@ -135,9 +136,23 @@ export class CameraController {
 
   setMode(mode) {
     this.mode = mode;
+    this.externalOverride = false;
     if (this.cockpitWheel) {
       this.cockpitWheel.visible = (this.mode === CAMERA_MODES.COCKPIT);
     }
+    this.camera.fov = this.baseFov * this.fovScaleMult;
+    this.camera.updateProjectionMatrix();
+  }
+
+  setExternalCameraPose(camPos, lookTarget, dt = 0.016) {
+    this.externalOverride = true;
+    if (this.cockpitWheel) this.cockpitWheel.visible = false;
+    const alphaPos = 1 - Math.exp(-5.0 * Math.max(0.004, dt));
+    const alphaTgt = 1 - Math.exp(-7.5 * Math.max(0.004, dt));
+    this.currentPosition.lerp(camPos, alphaPos);
+    this.currentTarget.lerp(lookTarget, alphaTgt);
+    this.camera.position.copy(this.currentPosition);
+    this.camera.lookAt(this.currentTarget);
   }
 
   cycleMode() {
@@ -173,7 +188,7 @@ export class CameraController {
   }
 
   update(dt, targetMesh, physics) {
-    if (!targetMesh) return;
+    if (!targetMesh || this.externalOverride) return;
 
     // FOV Speed Warp (scales dynamically up to 399 km/h + Nitro Super Mode)
     if (this.mode !== CAMERA_MODES.SHOWROOM && physics) {

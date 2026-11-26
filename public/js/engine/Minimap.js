@@ -97,6 +97,25 @@ export class Minimap {
     this.ctx.fillStyle = '#ff0055';
     this.ctx.fillRect(startPt.x - 3, startPt.y - 3, 6, 6);
 
+    // 3b. Pure Veg Café & Restaurant Date Destinations
+    if (this.track.dateVenues) {
+      Object.values(this.track.dateVenues).forEach((v) => {
+        if (!v?.parkingPos) return;
+        const vp = this.worldToCanvas(v.parkingPos.x, v.parkingPos.z);
+        const isSel = v.id === this.track.activeDateVenueId;
+        this.ctx.save();
+        this.ctx.fillStyle = isSel ? '#ff4d88' : '#ffd166';
+        if (isSel) {
+          this.ctx.shadowColor = '#ff4d88';
+          this.ctx.shadowBlur = 8;
+        }
+        this.ctx.beginPath();
+        this.ctx.arc(vp.x, vp.y, isSel ? 4.5 : 3.0, 0, Math.PI * 2);
+        this.ctx.fill();
+        this.ctx.restore();
+      });
+    }
+
     // 4. Draw Opponent / Bot Blips
     opponents.forEach((opp) => {
       if (!opp || !opp.car) return;

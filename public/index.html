@@ -362,10 +362,17 @@
        2b. PERSONALIZED COUPLE CRUISE MODAL
   ========================================= -->
   <div id="modal-date" class="modal-overlay hidden" style="z-index: 58;">
-    <div class="modal-card glass-panel" style="width: 560px; border-color: rgba(255, 77, 136, 0.45);">
-      <div class="modal-title" style="color: #ff6b9d;">💐 SCENIC COUPLE DATE CRUISE</div>
+    <div class="modal-card glass-panel" style="width: 620px; max-width:95vw; max-height:92vh; overflow-y:auto; border-color: rgba(255, 77, 136, 0.45);">
+      <div class="modal-title" style="color: #ff6b9d;">💐 ROMANTIC PURE-VEG DATE CRUISE</div>
       <div style="font-size:12px; color:var(--text-muted); text-align:center;">
-        Customize couple names, 3D car characters, rose bouquets, satin ribbons, glowing candles &amp; illuminated heart boards for both your car and the Candlelight Pavilion!
+        Drive together to your chosen 100% Pure Veg Café or Restaurant (including our favorite <strong>Shah Rasoi ★</strong>), open her car door at arrival, dine, celebrate, sing duets &amp; slow-dance!
+      </div>
+
+      <div class="settings-panel" style="border-color: rgba(255, 77, 136, 0.25);">
+        <div style="font-size:11px; font-weight:800; color:#4ade80; letter-spacing:0.8px; margin-bottom:6px;">
+          🌿 PICK DATE DESTINATION (100% PURE VEG CAFÉS &amp; RESTAURANTS)
+        </div>
+        <div id="date-venue-cards" class="date-venue-grid"></div>
       </div>
 
       <div class="settings-panel" style="border-color: rgba(255, 77, 136, 0.25);">
@@ -740,6 +747,23 @@
 
     <!-- Center Alerts & Voice Command Pill -->
     <div class="hud-center-alerts">
+      <div id="hud-date-nav-pill" class="hud-date-nav-pill glass-panel interactive hidden">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center;">
+          <span id="hud-date-venue-label" style="font-family:'Orbitron'; font-size:11px; font-weight:800; color:#ff8cb8;">❤️ SHAH RASOI ★</span>
+          <span class="pure-veg-badge">100% PURE VEG</span>
+          <span id="hud-date-dist-label" style="font-family:'Orbitron'; font-size:11px; color:#ffd166;">140m ↗</span>
+          <select id="hud-date-venue-select" class="settings-select" style="width:auto; min-width:140px; padding:3px 8px; font-size:11px;">
+            <option value="shah_rasoi">★ Shah Rasoi (Favorite)</option>
+            <option value="velvet_brew">Velvet Brew Café</option>
+            <option value="moonlight_courtyard">Moonlight Courtyard</option>
+            <option value="rosewood_bistro">Rosewood Bistro</option>
+          </select>
+          <button id="btn-hud-park-cafe" type="button" class="cyber-btn cyber-btn-love" style="padding:4px 10px; font-size:10px;">
+            🅿️ PARK &amp; OPEN HER DOOR
+          </button>
+        </div>
+      </div>
+
       <div id="hud-voice-pill" class="hud-voice-pill glass-panel hidden">
         <span class="voice-pulse-dot"></span>
         <span id="hud-voice-title" style="font-family:'Orbitron'; font-weight:800; color:var(--primary-neon);">VOICE</span>
@@ -849,6 +873,51 @@
         <button id="touch-brake" class="touch-btn touch-pedal touch-brake">BRAKE</button>
         <button id="touch-gas" class="touch-btn touch-pedal touch-gas">GAS</button>
       </div>
+    </div>
+  </div>
+
+  <!-- =========================================
+       8b. ROMANTIC PURE-VEG CAFÉ DINING, SING & DANCE OVERLAY
+  ========================================= -->
+  <div id="panel-date-cafe" class="ui-layer hidden">
+    <div id="date-cutscene-banner" class="date-cutscene-banner glass-panel hidden">
+      <span id="date-cutscene-text">💖 Opening car door &amp; walking into the Pure Veg Café...</span>
+      <button id="btn-date-skip-walk" type="button" class="cyber-btn cyber-btn-love" style="padding:5px 12px; font-size:11px;">SKIP TO TABLE ▸</button>
+    </div>
+
+    <div id="date-cafe-studio" class="date-cafe-studio glass-panel hidden">
+      <div class="date-cafe-header">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span id="cafe-studio-title" style="font-family:'Orbitron'; font-size:15px; font-weight:900; color:#ff8cb8;">SHAH RASOI ★</span>
+            <span class="pure-veg-badge">100% PURE VEG</span>
+            <span id="cafe-studio-fav-badge" class="fav-heart-badge">♥ OUR FAVORITE</span>
+          </div>
+          <div id="cafe-studio-sub" style="font-size:11px; color:var(--text-muted); margin-top:2px;">
+            Aarav ♥ Meera • Royal Candlelit Dining Table
+          </div>
+        </div>
+        <button id="btn-date-back-car" type="button" class="cyber-btn cyber-btn-secondary" style="padding:7px 14px; font-size:11px;">
+          🚗 BACK TO CAR
+        </button>
+      </div>
+
+      <div id="date-lyric-bubble" class="date-lyric-bubble hidden">
+        <div id="date-lyric-song" style="font-size:10px; font-weight:800; color:#ffd166;">🎤 SINGING DUET</div>
+        <div id="date-lyric-line" style="font-size:13px; font-weight:700; color:#fff;">♫ ...</div>
+      </div>
+
+      <div class="date-actions-row">
+        <button id="btn-date-celebrate" type="button" class="cyber-btn cyber-btn-gold">🥂 CELEBRATE &amp; TOAST</button>
+        <button id="btn-date-sing" type="button" class="cyber-btn cyber-btn-love">🎤 SING DUET</button>
+        <button id="btn-date-dance" type="button" class="cyber-btn cyber-btn-primary">💃 SLOW DANCE</button>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; font-weight:800; color:var(--text-muted); margin-top:4px;">
+        <span>🍽️ ORDER PURE VEG DISHES TO YOUR TABLE</span>
+        <span id="cafe-ordered-count" style="color:#4ade80;">Served: 0 items</span>
+      </div>
+      <div id="date-cafe-menu-grid" class="date-cafe-menu-grid"></div>
     </div>
   </div>
 

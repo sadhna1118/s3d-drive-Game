@@ -872,6 +872,10 @@ export class CarBuilder {
           dateAnimState.partnerHead.rotation.y = 0.18 + Math.sin(t * 0.18) * 0.12 - steeringAngle * 0.4;
         }
       },
+      setCrewSeatedVisible: (showDriver = true, showPartner = true) => {
+        if (dateAnimState.driverCrewRoot) dateAnimState.driverCrewRoot.visible = !!showDriver;
+        if (dateAnimState.partnerCrewRoot) dateAnimState.partnerCrewRoot.visible = !!showPartner;
+      },
       characterMode,
       hasPartner: !!dateAnimState.partnerHead
     };
@@ -1031,7 +1035,10 @@ export class CarBuilder {
 
     const createRealisticPerson = (xPos, isPartner) => {
       const personRoot = new THREE.Group();
+      personRoot.name = isPartner ? 'cabin_partner' : 'cabin_driver';
       personRoot.position.set(xPos, seatY, seatZ);
+      if (isPartner) animState.partnerCrewRoot = personRoot;
+      else animState.driverCrewRoot = personRoot;
       const skinM = isPartner ? skinMatB : skinMatA;
 
       addBucketSeat(personRoot);
