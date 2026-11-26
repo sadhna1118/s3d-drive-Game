@@ -1,6 +1,8 @@
 # ⚡ S3D Drive – 3D Web Racing & Open World Driving
 
-**🌐 Play Live:** https://s3d-drive-game-1.onrender.com
+[![Live Preview](https://img.shields.io/badge/LIVE%20PREVIEW-%E2%96%B6%20PLAY%20NOW-00b4d8?style=for-the-badge)](https://s3d-drive-game-1.onrender.com)
+
+> **Live Game URL:** [https://s3d-drive-game-1.onrender.com](https://s3d-drive-game-1.onrender.com)
 
 > **3D High-Performance Browser Racing Game featuring 10 Sculpted & Real GLB Vehicles, Unified Real-Time New Delhi Open World, Realistic Model-Specific Engine Acoustics, Horn & Indicator FX, Local Music + Live Indian FM Radio, Cinematic Crash Physics, and Real-Time Socket.IO Multiplayer.**
 
