@@ -1,6 +1,6 @@
 /**
  * Velocity Rush: Neon Rebellion - High-Res Photo Mode & Screenshot Exporter
- * Free orbit camera, FOV/Bloom tuning, and watermarked PNG export.
+ * Free orbit camera, FOV tuning, touch/mouse drag, and watermarked PNG export.
  */
 
 export class PhotoModeManager {
@@ -11,8 +11,8 @@ export class PhotoModeManager {
 
     this.isActive = false;
     this.orbitRadius = 6.5;
-    this.orbitTheta = 0; // horizontal angle
-    this.orbitPhi = 0.3; // vertical angle
+    this.orbitTheta = 0.4;
+    this.orbitPhi = 0.32;
     this.targetPos = new THREE.Vector3();
 
     this.isDragging = false;
@@ -32,12 +32,13 @@ export class PhotoModeManager {
 
   exit() {
     this.isActive = false;
+    this.isDragging = false;
   }
 
   initMouseControls() {
     window.addEventListener('mousedown', (e) => {
       if (!this.isActive) return;
-      if (e.target.closest('.interactive') && !e.target.closest('#canvas-container')) return;
+      if (e.target.closest('.photo-mode-overlay')) return;
       this.isDragging = true;
       this.prevMouseX = e.clientX;
       this.prevMouseY = e.clientY;
@@ -51,8 +52,7 @@ export class PhotoModeManager {
       this.prevMouseY = e.clientY;
 
       this.orbitTheta -= dx * 0.008;
-      this.orbitPhi = THREE.MathUtils.clamp(this.orbitPhi + dy * 0.008, 0.05, Math.PI / 2 - 0.1);
-
+      this.orbitPhi = THREE.MathUtils.clamp(this.orbitPhi + dy * 0.008, 0.06, Math.PI / 2 - 0.1);
       this.updateCamera();
     });
 
@@ -62,7 +62,7 @@ export class PhotoModeManager {
 
     window.addEventListener('wheel', (e) => {
       if (!this.isActive) return;
-      this.orbitRadius = THREE.MathUtils.clamp(this.orbitRadius + e.deltaY * 0.005, 3.0, 16.0);
+      this.orbitRadius = THREE.MathUtils.clamp(this.orbitRadius + e.deltaY * 0.005, 3.0, 18.0);
       this.updateCamera();
     });
   }
@@ -82,12 +82,9 @@ export class PhotoModeManager {
   }
 
   captureScreenshot() {
-    // Render high quality frame
     this.renderer.render();
-
     const canvas = this.renderer.renderer.domElement;
 
-    // Create export canvas to watermark
     const exportCanvas = document.createElement('canvas');
     exportCanvas.width = canvas.width;
     exportCanvas.height = canvas.height;
@@ -95,23 +92,26 @@ export class PhotoModeManager {
 
     ctx.drawImage(canvas, 0, 0);
 
-    // Draw Sleek Watermark Banner
-    ctx.fillStyle = 'rgba(6, 10, 18, 0.6)';
-    ctx.roundRect(exportCanvas.width - 340, exportCanvas.height - 70, 310, 50, 8);
+    const bx = exportCanvas.width - 340;
+    const by = exportCanvas.height - 70;
+    ctx.fillStyle = 'rgba(6, 10, 18, 0.72)';
+    ctx.beginPath();
+    ctx.roundRect(bx, by, 310, 50, 8);
     ctx.fill();
+
     ctx.strokeStyle = '#00f0ff';
     ctx.lineWidth = 2;
-    ctx.roundRect(exportCanvas.width - 340, exportCanvas.height - 70, 310, 50, 8);
+    ctx.beginPath();
+    ctx.roundRect(bx, by, 310, 50, 8);
     ctx.stroke();
 
     ctx.fillStyle = '#00f0ff';
     ctx.font = 'bold 20px Orbitron, sans-serif';
-    ctx.fillText('S3D DRIVE', exportCanvas.width - 325, exportCanvas.height - 40);
+    ctx.fillText('S3D DRIVE', bx + 15, by + 26);
     ctx.fillStyle = '#ff0055';
     ctx.font = 'bold 12px Orbitron, sans-serif';
-    ctx.fillText('3D SPEED RACER', exportCanvas.width - 325, exportCanvas.height - 25);
+    ctx.fillText('3D SPEED RACER', bx + 15, by + 42);
 
-    // Trigger download
     const link = document.createElement('a');
     link.download = `S3D_Drive_Photo_${Date.now()}.png`;
     link.href = exportCanvas.toDataURL('image/png');

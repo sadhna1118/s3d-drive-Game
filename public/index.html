@@ -11,6 +11,8 @@
 
   <!-- Three.js & Post-Processing (Self-Contained Offline/Online Local Libs) -->
   <script src="libs/three.min.js"></script>
+  <script src="libs/DRACOLoader.js"></script>
+  <script src="libs/GLTFLoader.js"></script>
   <script src="libs/Pass.js"></script>
   <script src="libs/CopyShader.js"></script>
   <script src="libs/LuminosityHighPassShader.js"></script>
@@ -35,7 +37,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(errData)
-        });
+        }).catch(function() {});
       } catch (err) {}
 
       var box = document.getElementById('debug-error-box');
@@ -59,7 +61,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(errData)
-        });
+        }).catch(function() {});
       } catch (err) {}
     });
 
@@ -126,13 +128,16 @@
           🟢 READY
         </button>
         <button id="btn-open-tuning" class="cyber-btn cyber-btn-ghost" style="padding:6px 14px; font-size:11px;">
-          🔧 TUNING
+          🔧 EQUIPMENTS
         </button>
         <button id="btn-open-career" class="cyber-btn cyber-btn-ghost" style="padding:6px 14px; font-size:11px;">
           👑 CAREER
         </button>
         <button id="btn-open-achievements" class="cyber-btn cyber-btn-ghost" style="padding:6px 14px; font-size:11px;">
           🏆 BADGES
+        </button>
+        <button id="btn-open-settings" class="cyber-btn cyber-btn-ghost" style="padding:6px 14px; font-size:11px;">
+          ⚙️ SETTINGS
         </button>
 
         <div class="player-profile-tag glass-panel">
@@ -142,9 +147,10 @@
       </div>
     </header>
 
-    <!-- Center Carousel Arrows -->
+    <!-- Center Carousel Arrows + Orbit Hint -->
     <div class="garage-center-nav">
       <button id="btn-prev-car" class="cyber-btn cyber-btn-ghost nav-arrow-btn">◀</button>
+      <div class="showroom-orbit-hint">🖱️ DRAG TO ORBIT • SCROLL TO ZOOM</div>
       <button id="btn-next-car" class="cyber-btn cyber-btn-ghost nav-arrow-btn">▶</button>
     </div>
 
@@ -152,9 +158,9 @@
     <div class="garage-bottom-container">
       <!-- Car Specs Card -->
       <div class="car-details-card glass-panel">
-        <div id="garage-car-type" class="car-type-badge">GT SUPERCAR</div>
-        <div id="garage-car-name" class="car-title">HYPERION GT3</div>
-        <div id="garage-car-desc" class="car-desc">Twin-turbo precision racer with balanced high-speed downforce.</div>
+        <div id="garage-car-type" class="car-type-badge">REAL 3D GLB • ITALIAN SUPERCAR</div>
+        <div id="garage-car-name" class="car-title">FERRARI 458 ITALIA</div>
+        <div id="garage-car-desc" class="car-desc">High-detail real 3D Ferrari 458 Italia model with naturally aspirated V8 speed & crisp cornering.</div>
 
         <div class="stat-row">
           <div class="stat-label-row"><span>TOP SPEED</span></div>
@@ -179,7 +185,8 @@
         <div class="customizer-box glass-panel">
           <div class="palette-label">METALLIC LIVERY & UNDERGLOW</div>
           <div class="color-chips-row">
-            <div class="color-chip active" data-color="#00f0ff" style="background:#00f0ff;"></div>
+            <div class="color-chip active" data-color="#ff0022" style="background:#ff0022;"></div>
+            <div class="color-chip" data-color="#00f0ff" style="background:#00f0ff;"></div>
             <div class="color-chip" data-color="#ff0055" style="background:#ff0055;"></div>
             <div class="color-chip" data-color="#ffaa00" style="background:#ffaa00;"></div>
             <div class="color-chip" data-color="#00ff88" style="background:#00ff88;"></div>
@@ -188,13 +195,56 @@
             <div class="color-chip" data-color="#ff3300" style="background:#ff3300;"></div>
           </div>
 
-          <div style="display:flex; justify-content:space-between; width:100%; margin-top:2px;">
+          <div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap:6px; width:100%; margin-top:2px;">
+            <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
+              <span class="palette-label">FINISH</span>
+              <div class="chips-row">
+                <div class="finish-chip active" data-finish="metallic">METALLIC</div>
+                <div class="finish-chip" data-finish="gloss">GLOSS</div>
+                <div class="finish-chip" data-finish="matte">MATTE</div>
+                <div class="finish-chip" data-finish="chrome">CHROME</div>
+              </div>
+            </div>
             <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
               <span class="palette-label">RIMS</span>
               <div class="rim-chips-row">
                 <div class="rim-chip active" data-rim="0">SPORT</div>
                 <div class="rim-chip" data-rim="1">TURBINE</div>
                 <div class="rim-chip" data-rim="2">MESH</div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
+              <span class="palette-label">SPOILER WING</span>
+              <div class="chips-row">
+                <div class="spoiler-chip active" data-spoiler="0">STOCK</div>
+                <div class="spoiler-chip" data-spoiler="1">GT LIP</div>
+                <div class="spoiler-chip" data-spoiler="2">GT3 WING</div>
+                <div class="spoiler-chip" data-spoiler="3">CLEAN</div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
+              <span class="palette-label">AERO KIT</span>
+              <div class="chips-row">
+                <div class="aero-chip active" data-aero="0">OEM</div>
+                <div class="aero-chip" data-aero="1">SPLITTER</div>
+                <div class="aero-chip" data-aero="2">PRO AERO</div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
+              <span class="palette-label">HEADLIGHTS</span>
+              <div class="chips-row">
+                <div class="headlight-chip active" data-headlight="0">XENON</div>
+                <div class="headlight-chip" data-headlight="1">LASER</div>
+                <div class="headlight-chip" data-headlight="2">GT3</div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
+              <span class="palette-label">CALIPERS</span>
+              <div class="chips-row">
+                <div class="caliper-chip active" data-caliper="0">RED</div>
+                <div class="caliper-chip" data-caliper="1">GOLD</div>
+                <div class="caliper-chip" data-caliper="2">CYAN</div>
+                <div class="caliper-chip" data-caliper="3">LIME</div>
               </div>
             </div>
             <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
@@ -205,25 +255,62 @@
                 <div class="underglow-chip" data-mode="static">STATIC</div>
               </div>
             </div>
+            <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
+              <span class="palette-label">WINDOW TINT</span>
+              <div class="tint-chips-row">
+                <div class="tint-chip active" data-tint="0">DARK</div>
+                <div class="tint-chip" data-tint="1">CYAN</div>
+                <div class="tint-chip" data-tint="2">GOLD</div>
+                <div class="tint-chip" data-tint="3">CLEAR</div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
+              <span class="palette-label">GARAGE CABIN CREW</span>
+              <div class="chips-row">
+                <div class="crew-chip active" data-crew="couple">COUPLE</div>
+                <div class="crew-chip" data-crew="driver_only">ONLY DRIVER</div>
+                <div class="crew-chip" data-crew="none">EMPTY</div>
+              </div>
+            </div>
+            <div style="display:flex; justify-content:center; gap:6px; flex-wrap:wrap; width:100%; margin-top:2px;">
+              <button id="btn-open-date-setup" class="cyber-btn cyber-btn-secondary" style="padding:4px 10px; font-size:10px; border-color:#ff4d88; color:#ff9ec2;">
+                💐 DATE DECOR &amp; NAMES
+              </button>
+              <button id="btn-open-music-studio" class="cyber-btn cyber-btn-secondary" style="padding:4px 10px; font-size:10px; border-color:#00f0ff; color:#7deeff;">
+                🎵 LIVE RADIO &amp; SONGS
+              </button>
+              <button id="btn-import-glb" class="cyber-btn cyber-btn-ghost" style="padding:4px 10px; font-size:10px;">
+                📦 IMPORT .GLB
+              </button>
+              <input type="file" id="input-import-glb" accept=".glb,.gltf" class="hidden">
+            </div>
           </div>
         </div>
 
-        <!-- 5 Worlds Selector -->
-        <div class="track-weather-bar">
+        <!-- 6 Delhi Climates & Real-Time Weather Selector -->
+        <div class="track-weather-bar" style="flex-direction:column; gap:4px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+            <span class="palette-label">DELHI REAL-TIME CLIMATE &amp; WEATHER</span>
+            <span id="garage-climate-badge" style="font-family:'Orbitron'; font-size:9px; color:#ffd166;">LIVE DELHI SKY</span>
+          </div>
           <select id="garage-track-select">
-            <option value="neon_city">🏙️ 1. Neon City (Night Circuit)</option>
-            <option value="cyber_rain">🌧️ 2. Cyber City (Rain & Thunder)</option>
-            <option value="cyber_desert">🏜️ 3. Cyber Desert (Sandstorm)</option>
-            <option value="space_ring">🌌 4. Space Ring (Low-Gravity)</option>
-            <option value="industrial_core">🏭 5. Industrial Core (Hazards)</option>
+            <option value="delhi_live" selected>🇮🇳 1. Live Real-Time Delhi (Current Sky, Parks &amp; Forests)</option>
+            <option value="delhi_sunny">☀️ 2. Sunny Delhi Day (India Gate, Lodhi Park &amp; Ridge Forest)</option>
+            <option value="delhi_sunset">🌅 3. Delhi Golden Sunset (Romantic Dusk Skyline)</option>
+            <option value="delhi_monsoon">🌧️ 4. Delhi Monsoon Rain (Wet Reflective Puddles &amp; Storm)</option>
+            <option value="delhi_fog">🌫️ 5. Delhi Winter Fog (November Forest &amp; City Mist)</option>
+            <option value="delhi_night">🌙 6. Midnight Delhi (Floodlights, Metro &amp; Candles)</option>
           </select>
         </div>
       </div>
 
-      <!-- 5 Game Mode Launchers -->
+      <!-- Game Mode Launchers -->
       <div class="play-actions-card glass-panel">
         <button id="btn-mode-gp" class="cyber-btn cyber-btn-primary start-race-hero-btn">
-          🏁 START RACE (GRAND PRIX)
+          🏁 START RACE (NEW DELHI GP)
+        </button>
+        <button id="btn-mode-date" class="cyber-btn cyber-btn-love">
+          ❤️ GO ON A DELHI DATE (COUPLE CRUISE)
         </button>
         <button id="btn-mode-drift" class="cyber-btn cyber-btn-gold">
           🔥 DRIFT ARENA
@@ -245,16 +332,140 @@
   </div>
 
   <!-- =========================================
-       2. PERFORMANCE TUNING SHOP MODAL
+       2. PERFORMANCE TUNING & EQUIPMENTS WORKSHOP MODAL
   ========================================= -->
   <div id="modal-tuning" class="modal-overlay hidden">
-    <div class="modal-card glass-panel">
-      <div class="modal-title">🔧 PERFORMANCE TUNING SHOP</div>
-      <div style="font-size:12px; color:var(--text-muted); text-align:center;">Upgrade Engine, Turbo, Tires, and Nitro to dominate the AI Rivals.</div>
+    <div class="modal-card glass-panel" style="width: 780px;">
+      <div class="modal-title">🔧 MOTORSPORT EQUIPMENTS & WORKSHOP</div>
+      <div style="font-size:12px; color:var(--text-muted); text-align:center;">Install pro race hardware across Engine, Turbo, Gearbox, Suspension, Carbon Brakes, Chassis, Tires, and Nitrous ERS.</div>
       
       <div id="tuning-cards-container" class="tuning-grid"></div>
 
       <button class="cyber-btn cyber-btn-ghost btn-close-modal" style="margin-top:6px;">BACK TO GARAGE</button>
+    </div>
+  </div>
+
+  <!-- =========================================
+       2b. PERSONALIZED COUPLE & DELHI DATE MODAL
+  ========================================= -->
+  <div id="modal-date" class="modal-overlay hidden" style="z-index: 58;">
+    <div class="modal-card glass-panel" style="width: 560px; border-color: rgba(255, 77, 136, 0.45);">
+      <div class="modal-title" style="color: #ff6b9d;">💐 PERSONALIZED DELHI COUPLE DATE</div>
+      <div style="font-size:12px; color:var(--text-muted); text-align:center;">
+        Customize couple names, 3D car characters, rose bouquets, satin ribbons, glowing candles &amp; illuminated heart boards for both your car and the Lodhi Candlelight Pavilion!
+      </div>
+
+      <div class="settings-panel" style="border-color: rgba(255, 77, 136, 0.25);">
+        <div class="settings-grid">
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">DRIVER NAME (PARTNER 1)</span>
+            <input type="text" id="date-name-1" maxlength="16" class="settings-select" style="cursor:text;" value="Aarav" placeholder="Your Name">
+          </div>
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">DATE NAME (PARTNER 2)</span>
+            <input type="text" id="date-name-2" maxlength="16" class="settings-select" style="cursor:text;" value="Meera" placeholder="Partner Name">
+          </div>
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">CAR DATE DECORATIONS</span>
+            <select id="date-decor-select" class="settings-select">
+              <option value="romance" selected>Full Pack (Roses, Ribbons, Candles, Fairy Lights &amp; Heart Board)</option>
+              <option value="candlelight">Candlelight Night (Candles, Fairy Lights &amp; Heart Board)</option>
+              <option value="elegant">Classic Bouquets &amp; Custom Heart Board</option>
+              <option value="off">Off (Clean Car Exterior)</option>
+            </select>
+          </div>
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">3D CHARACTERS IN CAR</span>
+            <select id="date-chars-select" class="settings-select">
+              <option value="couple" selected>Couple Inside Cabin (Driver + Partner)</option>
+              <option value="driver_only">Only Driver Mode (Solo Driver)</option>
+              <option value="none">Empty Cabin (Hidden)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="date-board-preview" class="date-board-preview">
+          ♥ AARAV ♥ MEERA — DELHI DATE BOARD ♥
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
+        <button type="button" id="btn-save-date-setup" class="cyber-btn cyber-btn-secondary">💾 APPLY DECOR IN GARAGE</button>
+        <button type="button" id="btn-start-date-cruise" class="cyber-btn cyber-btn-love">🚗 START DELHI DATE CRUISE</button>
+      </div>
+      <button type="button" class="cyber-btn cyber-btn-ghost btn-close-modal">CLOSE</button>
+    </div>
+  </div>
+
+  <!-- =========================================
+       2c. CAR STEREO: LIVE INTERNET RADIO & DEVICE MUSIC MODAL
+  ========================================= -->
+  <div id="modal-music" class="modal-overlay hidden" style="z-index: 62;">
+    <div class="modal-card glass-panel" style="width: 680px; max-width:94vw; max-height: 90vh; overflow-y:auto;">
+      <div class="modal-title" style="color: var(--primary-neon);">🎵 S3D CAR STEREO • LIVE RADIO &amp; DEVICE MUSIC</div>
+
+      <!-- Now Playing Player Deck -->
+      <div class="music-player-deck">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <span id="music-status-badge" class="music-badge">🎹 SYNTH RADIO READY</span>
+          <span id="music-time-label" style="font-family:'Orbitron'; font-size:11px; color:var(--text-muted);">--:-- / --:--</span>
+        </div>
+        <div id="music-now-title" style="font-family:'Orbitron'; font-size:15px; font-weight:800; color:#fff; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+          📻 Delhi Nightwave
+        </div>
+        <div id="music-now-sub" style="font-size:12px; color:var(--text-muted); margin-bottom:6px;">
+          Dark Synthwave
+        </div>
+        <input type="range" id="music-seek-slider" class="settings-slider" min="0" max="1000" value="0" style="width:100%;">
+        <div style="display:flex; justify-content:center; flex-wrap:wrap; gap:8px; margin-top:8px;">
+          <button type="button" id="music-btn-prev" class="cyber-btn cyber-btn-ghost" style="padding:6px 14px; font-size:12px;">⏮ PREV</button>
+          <button type="button" id="music-btn-playpause" class="cyber-btn cyber-btn-primary" style="padding:6px 22px; font-size:12px;">⏯ PLAY / PAUSE</button>
+          <button type="button" id="music-btn-next" class="cyber-btn cyber-btn-ghost" style="padding:6px 14px; font-size:12px;">NEXT ⏭</button>
+        </div>
+        <div style="display:flex; justify-content:center; gap:8px; margin-top:8px;">
+          <button type="button" id="music-btn-mute-sfx" class="cyber-btn cyber-btn-ghost" style="padding:5px 12px; font-size:11px;">🏎️ CAR SOUND: ON</button>
+          <button type="button" id="music-btn-mute-music" class="cyber-btn cyber-btn-ghost" style="padding:5px 12px; font-size:11px;">🎵 MUSIC: ON</button>
+        </div>
+      </div>
+
+      <!-- Upload / Direct Play From Device -->
+      <div class="settings-panel">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <span style="font-family:'Orbitron'; font-size:11px; font-weight:800; color:var(--accent-gold);">📁 PLAY DIRECTLY FROM YOUR DEVICE (MP3 / WAV / M4A / OGG)</span>
+          <button type="button" id="music-btn-clear-local" class="cyber-btn cyber-btn-ghost" style="padding:3px 8px; font-size:10px;">CLEAR LIST</button>
+        </div>
+        <div id="music-dropzone" class="music-dropzone">
+          <div style="font-size:12px; font-weight:700; color:#e2e8f0;">Drag &amp; Drop Songs Here OR Pick Files From Your Phone / PC</div>
+          <button type="button" id="btn-upload-device-music" class="cyber-btn cyber-btn-gold" style="padding:6px 14px; font-size:11px;">
+            📂 CHOOSE SONGS FROM DEVICE
+          </button>
+          <input type="file" id="input-device-music" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.flac" multiple class="hidden">
+        </div>
+        <div id="music-playlist-list" class="music-playlist-list"></div>
+      </div>
+
+      <!-- Live Internet Radio Stations + Custom Stream URL -->
+      <div class="settings-panel">
+        <div style="font-family:'Orbitron'; font-size:11px; font-weight:800; color:#ff6b9d; margin-bottom:6px;">🇮🇳 INDIAN LIVE FM STATIONS (BIG FM, RED FM, MIRCHI, CITY &amp; MORE)</div>
+        <div id="music-live-stations-grid" class="music-stations-grid"></div>
+
+        <div style="font-family:'Orbitron'; font-size:11px; font-weight:800; color:#ffd166; margin-top:10px; margin-bottom:6px;">🔎 BROWSE ALL LIVE INDIAN RADIOS (SEARCH ANY STATION / LANGUAGE)</div>
+        <div style="display:flex; gap:6px; margin-bottom:6px;">
+          <input type="text" id="music-india-search" class="settings-select" style="flex:1; cursor:text; font-size:11px;" placeholder="Search Indian FM (e.g. Big FM, Red FM, Mirchi, Punjabi, Hindi, Sufi)">
+          <button type="button" id="btn-search-india-fm" class="cyber-btn cyber-btn-gold" style="padding:5px 12px; font-size:11px;">LOAD INDIAN FMs</button>
+        </div>
+        <div id="music-india-dir-grid" class="music-stations-grid" style="max-height:130px; overflow-y:auto;"></div>
+
+        <div style="display:flex; gap:6px; margin-top:8px;">
+          <input type="url" id="music-custom-stream-url" class="settings-select" style="flex:1; cursor:text; font-size:11px;" placeholder="Optional: Paste any Live Radio URL (https://.../stream.mp3)">
+          <button type="button" id="btn-play-custom-stream" class="cyber-btn cyber-btn-secondary" style="padding:5px 12px; font-size:11px;">TUNE URL</button>
+        </div>
+
+        <div style="font-family:'Orbitron'; font-size:11px; font-weight:800; color:var(--primary-neon); margin-top:10px; margin-bottom:6px;">🎹 BUILT-IN IN-CAR RADIO (OFFLINE READY)</div>
+        <div id="music-synth-stations-grid" class="music-stations-grid"></div>
+      </div>
+
+      <button type="button" class="cyber-btn cyber-btn-ghost btn-close-modal">DONE / BACK</button>
     </div>
   </div>
 
@@ -441,6 +652,11 @@
        8. IN-GAME RACING HUD & RIVALS
   ========================================= -->
   <div id="screen-hud" class="ui-layer hidden">
+    <div id="cinema-bars" class="cinema-letterbox hidden">
+      <div class="cinema-bar-top"></div>
+      <div class="cinema-bar-bottom"></div>
+    </div>
+    <div id="hud-speedlines" class="hud-speedlines-overlay"></div>
     <!-- Top Bar -->
     <div class="hud-top-bar">
       <!-- Position & Lap Counter -->
@@ -461,19 +677,30 @@
           <span id="hud-time-current" class="hud-timer-main">00:00.00</span>
           <span class="hud-timer-best">BEST: <span id="hud-time-best">--:--.--</span></span>
         </div>
-        <div id="hud-btn-radio" class="hud-radio-widget glass-panel interactive" title="Click to Change Radio Station">
-          <span id="hud-radio-name">📻 Cyberwave 2077</span>
+        <div style="display:flex; align-items:center; gap:5px;">
+          <div id="hud-btn-radio" class="hud-radio-widget glass-panel interactive" title="Click to Switch Radio / Next Track">
+            <span id="hud-radio-name">📻 Delhi Nightwave</span>
+          </div>
+          <button id="hud-btn-open-music" class="cyber-btn cyber-btn-ghost hud-icon-btn interactive" style="height:26px; font-size:12px;" title="Open Car Stereo (Live Radio & Device Songs)">🎛️</button>
         </div>
       </div>
 
       <!-- Top Right Controls -->
       <div class="hud-top-controls interactive">
+        <div id="hud-fps-pill" class="hud-stat-pill glass-panel hidden" style="padding: 4px 10px; font-family:'Orbitron'; font-size:11px; font-weight:800; color:var(--accent-green);">
+          60 FPS
+        </div>
+        <div id="hud-climate-pill" class="hud-stat-pill glass-panel" style="padding: 4px 10px; font-family:'Orbitron'; font-size:10px; font-weight:800; color:#ffd166;">
+          🇮🇳 DELHI LIVE
+        </div>
         <div id="hud-mode-badge" class="hud-stat-pill glass-panel" style="padding: 4px 10px; font-family:'Orbitron'; font-size:11px; font-weight:800; color:var(--accent-gold);">
           GRAND PRIX
         </div>
+        <button id="hud-btn-climate" class="cyber-btn cyber-btn-ghost hud-icon-btn" title="Switch Delhi Weather &amp; Time">🌦️</button>
         <button id="hud-btn-voice" class="cyber-btn cyber-btn-ghost hud-icon-btn voice-mic-btn" title="Toggle Voice Driving (V)">🎙️</button>
         <button id="hud-btn-cam" class="cyber-btn cyber-btn-ghost hud-icon-btn" title="Change Camera (C)">🎥</button>
-        <button id="hud-btn-mute" class="cyber-btn cyber-btn-ghost hud-icon-btn" title="Mute Audio (M)"><span id="mute-icon">🔊</span></button>
+        <button id="hud-btn-mute-sfx" class="cyber-btn cyber-btn-ghost hud-audio-toggle-btn" title="Car Engine &amp; SFX ON/OFF (M)"><span id="sfx-mute-icon">🏎️🔊</span><span>CAR</span></button>
+        <button id="hud-btn-mute-music" class="cyber-btn cyber-btn-ghost hud-audio-toggle-btn" title="Music &amp; Radio ON/OFF (B)"><span id="music-mute-icon">🎵🔊</span><span>MUSIC</span></button>
         <button id="hud-btn-pause" class="cyber-btn cyber-btn-ghost hud-icon-btn" title="Pause Game (ESC)">⏸</button>
       </div>
     </div>
@@ -498,7 +725,16 @@
       <div id="hud-knockout-box" class="hud-wrong-way-alert hidden" style="border-color:var(--accent-gold); color:var(--accent-gold); background:rgba(255,170,0,0.2);">
         ELIMINATION IN: <span id="hud-knockout-timer">30</span>s
       </div>
-      <div id="hud-countdown" class="hud-countdown-overlay hidden"><span id="hud-countdown-text">3</span></div>
+      <div id="hud-countdown" class="hud-countdown-overlay hidden">
+        <div id="hud-start-lights" class="start-lights-gantry">
+          <span class="start-light-bulb"></span>
+          <span class="start-light-bulb"></span>
+          <span class="start-light-bulb"></span>
+          <span class="start-light-bulb"></span>
+          <span class="start-light-bulb"></span>
+        </div>
+        <span id="hud-countdown-text">3</span>
+      </div>
       <div id="hud-drift-box" class="hud-drift-popup glass-panel hidden">
         <span class="drift-badge">DRIFT</span>
         <span id="hud-drift-score" class="drift-points">1,240</span>
@@ -513,12 +749,37 @@
         <canvas id="minimap-canvas" width="140" height="140"></canvas>
       </div>
 
-      <!-- Speedometer & Tachometer Cluster -->
+      <!-- Speedometer & GT Telemetry Cluster -->
       <div class="speedometer-cluster">
+        <div id="hud-rpm-leds" class="hud-rpm-leds">
+          <span class="rpm-led"></span><span class="rpm-led"></span><span class="rpm-led"></span><span class="rpm-led"></span><span class="rpm-led"></span>
+          <span class="rpm-led"></span><span class="rpm-led"></span><span class="rpm-led"></span><span class="rpm-led"></span><span class="rpm-led"></span>
+        </div>
+
         <div class="speed-dial-box">
           <span id="hud-speed-val" class="speed-val">0</span>
-          <span class="speed-unit">KM/H</span>
-          <span id="hud-gear-val" class="gear-indicator">1</span>
+          <span id="hud-speed-unit" class="speed-unit">KM/H</span>
+          <div class="hud-gear-box interactive">
+            <button id="hud-btn-shift-down" class="hud-paddle-btn" title="Shift Down (Q)">▼</button>
+            <span id="hud-gear-val" class="gear-indicator" title="Current Gear (Q / E)">1</span>
+            <button id="hud-btn-shift-up" class="hud-paddle-btn" title="Shift Up (E)">▲</button>
+            <button id="hud-trans-mode" class="hud-trans-pill" title="Toggle Auto / Manual Transmission">AUTO</button>
+          </div>
+        </div>
+
+        <div id="hud-telemetry-strip" class="hud-telemetry-strip">
+          <span id="hud-boost-val" class="hud-tel-chip">0.0 PSI</span>
+          <span id="hud-gforce-val" class="hud-tel-chip">0.0G</span>
+          <span id="hud-lamp-abs" class="hud-assist-lamp on">ABS</span>
+          <span id="hud-lamp-tcs" class="hud-assist-lamp on">TCS</span>
+          <span id="hud-lamp-ers" class="hud-assist-lamp">ERS</span>
+        </div>
+
+        <div id="hud-fx-controls" class="hud-fx-controls interactive">
+          <button type="button" id="hud-btn-ind-left" class="hud-fx-btn" title="Left Indicator (Z)">◀</button>
+          <button type="button" id="hud-btn-hazard" class="hud-fx-btn hud-fx-hazard" title="Hazard Flashers (F)">⚠</button>
+          <button type="button" id="hud-btn-horn" class="hud-fx-btn hud-fx-horn" title="Car Horn Hold (H)">📢 HORN</button>
+          <button type="button" id="hud-btn-ind-right" class="hud-fx-btn" title="Right Indicator (X)">▶</button>
         </div>
 
         <div class="rpm-gauge-container">
@@ -526,10 +787,11 @@
         </div>
 
         <div class="nitro-gauge-container">
-          <span class="nitro-label">WARP</span>
+          <span id="hud-nitro-mode-label" class="nitro-label">TWIN-STAGE</span>
           <div class="nitro-track">
             <div id="hud-nitro-bar" class="nitro-bar-fill"></div>
           </div>
+          <span id="hud-handbrake-pill" class="hud-status-pill hidden">H-BRAKE</span>
         </div>
       </div>
 
@@ -541,7 +803,7 @@
     </div>
 
     <!-- In-Game Multiplayer Chat Drawer -->
-    <div id="chat-drawer" class="chat-drawer glass-panel">
+    <div id="chat-drawer" class="chat-drawer glass-panel hidden">
       <div id="chat-messages-list" class="chat-messages"></div>
       <div class="chat-input-row">
         <input type="text" id="chat-input" placeholder="Comms..." maxlength="100">
@@ -604,27 +866,397 @@
   </div>
 
   <!-- =========================================
-       11. PAUSE MENU MODAL
+       11. SETTINGS MODAL (PRO 4-TAB SETUP)
   ========================================= -->
-  <div id="screen-pause" class="modal-overlay hidden">
-    <div class="modal-card glass-panel" style="width:480px;">
-      <div class="modal-title">GAME PAUSED</div>
-      
-      <div style="display:flex; flex-direction:column; gap:8px;">
-        <button id="btn-pause-resume" class="cyber-btn cyber-btn-primary">RESUME RACE</button>
-        <button id="btn-pause-restart" class="cyber-btn cyber-btn-secondary">RESTART RACE</button>
-        <button id="btn-pause-quit" class="cyber-btn cyber-btn-ghost">RETURN TO GARAGE</button>
+  <div id="modal-settings" class="modal-overlay hidden" style="z-index: 60;">
+    <div class="modal-card glass-panel" style="width:680px;">
+      <div class="modal-title">⚙️ PRO SETTINGS, EQUIPMENTS & GRAPHICS</div>
+
+      <div class="settings-tabs-bar">
+        <button type="button" class="cyber-btn cyber-btn-ghost settings-tab-btn active" data-settings-tab="controls">🎮 CONTROLS</button>
+        <button type="button" class="cyber-btn cyber-btn-ghost settings-tab-btn" data-settings-tab="equipments">⚡ EQUIPMENTS</button>
+        <button type="button" class="cyber-btn cyber-btn-ghost settings-tab-btn" data-settings-tab="graphics">🖥️ GRAPHICS</button>
+        <button type="button" class="cyber-btn cyber-btn-ghost settings-tab-btn" data-settings-tab="audio">🔊 AUDIO & HUD</button>
       </div>
 
-      <div style="background: rgba(255,255,255,0.04); padding: 10px; border-radius: 6px; font-size: 12px; color: var(--text-muted); line-height: 1.4;">
-        <strong style="color:#fff;">CONTROLS:</strong><br>
-        • <b>W / Arrow Up</b>: Accelerate<br>
-        • <b>S / Arrow Down</b>: Brake / Reverse<br>
-        • <b>A / D / Left / Right</b>: Steer<br>
-        • <b>SPACEBAR</b>: Handbrake Drift<br>
-        • <b>SHIFT / N</b>: Nitro Warp Surge<br>
-        • <b>C</b>: Change Camera (Chase / Hood / Cockpit)<br>
-        • <b>R</b>: Reset Car to Track
+      <!-- TAB 1: CONTROLS & STEERING -->
+      <div class="settings-panel settings-tab-pane" data-settings-pane="controls">
+        <div class="settings-row">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:700;">
+            <span>STEERING MODE PRESET</span>
+            <span data-profile-display="steeringBadge" class="profile-mode-badge">ARCADE EASY</span>
+          </div>
+          <div class="preset-pills-row">
+            <button type="button" class="cyber-btn cyber-btn-ghost preset-pill-btn active" data-steering-preset="arcade">ARCADE EASY</button>
+            <button type="button" class="cyber-btn cyber-btn-ghost preset-pill-btn" data-steering-preset="sport">SPORT</button>
+            <button type="button" class="cyber-btn cyber-btn-ghost preset-pill-btn" data-steering-preset="drift">DRIFT PRO</button>
+            <button type="button" class="cyber-btn cyber-btn-ghost preset-pill-btn" data-steering-preset="sim">SIMULATION</button>
+          </div>
+        </div>
+
+        <div class="settings-grid">
+          <div class="settings-row">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+              <span>SENSITIVITY</span>
+              <span data-profile-display="steerSensitivity" style="color:var(--primary-neon); font-family:'Orbitron';">1.00x</span>
+            </div>
+            <input type="range" data-profile-input="steerSensitivity" class="settings-slider" min="0.4" max="1.6" step="0.05" value="1.0">
+          </div>
+
+          <div class="settings-row">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+              <span>RESPONSE SPEED</span>
+              <span data-profile-display="steerResponse" style="color:var(--primary-neon); font-family:'Orbitron';">1.00x</span>
+            </div>
+            <input type="range" data-profile-input="steerResponse" class="settings-slider" min="0.6" max="1.6" step="0.05" value="1.0">
+          </div>
+
+          <div class="settings-row">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+              <span>STABILITY ASSIST</span>
+              <span data-profile-display="stabilityAssist" style="color:var(--accent-green); font-family:'Orbitron';">85%</span>
+            </div>
+            <input type="range" data-profile-input="stabilityAssist" class="settings-slider" min="0" max="100" step="5" value="85">
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">STEERING CURVE</span>
+            <select data-profile-input="steerLinearity" class="settings-select">
+              <option value="smooth" selected>Smooth Center (Easy Straight)</option>
+              <option value="balanced">Balanced Progress</option>
+              <option value="direct">Direct 1:1 Response</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">GEAR SYSTEM</span>
+            <select data-profile-input="transmissionMode" class="settings-select">
+              <option value="auto" selected>6-Speed AUTO (AT)</option>
+              <option value="manual">6-Speed MANUAL (Q / E)</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">HANDBRAKE MODE</span>
+            <select data-profile-input="handbrakeMode" class="settings-select">
+              <option value="drift" selected>Drift Pro + Launch Hold</option>
+              <option value="lock">Full Rear Lock Slide</option>
+              <option value="sharp">Sharp Apex Trail-Brake</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">CHASE CAMERA DISTANCE</span>
+            <select data-system-input="cameraDistance" class="settings-select">
+              <option value="close">Close Dynamic</option>
+              <option value="medium" selected>Medium Balanced</option>
+              <option value="wide">Wide Panoramic</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">ON-SCREEN TOUCH PEDALS</span>
+            <select data-system-input="touchVisibility" class="settings-select">
+              <option value="auto" selected>Auto (Mobile / Narrow)</option>
+              <option value="always">Always Show</option>
+              <option value="off">Always Hide</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: MOTORSPORT EQUIPMENTS & ASSISTS -->
+      <div class="settings-panel settings-tab-pane hidden" data-settings-pane="equipments">
+        <div class="settings-grid">
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">NITRO SUPER SYSTEM</span>
+            <select data-profile-input="nitroMode" class="settings-select">
+              <option value="twin_overboost" selected>Twin-Stage Overboost (+60 km/h)</option>
+              <option value="plasma">Plasma Surge (Long Burn +45 km/h)</option>
+              <option value="hyper_warp">Quantum Hyper-Warp (+82 km/h)</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">ABS (ANTI-LOCK BRAKES)</span>
+            <select data-profile-input="absEnabled" class="settings-select">
+              <option value="true" selected>ON (Steerable Threshold Brake)</option>
+              <option value="false">OFF (Raw Wheel Lockup)</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">TCS (TRACTION CONTROL)</span>
+            <select data-profile-input="tcsEnabled" class="settings-select">
+              <option value="true" selected>ON (Rain & Exit Grip Guard)</option>
+              <option value="false">OFF (Full Rear Slip Freedom)</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">BRAKE BIAS BALANCE</span>
+            <select data-profile-input="brakeBias" class="settings-select">
+              <option value="front">60% Front (Straight Stability)</option>
+              <option value="balanced" selected>50 / 50 Balanced</option>
+              <option value="rear">60% Rear (Trail-Brake Rotation)</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">AERO DOWNFORCE TRIM</span>
+            <select data-profile-input="aeroTrim" class="settings-select">
+              <option value="low_drag">Low Drag (Max Top Speed)</option>
+              <option value="balanced" selected>Balanced GT Setup</option>
+              <option value="high_downforce">High Downforce (+12% Corner Grip)</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">GEAR FINAL DRIVE RATIO</span>
+            <select data-profile-input="finalDrive" class="settings-select">
+              <option value="accel">Short Ratio (+9% Acceleration)</option>
+              <option value="balanced" selected>Factory Balanced</option>
+              <option value="top_speed">Tall Ratio (+6% Top Speed)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: GRAPHICS & RENDERING -->
+      <div class="settings-panel settings-tab-pane hidden" data-settings-pane="graphics">
+        <div class="settings-row">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:700;">
+            <span>GRAPHICS QUALITY PRESET</span>
+            <span data-system-display="graphicsBadge" class="profile-mode-badge">HIGH</span>
+          </div>
+          <div class="preset-pills-row">
+            <button type="button" class="cyber-btn cyber-btn-ghost preset-pill-btn" data-graphics-preset="ultra">ULTRA</button>
+            <button type="button" class="cyber-btn cyber-btn-ghost preset-pill-btn active" data-graphics-preset="high">HIGH</button>
+            <button type="button" class="cyber-btn cyber-btn-ghost preset-pill-btn" data-graphics-preset="medium">MEDIUM</button>
+            <button type="button" class="cyber-btn cyber-btn-ghost preset-pill-btn" data-graphics-preset="low">LOW FPS</button>
+          </div>
+        </div>
+
+        <div class="settings-grid">
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">SHADOW QUALITY</span>
+            <select data-system-input="shadowQuality" class="settings-select">
+              <option value="ultra" selected>Ultra 2048px Soft Shadows</option>
+              <option value="standard">Standard 1024px</option>
+              <option value="off">Off (Max Performance)</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">HDR BLOOM & NEON GLOW</span>
+            <select data-system-input="bloomMode" class="settings-select">
+              <option value="cinematic" selected>Cinematic HDR Bloom</option>
+              <option value="subtle">Subtle Clean Bloom</option>
+              <option value="off">Off</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">RESOLUTION SCALE</span>
+            <select data-system-input="resolutionScale" class="settings-select">
+              <option value="0.75">0.75x Performance</option>
+              <option value="1">1.0x Native</option>
+              <option value="1.5" selected>1.5x Sharp AA</option>
+              <option value="1.75">1.75x Ultra Crisp</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+              <span>EXPOSURE / BRIGHTNESS</span>
+              <span data-system-display="exposure" style="color:var(--primary-neon); font-family:'Orbitron';">1.15</span>
+            </div>
+            <input type="range" data-system-input="exposure" class="settings-slider" min="0.80" max="1.50" step="0.05" value="1.15">
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">SPEED VIGNETTE & CHROMATIC FX</span>
+            <select data-system-input="speedFxEnabled" class="settings-select">
+              <option value="true" selected>ON (Nitro Edge Warp)</option>
+              <option value="false">OFF</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">DYNAMIC CAR HEADLIGHT BEAMS</span>
+            <select data-system-input="headlightsEnabled" class="settings-select">
+              <option value="true" selected>ON (Spotlights + Volumetrics)</option>
+              <option value="false">OFF</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">FOV SPEED SENSE</span>
+            <select data-system-input="fovScale" class="settings-select">
+              <option value="off">Off (Locked FOV)</option>
+              <option value="normal" selected>Normal Immersive</option>
+              <option value="intense">Intense Hyper-Sense</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">LIVE FPS COUNTER</span>
+            <select data-system-input="fpsCounter" class="settings-select">
+              <option value="false" selected>Hidden</option>
+              <option value="true">Show Live FPS</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: AUDIO & HUD -->
+      <div class="settings-panel settings-tab-pane hidden" data-settings-pane="audio">
+        <div class="settings-grid">
+          <div class="settings-row">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+              <span>MASTER VOLUME</span>
+              <span data-system-display="masterVolume" style="color:var(--primary-neon); font-family:'Orbitron';">75%</span>
+            </div>
+            <input type="range" data-system-input="masterVolume" class="settings-slider" min="0" max="100" step="5" value="75">
+          </div>
+
+          <div class="settings-row">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+              <span>ENGINE & EXHAUST</span>
+              <span data-system-display="engineVolume" style="color:var(--primary-neon); font-family:'Orbitron';">85%</span>
+            </div>
+            <input type="range" data-system-input="engineVolume" class="settings-slider" min="0" max="100" step="5" value="85">
+          </div>
+
+          <div class="settings-row">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+              <span>RADIO MUSIC</span>
+              <span data-system-display="musicVolume" style="color:var(--primary-neon); font-family:'Orbitron';">35%</span>
+            </div>
+            <input type="range" data-system-input="musicVolume" class="settings-slider" min="0" max="100" step="5" value="35">
+          </div>
+
+          <div class="settings-row">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:700;">
+              <span>HORN, INDICATORS, TIRES &amp; FX</span>
+              <span data-system-display="sfxVolume" style="color:var(--primary-neon); font-family:'Orbitron';">85%</span>
+            </div>
+            <input type="range" data-system-input="sfxVolume" class="settings-slider" min="0" max="100" step="5" value="85">
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">SPEEDOMETER UNIT</span>
+            <select data-system-input="speedUnit" class="settings-select">
+              <option value="kmh" selected>Metric (KM/H)</option>
+              <option value="mph">Imperial (MPH)</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">HUD CLUSTER STYLE</span>
+            <select data-system-input="hudStyle" class="settings-select">
+              <option value="pro" selected>Pro GT Telemetry + LEDs</option>
+              <option value="minimal">Clean Minimalist</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:12px; font-weight:700;">MINIMAP RADAR</span>
+            <select data-system-input="showMinimap" class="settings-select">
+              <option value="true" selected>Visible</option>
+              <option value="false">Hidden</option>
+            </select>
+          </div>
+
+          <div class="settings-row" style="grid-column: span 2;">
+            <button type="button" id="btn-settings-open-music" class="cyber-btn cyber-btn-primary" style="width:100%; padding:9px 12px; font-size:11px;">
+              🎵 OPEN CAR STEREO — LIVE INTERNET FM &amp; PLAY SONGS FROM DEVICE
+            </button>
+          </div>
+
+          <div class="settings-row" style="justify-content: flex-end;">
+            <button type="button" id="btn-reset-settings" class="cyber-btn cyber-btn-ghost" style="padding:7px 10px; font-size:11px; border-color:#ff0055; color:#ff6699;">
+              🔄 RESET DEFAULT SETTINGS
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button class="cyber-btn cyber-btn-primary btn-close-modal" style="margin-top:6px;">APPLY & CLOSE</button>
+    </div>
+  </div>
+
+  <!-- =========================================
+       11b. PAUSE MENU MODAL
+  ========================================= -->
+  <div id="screen-pause" class="modal-overlay hidden">
+    <div class="modal-card glass-panel" style="width:560px;">
+      <div class="modal-title">GAME PAUSED</div>
+      
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;">
+        <button id="btn-pause-resume" class="cyber-btn cyber-btn-primary">RESUME</button>
+        <button id="btn-pause-restart" class="cyber-btn cyber-btn-secondary">RESTART</button>
+        <button id="btn-pause-quit" class="cyber-btn cyber-btn-ghost">GARAGE</button>
+      </div>
+
+      <div class="settings-panel">
+        <div class="settings-row">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:700;">
+            <span>QUICK STEERING PRESET</span>
+            <span data-profile-display="steeringBadge" class="profile-mode-badge">ARCADE EASY</span>
+          </div>
+          <div class="preset-pills-row">
+            <button type="button" class="cyber-btn cyber-btn-ghost preset-pill-btn active" data-steering-preset="arcade">ARCADE</button>
+            <button type="button" class="cyber-btn cyber-btn-ghost preset-pill-btn" data-steering-preset="sport">SPORT</button>
+            <button type="button" class="cyber-btn cyber-btn-ghost preset-pill-btn" data-steering-preset="drift">DRIFT</button>
+            <button type="button" class="cyber-btn cyber-btn-ghost preset-pill-btn" data-steering-preset="sim">SIM</button>
+          </div>
+        </div>
+
+        <div class="settings-grid">
+          <div class="settings-row">
+            <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700;">
+              <span>SENSITIVITY</span>
+              <span data-profile-display="steerSensitivity" style="color:var(--primary-neon); font-family:'Orbitron';">1.00x</span>
+            </div>
+            <input type="range" data-profile-input="steerSensitivity" class="settings-slider" min="0.4" max="1.6" step="0.05" value="1.0">
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:11px; font-weight:700;">GEAR SYSTEM</span>
+            <select data-profile-input="transmissionMode" class="settings-select">
+              <option value="auto" selected>6-Speed AUTO (AT)</option>
+              <option value="manual">6-Speed MANUAL (Q / E)</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:11px; font-weight:700;">NITRO SUPER SYSTEM</span>
+            <select data-profile-input="nitroMode" class="settings-select">
+              <option value="twin_overboost" selected>Twin-Stage Overboost</option>
+              <option value="plasma">Plasma Surge</option>
+              <option value="hyper_warp">Quantum Hyper-Warp</option>
+            </select>
+          </div>
+
+          <div class="settings-row">
+            <span style="font-size:11px; font-weight:700;">HANDBRAKE MODE</span>
+            <select data-profile-input="handbrakeMode" class="settings-select">
+              <option value="drift" selected>Drift Pro + Launch</option>
+              <option value="lock">Full Rear Lock</option>
+              <option value="sharp">Sharp Trail-Brake</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="button" id="btn-pause-open-settings" class="cyber-btn cyber-btn-secondary" style="padding:8px 12px; font-size:11px;">
+          ⚙️ OPEN FULL 4-TAB SETTINGS (GRAPHICS, EQUIPMENTS, AUDIO, HUD)
+        </button>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.04); padding: 9px 11px; border-radius: 6px; font-size: 11px; color: var(--text-muted); line-height: 1.45;">
+        <strong style="color:#fff;">CONTROLS:</strong>
+        <b>W/S</b> Throttle/Brake • <b>A/D</b> Steer • <b>Q/E</b> Shift Gears (R-N-1..6) • <b>SPACE</b> Handbrake (<b>W+SPACE</b> Launch Control) • <b>SHIFT/N</b> Nitro Super • <b>C</b> Camera • <b>R</b> Reset
       </div>
     </div>
   </div>

@@ -75,8 +75,8 @@ export class GhostCarManager {
     this.destroyGhost();
     if (!this.ghostData || this.ghostData.length === 0) return;
 
-    // Create Holographic Translucent Ghost Car
-    const carObj = CarBuilder.createCar(carIndex, '#00ffff');
+    // Create Holographic Translucent Ghost Car (force synchronous procedural silhouette)
+    const carObj = CarBuilder.createCar(carIndex, '#00ffff', {}, false, true);
     this.activeGhostMesh = carObj.mesh;
 
     // Replace materials with holographic translucent cyan glow

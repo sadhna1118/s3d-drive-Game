@@ -1,28 +1,51 @@
 /**
  * Velocity Rush: Neon Rebellion - Master UI Manager
- * Handles 5 Game Modes, Telemetry Dashboard, Replay Player, Photo Mode,
+ * Handles Game Modes, Settings (Sensitivity & Graphics), Telemetry, Replay, Photo Mode,
  * Rival Dialogues, Knockout Timers, and Boss HUD.
  */
-import { CAR_CONFIGS } from '../engine/CarBuilder.js';
+import { CAR_CONFIGS, NITRO_MODES } from '../engine/CarBuilder.js';
+import { STEERING_PRESETS, GRAPHICS_PRESETS } from '../engine/Input.js';
 import { UPGRADE_TIERS, ACHIEVEMENTS, CAREER_CUPS } from '../systems/CareerManager.js';
-import { TRACK_PRESETS } from '../engine/Track.js';
+import { RADIO_STATIONS, LIVE_RADIO_STREAMS } from '../engine/Audio.js';
 
 export class UIManager {
   constructor(careerManager) {
     this.career = careerManager;
 
+    this.escapeHtml = (val) => String(val ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+
+    this.safeColor = (val, fallback = '#00f0ff') => (
+      typeof val === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(val.trim()) ? val.trim() : fallback
+    );
+
     this.selectedCarIndex = 0;
-    this.selectedColor = '#00f0ff';
-    this.selectedTrackId = 'neon_city';
+    this.selectedColor = CAR_CONFIGS[0]?.defaultColor || '#ff0022';
+    this.selectedTrackId = 'delhi_live';
     this.selectedWeather = 'clear';
     this.playerName = 'Rebel ' + Math.floor(100 + Math.random() * 900);
 
-    this.visualMods = { rimStyle: 0, tint: 0, underglowMode: 'pulse' };
+    this.visualMods = {
+      rimStyle: 0,
+      tint: 0,
+      underglowMode: 'pulse',
+      paintFinish: 'metallic',
+      spoilerStyle: 0,
+      aeroKit: 0,
+      headlightStyle: 0,
+      caliperColor: 0
+    };
 
     // Callbacks
     this.onCarSelect = null;
     this.onColorSelect = null;
     this.onVisualModChange = null;
+    this.onTrackSelect = null;
+    this.onImportCustomGlb = null;
     this.onStartRace = null;
     this.onCreateMultiplayerRoom = null;
     this.onJoinMultiplayerRoom = null;
@@ -31,16 +54,51 @@ export class UIManager {
     this.onStartMultiplayerRace = null;
     this.onSendChat = null;
     this.onToggleMute = null;
+    this.onToggleSfxMute = null;
+    this.onToggleMusicMute = null;
     this.onCamSwitch = null;
     this.onCycleRadio = null;
     this.onRestartRace = null;
     this.onReturnToGarage = null;
     this.onOpenReplay = null;
+    this.onExitReplay = null;
     this.onOpenPhotoMode = null;
+    this.onExitPhotoMode = null;
     this.onToggleVoice = null;
+    this.onTogglePause = null;
+    this.onSensitivityChange = null;
+    this.onQualityChange = null;
+    this.onSteeringPresetSelect = null;
+    this.onDrivingProfileChange = null;
+    this.onGraphicsPresetSelect = null;
+    this.onSystemSettingsChange = null;
+    this.onResetSettings = null;
+    this.onCoupleProfileChange = null;
+    this.onStartDateCruise = null;
+    this.onCycleClimate = null;
+    this.onUploadDeviceMusic = null;
+    this.onPlayLocalTrack = null;
+    this.onRemoveLocalTrack = null;
+    this.onClearLocalMusic = null;
+    this.onPlayLiveStation = null;
+    this.onPlaySynthStation = null;
+    this.onPlayCustomStreamUrl = null;
+    this.onMusicPlayPause = null;
+    this.onMusicNext = null;
+    this.onMusicPrev = null;
+    this.onMusicSeek = null;
+    this.onRequestMusicState = null;
+    this.onShiftUp = null;
+    this.onShiftDown = null;
+    this.onHornStart = null;
+    this.onHornStop = null;
+    this.onToggleIndicator = null;
+    this.lastDrivingProfile = null;
+    this.lastSystemSettings = null;
 
     this.cacheDOMElements();
     this.bindEvents();
+    this.applyCarDefaultColor();
     this.updateCarShowroomInfo();
     this.updateCreditsDisplay();
   }
@@ -58,6 +116,30 @@ export class UIManager {
     this.modalMultiplayer = document.getElementById('modal-multiplayer');
     this.modalTelemetry = document.getElementById('modal-telemetry');
     this.modalVoiceGuide = document.getElementById('modal-voice-guide');
+    this.modalSettings = document.getElementById('modal-settings');
+    this.modalDate = document.getElementById('modal-date');
+    this.modalMusic = document.getElementById('modal-music');
+    this.musicStatusBadge = document.getElementById('music-status-badge');
+    this.musicNowTitle = document.getElementById('music-now-title');
+    this.musicNowSub = document.getElementById('music-now-sub');
+    this.musicTimeLabel = document.getElementById('music-time-label');
+    this.musicSeekSlider = document.getElementById('music-seek-slider');
+    this.musicPlaylistList = document.getElementById('music-playlist-list');
+    this.musicLiveGrid = document.getElementById('music-live-stations-grid');
+    this.musicIndiaGrid = document.getElementById('music-india-dir-grid');
+    this.musicIndiaSearch = document.getElementById('music-india-search');
+    this.musicSynthGrid = document.getElementById('music-synth-stations-grid');
+    this.inputDeviceMusic = document.getElementById('input-device-music');
+    this.musicCustomStreamUrl = document.getElementById('music-custom-stream-url');
+    this.musicDropzone = document.getElementById('music-dropzone');
+    this.dateName1 = document.getElementById('date-name-1');
+    this.dateName2 = document.getElementById('date-name-2');
+    this.dateDecorSelect = document.getElementById('date-decor-select');
+    this.dateCharsSelect = document.getElementById('date-chars-select');
+    this.dateBoardPreview = document.getElementById('date-board-preview');
+    this.garageClimateBadge = document.getElementById('garage-climate-badge');
+    this.hudClimatePill = document.getElementById('hud-climate-pill');
+    this.cinemaBars = document.getElementById('cinema-bars');
     this.panelReplayControls = document.getElementById('panel-replay-controls');
     this.panelPhotoMode = document.getElementById('panel-photo-mode');
 
@@ -67,6 +149,8 @@ export class UIManager {
     this.hudVoicePill = document.getElementById('hud-voice-pill');
     this.hudVoiceTitle = document.getElementById('hud-voice-title');
     this.hudVoiceDesc = document.getElementById('hud-voice-desc');
+
+    // Settings Controls synced uniformly via [data-profile-*] & [data-quality-input]
 
     // Credits
     this.creditsDisplay = document.getElementById('player-credits-val');
@@ -86,9 +170,30 @@ export class UIManager {
 
     // HUD
     this.hudSpeedNumber = document.getElementById('hud-speed-val');
+    this.hudSpeedUnit = document.getElementById('hud-speed-unit');
     this.hudGear = document.getElementById('hud-gear-val');
+    this.hudBtnShiftDown = document.getElementById('hud-btn-shift-down');
+    this.hudBtnShiftUp = document.getElementById('hud-btn-shift-up');
+    this.hudTransMode = document.getElementById('hud-trans-mode');
     this.hudRpmBar = document.getElementById('hud-rpm-bar');
+    this.hudRpmLeds = document.getElementById('hud-rpm-leds');
+    this.hudBoostVal = document.getElementById('hud-boost-val');
+    this.hudGForceVal = document.getElementById('hud-gforce-val');
+    this.hudLampAbs = document.getElementById('hud-lamp-abs');
+    this.hudLampTcs = document.getElementById('hud-lamp-tcs');
+    this.hudLampErs = document.getElementById('hud-lamp-ers');
+    this.hudBtnIndLeft = document.getElementById('hud-btn-ind-left');
+    this.hudBtnIndRight = document.getElementById('hud-btn-ind-right');
+    this.hudBtnHazard = document.getElementById('hud-btn-hazard');
+    this.hudBtnHorn = document.getElementById('hud-btn-horn');
     this.hudNitroBar = document.getElementById('hud-nitro-bar');
+    this.hudNitroModeLabel = document.getElementById('hud-nitro-mode-label');
+    this.hudHandbrakePill = document.getElementById('hud-handbrake-pill');
+    this.hudSpeedlines = document.getElementById('hud-speedlines');
+    this.hudFpsPill = document.getElementById('hud-fps-pill');
+    this.hudStartLights = document.getElementById('hud-start-lights');
+    this.touchLayer = document.querySelector('.touch-controls-layer');
+    this.radarBox = document.querySelector('.radar-box');
     this.hudLapCurrent = document.getElementById('hud-lap-val');
     this.hudLapTotal = document.getElementById('hud-lap-total');
     this.hudCurrentTime = document.getElementById('hud-time-current');
@@ -113,6 +218,7 @@ export class UIManager {
     this.hudRivalText = document.getElementById('hud-rival-text');
 
     // Chat
+    this.chatDrawer = document.getElementById('chat-drawer');
     this.chatMessagesList = document.getElementById('chat-messages-list');
     this.chatInput = document.getElementById('chat-input');
 
@@ -130,18 +236,179 @@ export class UIManager {
     this.resultsCashPrize = document.getElementById('results-cash-prize');
   }
 
+  syncDrivingProfileUI(profile) {
+    if (!profile || typeof profile !== 'object') return;
+    this.lastDrivingProfile = { ...profile };
+
+    document.querySelectorAll('[data-steering-preset]').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.steeringPreset === profile.steeringMode);
+    });
+
+    const presetName = STEERING_PRESETS[profile.steeringMode]?.name || 'CUSTOM';
+    document.querySelectorAll('[data-profile-display]').forEach((el) => {
+      const key = el.dataset.profileDisplay;
+      if (key === 'steeringBadge') el.textContent = presetName;
+      else if (key === 'steerSensitivity') el.textContent = `${Number(profile.steerSensitivity).toFixed(2)}x`;
+      else if (key === 'steerResponse') el.textContent = `${Number(profile.steerResponse).toFixed(2)}x`;
+      else if (key === 'stabilityAssist') el.textContent = `${Math.round(Number(profile.stabilityAssist) * 100)}%`;
+    });
+
+    document.querySelectorAll('[data-profile-input]').forEach((el) => {
+      const key = el.dataset.profileInput;
+      if (key === 'stabilityAssist') {
+        el.value = String(Math.round(Number(profile.stabilityAssist) * 100));
+      } else if (profile[key] !== undefined) {
+        el.value = String(profile[key]);
+      }
+    });
+
+    if (this.hudTransMode) {
+      const isManual = profile.transmissionMode === 'manual';
+      this.hudTransMode.textContent = isManual ? 'MANUAL' : 'AUTO';
+      this.hudTransMode.classList.toggle('manual', isManual);
+    }
+
+    if (this.hudNitroModeLabel) {
+      const shortNames = { plasma: 'PLASMA', twin_overboost: 'TWIN-STAGE', hyper_warp: 'HYPER-WARP' };
+      this.hudNitroModeLabel.textContent = shortNames[profile.nitroMode] || 'NITRO';
+    }
+  }
+
+  syncSystemSettingsUI(settings) {
+    if (!settings || typeof settings !== 'object') return;
+    this.lastSystemSettings = { ...settings };
+
+    document.querySelectorAll('[data-graphics-preset]').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.graphicsPreset === settings.graphicsPreset);
+    });
+
+    document.querySelectorAll('[data-system-display]').forEach((el) => {
+      const key = el.dataset.systemDisplay;
+      if (key === 'graphicsBadge') {
+        el.textContent = GRAPHICS_PRESETS[settings.graphicsPreset]?.id.toUpperCase() || (settings.graphicsPreset || 'CUSTOM').toUpperCase();
+      } else if (key === 'exposure') {
+        el.textContent = Number(settings.exposure || 1.15).toFixed(2);
+      } else if (key.endsWith('Volume')) {
+        el.textContent = `${Math.round(Number(settings[key] ?? 0.75) * 100)}%`;
+      }
+    });
+
+    document.querySelectorAll('[data-system-input]').forEach((el) => {
+      const key = el.dataset.systemInput;
+      if (settings[key] === undefined) return;
+      if (key.endsWith('Volume')) {
+        el.value = String(Math.round(Number(settings[key]) * 100));
+      } else {
+        el.value = String(settings[key]);
+      }
+    });
+
+    if (this.hudFpsPill) this.hudFpsPill.classList.toggle('hidden', !settings.fpsCounter);
+    if (this.hudSpeedUnit) this.hudSpeedUnit.textContent = settings.speedUnit === 'mph' ? 'MPH' : 'KM/H';
+    if (this.screenHUD) this.screenHUD.classList.toggle('hud-minimal', settings.hudStyle === 'minimal');
+    if (this.radarBox) this.radarBox.classList.toggle('hidden', settings.showMinimap === false);
+    if (this.touchLayer) {
+      this.touchLayer.classList.toggle('force-on', settings.touchVisibility === 'always');
+      this.touchLayer.classList.toggle('force-off', settings.touchVisibility === 'off');
+    }
+    if (!settings.speedFxEnabled && this.hudSpeedlines) {
+      this.hudSpeedlines.style.opacity = '0';
+    }
+  }
+
+  syncSettingsUI(sensitivityOrProfile, quality) {
+    if (sensitivityOrProfile && typeof sensitivityOrProfile === 'object') {
+      this.syncDrivingProfileUI(sensitivityOrProfile);
+    } else if (sensitivityOrProfile !== undefined) {
+      const sens = Number(sensitivityOrProfile);
+      this.syncDrivingProfileUI({
+        ...(this.lastDrivingProfile || { steeringMode: 'arcade', steerResponse: 1.0, steerLinearity: 'smooth', stabilityAssist: 0.85, transmissionMode: 'auto', nitroMode: 'twin_overboost', handbrakeMode: 'drift' }),
+        steerSensitivity: isNaN(sens) ? 1.0 : sens
+      });
+    }
+    if (quality) {
+      document.querySelectorAll('[data-quality-input]').forEach((sel) => {
+        sel.value = quality;
+      });
+    }
+  }
+
+  hasOpenModal() {
+    return !!document.querySelector('.modal-overlay:not(.hidden)');
+  }
+
+  closeAllModals() {
+    this.modalTuning?.classList.add('hidden');
+    this.modalCareer?.classList.add('hidden');
+    this.modalAchievements?.classList.add('hidden');
+    this.modalMultiplayer?.classList.add('hidden');
+    this.modalTelemetry?.classList.add('hidden');
+    this.modalVoiceGuide?.classList.add('hidden');
+    this.modalSettings?.classList.add('hidden');
+    this.modalDate?.classList.add('hidden');
+  }
+
+  syncCoupleProfileUI(profile) {
+    if (!profile) return;
+    if (this.dateName1) this.dateName1.value = profile.partner1 || 'Aarav';
+    if (this.dateName2) this.dateName2.value = profile.partner2 || 'Meera';
+    if (this.dateDecorSelect) this.dateDecorSelect.value = profile.dateMode || 'off';
+    const rawC = profile.showCharacters;
+    const charMode = rawC === 'driver_only'
+      ? 'driver_only'
+      : (rawC === false || rawC === 'false' || rawC === 'none' ? 'none' : 'couple');
+    if (this.dateCharsSelect) this.dateCharsSelect.value = charMode;
+    document.querySelectorAll('.crew-chip').forEach((chip) => {
+      chip.classList.toggle('active', chip.dataset.crew === charMode);
+    });
+    if (this.dateBoardPreview) {
+      const n1 = (profile.partner1 || 'Aarav').trim().toUpperCase();
+      const n2 = (profile.partner2 || 'Meera').trim().toUpperCase();
+      this.dateBoardPreview.textContent = `♥ ${n1} ♥ ${n2} — DELHI DATE BOARD ♥`;
+    }
+  }
+
+  updateClimateBadge(preset) {
+    if (!preset) return;
+    const label = preset.timeLabel || (preset.name ? preset.name.replace(/^[^\w\u0900-\u097F]+/, '').split('(')[0].trim() : 'DELHI');
+    if (this.garageClimateBadge) this.garageClimateBadge.textContent = label.toUpperCase();
+    if (this.hudClimatePill) this.hudClimatePill.textContent = `🇮🇳 ${label.toUpperCase()}`;
+  }
+
+  setCinemaBarsVisible(visible) {
+    if (!this.cinemaBars) return;
+    this.cinemaBars.classList.toggle('hidden', !visible);
+  }
+
   bindEvents() {
     // Car Selection
     document.getElementById('btn-prev-car')?.addEventListener('click', () => {
       this.selectedCarIndex = (this.selectedCarIndex - 1 + CAR_CONFIGS.length) % CAR_CONFIGS.length;
+      this.applyCarDefaultColor();
       this.updateCarShowroomInfo();
       if (this.onCarSelect) this.onCarSelect(this.selectedCarIndex);
     });
 
     document.getElementById('btn-next-car')?.addEventListener('click', () => {
       this.selectedCarIndex = (this.selectedCarIndex + 1) % CAR_CONFIGS.length;
+      this.applyCarDefaultColor();
       this.updateCarShowroomInfo();
       if (this.onCarSelect) this.onCarSelect(this.selectedCarIndex);
+    });
+
+    // Custom .GLB Car Model Import
+    const importBtn = document.getElementById('btn-import-glb');
+    const importInput = document.getElementById('input-import-glb');
+    importBtn?.addEventListener('click', () => importInput?.click());
+    importInput?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const blobUrl = URL.createObjectURL(file);
+      const carConfig = CAR_CONFIGS[this.selectedCarIndex % CAR_CONFIGS.length];
+      if (this.onImportCustomGlb) {
+        this.onImportCustomGlb(carConfig.id, blobUrl, file.name);
+      }
+      importInput.value = '';
     });
 
     // Customizer
@@ -154,23 +421,26 @@ export class UIManager {
       });
     });
 
-    document.querySelectorAll('.rim-chip').forEach((chip) => {
-      chip.addEventListener('click', () => {
-        document.querySelectorAll('.rim-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        this.visualMods.rimStyle = parseInt(chip.dataset.rim);
-        if (this.onVisualModChange) this.onVisualModChange(this.visualMods);
+    const bindChipGroup = (selector, modKey, dataAttr, parseFn = (v) => v) => {
+      const els = document.querySelectorAll(selector);
+      els.forEach((chip) => {
+        chip.addEventListener('click', () => {
+          els.forEach((c) => c.classList.remove('active'));
+          chip.classList.add('active');
+          this.visualMods[modKey] = parseFn(chip.dataset[dataAttr]);
+          if (this.onVisualModChange) this.onVisualModChange(this.visualMods);
+        });
       });
-    });
+    };
 
-    document.querySelectorAll('.underglow-chip').forEach((chip) => {
-      chip.addEventListener('click', () => {
-        document.querySelectorAll('.underglow-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        this.visualMods.underglowMode = chip.dataset.mode;
-        if (this.onVisualModChange) this.onVisualModChange(this.visualMods);
-      });
-    });
+    bindChipGroup('.rim-chip', 'rimStyle', 'rim', (v) => parseInt(v, 10));
+    bindChipGroup('.underglow-chip', 'underglowMode', 'mode');
+    bindChipGroup('.tint-chip', 'tint', 'tint', (v) => parseInt(v, 10));
+    bindChipGroup('.finish-chip', 'paintFinish', 'finish');
+    bindChipGroup('.spoiler-chip', 'spoilerStyle', 'spoiler', (v) => parseInt(v, 10));
+    bindChipGroup('.aero-chip', 'aeroKit', 'aero', (v) => parseInt(v, 10));
+    bindChipGroup('.headlight-chip', 'headlightStyle', 'headlight', (v) => parseInt(v, 10));
+    bindChipGroup('.caliper-chip', 'caliperColor', 'caliper', (v) => parseInt(v, 10));
 
     this.playerNameInput?.addEventListener('input', (e) => {
       this.playerName = (e.target.value || 'Rebel').trim().substring(0, 16);
@@ -178,15 +448,87 @@ export class UIManager {
 
     this.trackSelect?.addEventListener('change', (e) => {
       this.selectedTrackId = e.target.value;
+      if (this.onTrackSelect) this.onTrackSelect(this.selectedTrackId);
     });
 
-    // --- 5 Game Mode Launchers ---
+    // Pro Settings Tabs
+    document.querySelectorAll('[data-settings-tab]').forEach((tabBtn) => {
+      tabBtn.addEventListener('click', () => {
+        const target = tabBtn.dataset.settingsTab;
+        document.querySelectorAll('[data-settings-tab]').forEach((b) => b.classList.toggle('active', b === tabBtn));
+        document.querySelectorAll('[data-settings-pane]').forEach((pane) => {
+          pane.classList.toggle('hidden', pane.dataset.settingsPane !== target);
+        });
+      });
+    });
+
+    // Driving Profile, Presets, Graphics, Audio, HUD & Paddles
+    document.querySelectorAll('[data-steering-preset]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (this.onSteeringPresetSelect) this.onSteeringPresetSelect(btn.dataset.steeringPreset);
+      });
+    });
+
+    document.querySelectorAll('[data-profile-input]').forEach((el) => {
+      const key = el.dataset.profileInput;
+      const evtName = el.tagName === 'SELECT' ? 'change' : 'input';
+      el.addEventListener(evtName, (e) => {
+        let val = e.target.value;
+        if (key === 'stabilityAssist') val = parseFloat(val) / 100;
+        else if (key === 'absEnabled' || key === 'tcsEnabled') val = (val === 'true');
+        else if (el.type === 'range') val = parseFloat(val);
+        if (this.onDrivingProfileChange) {
+          const patch = key === 'transmissionMode'
+            ? { [key]: val, manualExplicit: val === 'manual' }
+            : { [key]: val };
+          this.onDrivingProfileChange(patch);
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-graphics-preset]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (this.onGraphicsPresetSelect) this.onGraphicsPresetSelect(btn.dataset.graphicsPreset);
+      });
+    });
+
+    document.querySelectorAll('[data-system-input]').forEach((el) => {
+      const key = el.dataset.systemInput;
+      const evtName = el.tagName === 'SELECT' ? 'change' : 'input';
+      el.addEventListener(evtName, (e) => {
+        let val = e.target.value;
+        if (key.endsWith('Volume')) val = parseFloat(val) / 100;
+        else if (key === 'speedFxEnabled' || key === 'headlightsEnabled' || key === 'fpsCounter' || key === 'showMinimap') val = (val === 'true');
+        else if (key === 'exposure' || key === 'resolutionScale') val = parseFloat(val);
+        if (this.onSystemSettingsChange) this.onSystemSettingsChange({ [key]: val });
+      });
+    });
+
+    document.getElementById('btn-pause-open-settings')?.addEventListener('click', () => {
+      this.modalSettings?.classList.remove('hidden');
+    });
+    document.getElementById('btn-reset-settings')?.addEventListener('click', () => {
+      if (this.onResetSettings) this.onResetSettings();
+    });
+
+    this.hudBtnShiftUp?.addEventListener('click', () => this.onShiftUp?.());
+    this.hudBtnShiftDown?.addEventListener('click', () => this.onShiftDown?.());
+    this.hudTransMode?.addEventListener('click', () => {
+      const current = this.lastDrivingProfile?.transmissionMode || 'auto';
+      const next = current === 'manual' ? 'auto' : 'manual';
+      if (this.onDrivingProfileChange) {
+        this.onDrivingProfileChange({ transmissionMode: next, manualExplicit: next === 'manual' });
+      }
+      this.hudTransMode?.blur?.();
+    });
+
+    // Game Mode Launchers
     document.getElementById('btn-mode-gp')?.addEventListener('click', () => {
       if (this.onStartRace) this.onStartRace({ mode: 'GP', trackId: this.selectedTrackId, laps: 3 });
     });
 
     document.getElementById('btn-mode-drift')?.addEventListener('click', () => {
-      if (this.onStartRace) this.onStartRace({ mode: 'DRIFT_ARENA', trackId: 'industrial_core', laps: 3 });
+      if (this.onStartRace) this.onStartRace({ mode: 'DRIFT_ARENA', trackId: 'delhi_sunset', laps: 3 });
     });
 
     document.getElementById('btn-mode-time-attack')?.addEventListener('click', () => {
@@ -198,7 +540,52 @@ export class UIManager {
     });
 
     document.getElementById('btn-mode-boss')?.addEventListener('click', () => {
-      if (this.onStartRace) this.onStartRace({ mode: 'BOSS_BATTLE', trackId: 'space_ring', laps: 3, isBoss: true });
+      if (this.onStartRace) this.onStartRace({ mode: 'BOSS_BATTLE', trackId: 'delhi_night', laps: 3, isBoss: true });
+    });
+
+    // Personalized Couple Date Modal & Garage Cabin Crew Toggle
+    const readDateForm = () => ({
+      partner1: (this.dateName1?.value || 'Aarav').trim() || 'Aarav',
+      partner2: (this.dateName2?.value || 'Meera').trim() || 'Meera',
+      dateMode: this.dateDecorSelect?.value || 'romance',
+      showCharacters: this.dateCharsSelect?.value || 'couple'
+    });
+    document.querySelectorAll('.crew-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const mode = chip.dataset.crew || 'couple';
+        document.querySelectorAll('.crew-chip').forEach((c) => c.classList.remove('active'));
+        chip.classList.add('active');
+        if (this.dateCharsSelect) this.dateCharsSelect.value = mode;
+        if (this.onCoupleProfileChange) this.onCoupleProfileChange({ showCharacters: mode });
+        const label = mode === 'driver_only' ? 'ONLY DRIVER MODE' : (mode === 'none' ? 'EMPTY CABIN' : 'COUPLE IN CAR');
+        this.showToast(`👤 Garage Cabin: ${label}`);
+      });
+    });
+    const openDateModal = () => this.modalDate?.classList.remove('hidden');
+    document.getElementById('btn-open-date-setup')?.addEventListener('click', openDateModal);
+    document.getElementById('btn-mode-date')?.addEventListener('click', openDateModal);
+
+    [this.dateName1, this.dateName2].forEach((inp) => {
+      inp?.addEventListener('input', () => {
+        if (this.onCoupleProfileChange) this.onCoupleProfileChange(readDateForm());
+      });
+    });
+    [this.dateDecorSelect, this.dateCharsSelect].forEach((sel) => {
+      sel?.addEventListener('change', () => {
+        if (this.onCoupleProfileChange) this.onCoupleProfileChange(readDateForm());
+      });
+    });
+    document.getElementById('btn-save-date-setup')?.addEventListener('click', () => {
+      if (this.onCoupleProfileChange) this.onCoupleProfileChange(readDateForm());
+      this.modalDate?.classList.add('hidden');
+      this.showToast('💐 Couple Date Car & Heart Board Updated!');
+    });
+    document.getElementById('btn-start-date-cruise')?.addEventListener('click', () => {
+      this.modalDate?.classList.add('hidden');
+      if (this.onStartDateCruise) this.onStartDateCruise(readDateForm());
+    });
+    document.getElementById('hud-btn-climate')?.addEventListener('click', () => {
+      if (this.onCycleClimate) this.onCycleClimate();
     });
 
     document.getElementById('btn-mode-mp')?.addEventListener('click', () => {
@@ -209,16 +596,18 @@ export class UIManager {
     document.getElementById('btn-open-tuning')?.addEventListener('click', () => this.openTuningModal());
     document.getElementById('btn-open-career')?.addEventListener('click', () => this.openCareerModal());
     document.getElementById('btn-open-achievements')?.addEventListener('click', () => this.openAchievementsModal());
+    document.getElementById('btn-open-settings')?.addEventListener('click', () => {
+      this.modalSettings?.classList.remove('hidden');
+    });
     document.getElementById('btn-open-voice-guide')?.addEventListener('click', () => {
       this.modalVoiceGuide?.classList.remove('hidden');
     });
 
     document.getElementById('btn-self-test')?.addEventListener('click', () => {
       const hasSpeech = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-      this.showToast(`🟢 SYSTEM STATUS: 3D Engine: OK | Voice Control: ${hasSpeech ? 'READY' : 'KEYBOARD ONLY'} | Press ENTER to Race!`);
+      this.showToast(`🟢 SYSTEM OK | 3D Clearcoat Engine Ready | Voice: ${hasSpeech ? 'SUPPORTED' : 'KEYBOARD ONLY'}`);
     });
 
-    // Voice Mic Toggles
     const handleVoiceToggle = () => {
       if (this.onToggleVoice) this.onToggleVoice();
     };
@@ -227,12 +616,9 @@ export class UIManager {
 
     document.querySelectorAll('.btn-close-modal').forEach((btn) => {
       btn.addEventListener('click', () => {
-        this.modalTuning?.classList.add('hidden');
-        this.modalCareer?.classList.add('hidden');
-        this.modalAchievements?.classList.add('hidden');
-        this.modalMultiplayer?.classList.add('hidden');
-        this.modalTelemetry?.classList.add('hidden');
-        this.modalVoiceGuide?.classList.add('hidden');
+        const parentModal = btn.closest('.modal-overlay');
+        if (parentModal) parentModal.classList.add('hidden');
+        else this.closeAllModals();
       });
     });
 
@@ -296,28 +682,66 @@ export class UIManager {
       }
     });
 
-    document.getElementById('hud-btn-mute')?.addEventListener('click', () => {
-      if (this.onToggleMute) {
-        const isMuted = this.onToggleMute();
-        const icon = document.getElementById('mute-icon');
-        if (icon) icon.textContent = isMuted ? '🔇' : '🔊';
-      }
+    document.getElementById('hud-btn-mute-sfx')?.addEventListener('click', () => {
+      this.onToggleSfxMute?.();
+    });
+    document.getElementById('hud-btn-mute-music')?.addEventListener('click', () => {
+      this.onToggleMusicMute?.();
+    });
+    document.getElementById('music-btn-mute-sfx')?.addEventListener('click', () => {
+      this.onToggleSfxMute?.();
+    });
+    document.getElementById('music-btn-mute-music')?.addEventListener('click', () => {
+      this.onToggleMusicMute?.();
     });
 
-    document.getElementById('hud-btn-pause')?.addEventListener('click', () => this.togglePause(true));
-    document.getElementById('btn-pause-resume')?.addEventListener('click', () => this.togglePause(false));
+    this.hudBtnIndLeft?.addEventListener('click', () => {
+      this.onToggleIndicator?.('left');
+      this.hudBtnIndLeft?.blur?.();
+    });
+    this.hudBtnIndRight?.addEventListener('click', () => {
+      this.onToggleIndicator?.('right');
+      this.hudBtnIndRight?.blur?.();
+    });
+    this.hudBtnHazard?.addEventListener('click', () => {
+      this.onToggleIndicator?.('hazard');
+      this.hudBtnHazard?.blur?.();
+    });
+    if (this.hudBtnHorn) {
+      const releaseHorn = () => {
+        this.onHornStop?.();
+        this.hudBtnHorn?.blur?.();
+      };
+      this.hudBtnHorn.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        this.onHornStart?.();
+      });
+      this.hudBtnHorn.addEventListener('pointerup', releaseHorn);
+      this.hudBtnHorn.addEventListener('pointercancel', releaseHorn);
+      this.hudBtnHorn.addEventListener('mouseleave', releaseHorn);
+    }
+
+    document.getElementById('hud-btn-pause')?.addEventListener('click', () => {
+      if (this.onTogglePause) this.onTogglePause(true);
+      else this.togglePause(true);
+    });
+    document.getElementById('btn-pause-resume')?.addEventListener('click', () => {
+      if (this.onTogglePause) this.onTogglePause(false);
+      else this.togglePause(false);
+    });
     document.getElementById('btn-pause-restart')?.addEventListener('click', () => {
-      this.togglePause(false);
+      if (this.onTogglePause) this.onTogglePause(false);
+      else this.togglePause(false);
       if (this.onRestartRace) this.onRestartRace();
     });
     document.getElementById('btn-pause-quit')?.addEventListener('click', () => {
-      this.togglePause(false);
+      if (this.onTogglePause) this.onTogglePause(false);
+      else this.togglePause(false);
       if (this.onReturnToGarage) this.onReturnToGarage();
     });
 
-    // Results Actions (Replay, Telemetry, Rematch)
+    // Results Actions
     document.getElementById('btn-results-replay')?.addEventListener('click', () => {
-      this.screenResults?.classList.add('hidden');
       if (this.onOpenReplay) this.onOpenReplay();
     });
 
@@ -341,23 +765,16 @@ export class UIManager {
         window.gameApp.replay.isPlaying = !window.gameApp.replay.isPlaying;
       }
     });
-    document.getElementById('btn-replay-speed-slow')?.addEventListener('click', () => {
-      window.gameApp?.replay?.setSpeed(0.5);
-    });
-    document.getElementById('btn-replay-speed-norm')?.addEventListener('click', () => {
-      window.gameApp?.replay?.setSpeed(1.0);
-    });
-    document.getElementById('btn-replay-speed-fast')?.addEventListener('click', () => {
-      window.gameApp?.replay?.setSpeed(2.0);
-    });
-    document.getElementById('btn-replay-cam')?.addEventListener('click', () => {
-      window.gameApp?.replay?.cycleAngle();
-    });
+    document.getElementById('btn-replay-speed-slow')?.addEventListener('click', () => window.gameApp?.replay?.setSpeed(0.5));
+    document.getElementById('btn-replay-speed-norm')?.addEventListener('click', () => window.gameApp?.replay?.setSpeed(1.0));
+    document.getElementById('btn-replay-speed-fast')?.addEventListener('click', () => window.gameApp?.replay?.setSpeed(2.0));
+    document.getElementById('btn-replay-cam')?.addEventListener('click', () => window.gameApp?.replay?.cycleAngle());
     document.getElementById('btn-replay-photo')?.addEventListener('click', () => {
       if (this.onOpenPhotoMode) this.onOpenPhotoMode();
     });
     document.getElementById('btn-replay-exit')?.addEventListener('click', () => {
       this.panelReplayControls?.classList.add('hidden');
+      if (this.onExitReplay) this.onExitReplay();
       this.screenResults?.classList.remove('hidden');
     });
 
@@ -370,14 +787,79 @@ export class UIManager {
     });
     document.getElementById('btn-photo-exit')?.addEventListener('click', () => {
       this.panelPhotoMode?.classList.add('hidden');
-      window.gameApp?.photoMode?.exit();
+      if (this.onExitPhotoMode) this.onExitPhotoMode();
       this.panelReplayControls?.classList.remove('hidden');
+    });
+
+    // Car Stereo: Live Internet Radio + Local Device Music Player Bindings
+    const openMusic = () => this.openMusicModal();
+    document.getElementById('btn-open-music-studio')?.addEventListener('click', openMusic);
+    document.getElementById('hud-btn-open-music')?.addEventListener('click', openMusic);
+    document.getElementById('btn-settings-open-music')?.addEventListener('click', () => {
+      this.modalSettings?.classList.add('hidden');
+      openMusic();
+    });
+
+    document.getElementById('btn-upload-device-music')?.addEventListener('click', () => {
+      this.inputDeviceMusic?.click();
+    });
+    this.inputDeviceMusic?.addEventListener('change', (e) => {
+      if (e.target.files?.length && this.onUploadDeviceMusic) {
+        this.onUploadDeviceMusic(e.target.files);
+        e.target.value = '';
+      }
+    });
+
+    if (this.musicDropzone) {
+      this.musicDropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        this.musicDropzone.classList.add('dragover');
+      });
+      this.musicDropzone.addEventListener('dragleave', () => {
+        this.musicDropzone.classList.remove('dragover');
+      });
+      this.musicDropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        this.musicDropzone.classList.remove('dragover');
+        if (e.dataTransfer?.files?.length && this.onUploadDeviceMusic) {
+          this.onUploadDeviceMusic(e.dataTransfer.files);
+        }
+      });
+    }
+
+    document.getElementById('music-btn-clear-local')?.addEventListener('click', () => this.onClearLocalMusic?.());
+    document.getElementById('btn-search-india-fm')?.addEventListener('click', () => {
+      this.fetchIndianRadioDirectory(this.musicIndiaSearch?.value || '');
+    });
+    this.musicIndiaSearch?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') this.fetchIndianRadioDirectory(this.musicIndiaSearch.value || '');
+    });
+    document.getElementById('btn-play-custom-stream')?.addEventListener('click', () => {
+      const url = (this.musicCustomStreamUrl?.value || '').trim();
+      if (!url) {
+        this.showToast('⚠️ Enter an HTTPS radio stream URL first!');
+        return;
+      }
+      this.onPlayCustomStreamUrl?.(url);
+    });
+    document.getElementById('music-btn-playpause')?.addEventListener('click', () => this.onMusicPlayPause?.());
+    document.getElementById('music-btn-next')?.addEventListener('click', () => this.onMusicNext?.());
+    document.getElementById('music-btn-prev')?.addEventListener('click', () => this.onMusicPrev?.());
+    this.musicSeekSlider?.addEventListener('input', (e) => {
+      const frac = (Number(e.target.value) || 0) / 1000;
+      this.onMusicSeek?.(frac);
     });
 
     if (this.career) {
       this.career.onCreditsChanged = () => this.updateCreditsDisplay();
       this.career.onAchievementUnlocked = (ach) => this.showToast(`🏆 UNLOCKED: ${ach.title} (+$${ach.reward.toLocaleString()})`);
     }
+  }
+
+  setChatVisible(visible) {
+    if (!this.chatDrawer) return;
+    if (visible) this.chatDrawer.classList.remove('hidden');
+    else this.chatDrawer.classList.add('hidden');
   }
 
   showRivalBanter(rivalName, color, text) {
@@ -400,10 +882,24 @@ export class UIManager {
     }
   }
 
+  applyCarDefaultColor() {
+    const config = CAR_CONFIGS[this.selectedCarIndex % CAR_CONFIGS.length];
+    if (config?.defaultColor) {
+      this.selectedColor = config.defaultColor;
+      document.querySelectorAll('.color-chip').forEach((c) => {
+        c.classList.toggle('active', c.dataset.color?.toLowerCase() === this.selectedColor.toLowerCase());
+      });
+    }
+  }
+
   updateCarShowroomInfo() {
     const config = CAR_CONFIGS[this.selectedCarIndex % CAR_CONFIGS.length];
     if (this.carNameEl) this.carNameEl.textContent = config.name;
-    if (this.carTypeEl) this.carTypeEl.textContent = config.type.toUpperCase();
+    if (this.carTypeEl) {
+      this.carTypeEl.textContent = config.type.toUpperCase();
+      const tier = (config.classTier || '').toLowerCase();
+      this.carTypeEl.className = `car-type-badge${tier ? ` tier-${tier}` : ''}`;
+    }
     if (this.carDescEl) this.carDescEl.textContent = config.description;
 
     const carUpgrades = this.career ? this.career.getCarUpgrades(config.id) : { engine: 1, turbo: 1, tires: 1, nitro: 1 };
@@ -430,7 +926,17 @@ export class UIManager {
     if (!container) return;
 
     container.innerHTML = '';
-    const categories = ['engine', 'turbo', 'tires', 'nitro'];
+    const labels = {
+      engine: 'ENGINE BLOCK',
+      turbo: 'FORCED INDUCTION',
+      gearbox: 'RACING GEARBOX',
+      suspension: 'COILOVER SUSPENSION',
+      brakes: 'CARBON-CERAMIC BRAKES',
+      chassis: 'WEIGHT CHASSIS',
+      tires: 'TIRE COMPOUND',
+      nitro: 'NITROUS / ERS'
+    };
+    const categories = Object.keys(UPGRADE_TIERS);
 
     categories.forEach((cat) => {
       const currentTier = upgrades[cat] || 1;
@@ -444,8 +950,8 @@ export class UIManager {
 
       card.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-family:'Orbitron'; font-weight:800; font-size:15px; color:var(--primary-neon);">${cat.toUpperCase()}</span>
-          <span style="font-size:12px; font-weight:700; color:${isMax ? 'var(--accent-green)' : 'var(--accent-gold)'};">TIER ${currentTier}/4</span>
+          <span style="font-family:'Orbitron'; font-weight:800; font-size:13px; color:var(--primary-neon);">${labels[cat] || cat.toUpperCase()}</span>
+          <span style="font-size:11px; font-weight:700; color:${isMax ? 'var(--accent-green)' : 'var(--accent-gold)'};">TIER ${currentTier}/4</span>
         </div>
         <div style="font-size:12px; color:var(--text-muted); margin:4px 0;">${currentConfig.name}</div>
         <div class="stat-track" style="margin: 6px 0;">
@@ -465,7 +971,7 @@ export class UIManager {
             this.renderTuningCards();
             this.updateCarShowroomInfo();
           } else {
-            alert('Not enough credits!');
+            this.showToast('⚠️ Not enough credits!');
           }
         });
       }
@@ -480,18 +986,24 @@ export class UIManager {
 
     container.innerHTML = '';
     CAREER_CUPS.forEach((cup) => {
+      const prog = this.career?.data?.careerProgress?.[cup.id];
+      const badge = prog?.completed ? '✅ WON' : (cup.entryFee > 0 ? `Fee: $${cup.entryFee.toLocaleString()}` : 'FREE ENTRY');
       const card = document.createElement('div');
       card.className = 'career-cup-card glass-panel';
       card.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <span style="font-family:'Orbitron'; font-weight:800; font-size:17px; color:#fff;">${cup.name}</span>
-          <span style="font-size:12px; font-weight:700; color:var(--accent-gold);">${cup.tier.toUpperCase()} TIER</span>
+          <span style="font-size:12px; font-weight:700; color:var(--accent-gold);">${cup.tier.toUpperCase()} • ${badge}</span>
         </div>
-        <div style="font-size:12px; color:var(--text-muted); margin: 4px 0;">${cup.races.length} Stages • Prize: $${cup.prizeMoney.toLocaleString()}</div>
+        <div style="font-size:12px; color:var(--text-muted); margin: 4px 0;">${cup.races.length} Stages • Cup Bonus: $${cup.prizeMoney.toLocaleString()}</div>
         <button class="cyber-btn cyber-btn-primary" style="width:100%; padding:8px; font-size:12px; margin-top:6px;">ENTER CUP</button>
       `;
 
       card.querySelector('button').addEventListener('click', () => {
+        if (cup.entryFee > 0 && !this.career.spendCredits(cup.entryFee)) {
+          this.showToast(`⚠️ Need $${cup.entryFee.toLocaleString()} credits to enter ${cup.name}!`);
+          return;
+        }
         this.modalCareer?.classList.add('hidden');
         if (this.onStartRace) {
           const firstRace = cup.races[0];
@@ -560,7 +1072,10 @@ export class UIManager {
     switch (screenName) {
       case 'garage': this.screenGarage?.classList.remove('hidden'); break;
       case 'lobby': this.screenLobby?.classList.remove('hidden'); break;
-      case 'hud': this.screenHUD?.classList.remove('hidden'); break;
+      case 'hud':
+        this.screenHUD?.classList.remove('hidden');
+        if (typeof document !== 'undefined') document.activeElement?.blur?.();
+        break;
       case 'results': this.screenResults?.classList.remove('hidden'); break;
       case 'replay': this.panelReplayControls?.classList.remove('hidden'); break;
       case 'photo': this.panelPhotoMode?.classList.remove('hidden'); break;
@@ -582,12 +1097,14 @@ export class UIManager {
         const row = document.createElement('div');
         row.className = `lobby-player-card ${p.id === myId ? 'me' : ''}`;
         const carCfg = CAR_CONFIGS[p.carIndex % CAR_CONFIGS.length];
+        const safeCol = this.safeColor(p.carColor, '#00f0ff');
+        const safeName = this.escapeHtml(p.name);
         row.innerHTML = `
           <div class="player-info">
-            <span class="player-dot" style="background:${p.carColor}; box-shadow: 0 0 10px ${p.carColor}"></span>
-            <span class="player-name">${p.name} ${p.isHost ? '👑' : ''} ${p.id === myId ? '(You)' : ''}</span>
+            <span class="player-dot" style="background:${safeCol}; box-shadow: 0 0 10px ${safeCol}"></span>
+            <span class="player-name">${safeName} ${p.isHost ? '👑' : ''} ${p.id === myId ? '(You)' : ''}</span>
           </div>
-          <div class="player-car-tag">${carCfg.name}</div>
+          <div class="player-car-tag">${this.escapeHtml(carCfg.name)}</div>
           <div class="player-status ${p.ready ? 'ready' : 'waiting'}">${p.ready ? 'READY' : 'WAITING'}</div>
         `;
         this.lobbyPlayerList.appendChild(row);
@@ -605,37 +1122,115 @@ export class UIManager {
   }
 
   addChatMessage(msg) {
-    if (!this.chatMessagesList) return;
+    if (!this.chatMessagesList || !msg) return;
     const div = document.createElement('div');
     div.className = 'chat-msg';
+    const safeTime = this.escapeHtml(msg.time || '');
+    const safeCol = this.safeColor(msg.senderColor, '#00f0ff');
+    const safeSender = this.escapeHtml(msg.senderName || 'Racer');
+    const safeText = this.escapeHtml(msg.text || '');
     div.innerHTML = `
-      <span class="chat-time">${msg.time || ''}</span>
-      <span class="chat-sender" style="color: ${msg.senderColor || '#00f0ff'}">${msg.senderName}:</span>
-      <span class="chat-text">${msg.text}</span>
+      <span class="chat-time">${safeTime}</span>
+      <span class="chat-sender" style="color: ${safeCol}">${safeSender}:</span>
+      <span class="chat-text">${safeText}</span>
     `;
     this.chatMessagesList.appendChild(div);
     this.chatMessagesList.scrollTop = this.chatMessagesList.scrollHeight;
   }
 
-  updateHUD(physics, ping, leaderboard = [], modeName = 'GRAND PRIX') {
+  updateHUD(physics, ping, leaderboard = [], modeName = 'GRAND PRIX', fps = 60) {
     if (!physics) return;
 
-    if (this.hudModeBadge) this.hudModeBadge.textContent = modeName;
-    if (this.hudSpeedNumber) this.hudSpeedNumber.textContent = physics.speedKmh;
-    if (this.hudGear) this.hudGear.textContent = physics.gear;
+    const unitMult = this.lastSystemSettings?.speedUnit === 'mph' ? 0.621371 : 1.0;
+    const displaySpeed = Math.round(physics.speedKmh * unitMult);
 
+    if (this.hudModeBadge) this.hudModeBadge.textContent = modeName;
+    if (this.hudFpsPill && this.lastSystemSettings?.fpsCounter) {
+      this.hudFpsPill.textContent = `${fps} FPS`;
+    }
+    if (this.hudSpeedNumber) this.hudSpeedNumber.textContent = displaySpeed;
+    if (this.hudGear) {
+      this.hudGear.textContent = physics.gear;
+      this.hudGear.classList.toggle('shift-alert', !!(physics.shiftLight && !physics.revLimiter));
+      this.hudGear.classList.toggle('redline-limiter', !!physics.revLimiter);
+    }
+
+    if (this.hudTransMode) {
+      const isManual = physics.transmissionMode === 'manual';
+      this.hudTransMode.textContent = isManual ? 'MANUAL' : 'AUTO';
+      this.hudTransMode.classList.toggle('manual', isManual);
+    }
+
+    const rpmPercent = Math.min(100, (physics.rpm / physics.maxRpm) * 100);
     if (this.hudRpmBar) {
-      const rpmPercent = Math.min(100, (physics.rpm / physics.maxRpm) * 100);
       this.hudRpmBar.style.width = `${rpmPercent}%`;
       if (rpmPercent > 85) this.hudRpmBar.classList.add('redline');
       else this.hudRpmBar.classList.remove('redline');
     }
 
+    if (this.hudRpmLeds) {
+      const leds = this.hudRpmLeds.children;
+      const litCount = Math.round((rpmPercent / 100) * leds.length);
+      for (let i = 0; i < leds.length; i++) {
+        leds[i].className = 'rpm-led';
+        if (i < litCount) {
+          leds[i].classList.add(i < 5 ? 'lit-low' : (i < 8 ? 'lit-mid' : 'lit-high'));
+        }
+      }
+    }
+
+    if (this.hudBoostVal) this.hudBoostVal.textContent = `${(physics.boostPsi || 0).toFixed(1)} PSI`;
+    if (this.hudGForceVal) this.hudGForceVal.textContent = `${(physics.lateralG || 0).toFixed(1)}G`;
+    if (this.hudLampAbs) {
+      this.hudLampAbs.classList.toggle('on', !!physics.absEnabled);
+      this.hudLampAbs.classList.toggle('active', !!physics.absActive);
+    }
+    if (this.hudLampTcs) {
+      this.hudLampTcs.classList.toggle('on', !!physics.tcsEnabled);
+      this.hudLampTcs.classList.toggle('active', !!physics.tcsActive);
+    }
+    if (this.hudLampErs) {
+      this.hudLampErs.classList.toggle('on', true);
+      this.hudLampErs.classList.toggle('active', !!physics.isNitroActive);
+    }
+
+    if (this.hudSpeedlines) {
+      if (this.lastSystemSettings?.speedFxEnabled !== false) {
+        const lineAlpha = physics.isNitroActive ? 0.85 : Math.max(0, Math.min(0.65, (physics.speedKmh - 190) / 180));
+        this.hudSpeedlines.style.opacity = lineAlpha.toFixed(2);
+      } else {
+        this.hudSpeedlines.style.opacity = '0';
+      }
+    }
+
     if (this.hudNitroBar) {
       const nitroPercent = (physics.nitroAmount / physics.nitroMax) * 100;
       this.hudNitroBar.style.width = `${nitroPercent}%`;
-      if (physics.isNitroActive) this.hudNitroBar.classList.add('active-surge');
-      else this.hudNitroBar.classList.remove('active-surge');
+      this.hudNitroBar.classList.toggle('active-surge', !!physics.isNitroActive);
+      this.hudNitroBar.classList.toggle('mode-plasma', physics.nitroMode === 'plasma');
+      this.hudNitroBar.classList.toggle('mode-hyper_warp', physics.nitroMode === 'hyper_warp');
+    }
+
+    if (this.hudNitroModeLabel) {
+      const shortNames = { plasma: 'PLASMA', twin_overboost: 'TWIN-STAGE', hyper_warp: 'HYPER-WARP' };
+      this.hudNitroModeLabel.textContent = shortNames[physics.nitroMode] || (NITRO_MODES[physics.nitroMode]?.name || 'NITRO');
+    }
+
+    if (this.hudHandbrakePill) {
+      if (physics.isLaunchReady) {
+        this.hudHandbrakePill.classList.remove('hidden');
+        this.hudHandbrakePill.classList.add('launch-ready');
+        this.hudHandbrakePill.textContent = 'LAUNCH READY';
+      } else if (physics.isHandbrakeActive && physics.launchControlCharge > 0.08) {
+        this.hudHandbrakePill.classList.remove('hidden', 'launch-ready');
+        this.hudHandbrakePill.textContent = `LAUNCH ${Math.round(physics.launchControlCharge * 100)}%`;
+      } else if (physics.isHandbrakeActive) {
+        this.hudHandbrakePill.classList.remove('hidden', 'launch-ready');
+        this.hudHandbrakePill.textContent = 'H-BRAKE';
+      } else {
+        this.hudHandbrakePill.classList.add('hidden');
+        this.hudHandbrakePill.classList.remove('launch-ready');
+      }
     }
 
     if (this.hudLapCurrent) this.hudLapCurrent.textContent = Math.min(physics.totalLaps, physics.lap);
@@ -651,10 +1246,11 @@ export class UIManager {
       leaderboard.slice(0, 6).forEach((entry, idx) => {
         const item = document.createElement('div');
         item.className = `lb-item ${entry.isMe ? 'lb-me' : ''}`;
+        const safeCol = this.safeColor(entry.color, '#00f0ff');
         item.innerHTML = `
           <span class="lb-pos">${idx + 1}</span>
-          <span class="lb-name" style="color:${entry.color}">${entry.name}</span>
-          <span class="lb-gap">${entry.gap || ''}</span>
+          <span class="lb-name" style="color:${safeCol}">${this.escapeHtml(entry.name)}</span>
+          <span class="lb-gap">${this.escapeHtml(entry.gap || '')}</span>
         `;
         this.hudLeaderboardList.appendChild(item);
 
@@ -686,12 +1282,23 @@ export class UIManager {
     this.hudCountdown.classList.remove('hidden');
     if (this.hudCountdownText) {
       this.hudCountdownText.textContent = numberOrText;
-      this.hudCountdownText.className = `countdown-${numberOrText.toString().toLowerCase()}`;
+      this.hudCountdownText.className = `countdown-${numberOrText.toString().toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+    }
+    if (this.hudStartLights) {
+      const bulbs = this.hudStartLights.querySelectorAll('.start-light-bulb');
+      const txt = String(numberOrText).toUpperCase();
+      bulbs.forEach((b, idx) => {
+        b.classList.remove('lit', 'go');
+        if (txt.includes('GO')) b.classList.add('go');
+        else if (txt === '3' && idx < 2) b.classList.add('lit');
+        else if (txt === '2' && idx < 4) b.classList.add('lit');
+        else if (txt === '1') b.classList.add('lit');
+      });
     }
     if (numberOrText === 'GO!' || numberOrText === 'GO') {
       setTimeout(() => {
         this.hudCountdown?.classList.add('hidden');
-      }, 1200);
+      }, 1100);
     }
   }
 
@@ -706,9 +1313,10 @@ export class UIManager {
       podiumData.forEach((racer, idx) => {
         const row = document.createElement('div');
         row.className = `podium-card rank-${idx + 1}`;
+        const safeCol = this.safeColor(racer.carColor, '#00f0ff');
         row.innerHTML = `
           <div class="podium-rank">${idx === 0 ? '🥇 1st' : (idx === 1 ? '🥈 2nd' : (idx === 2 ? '🥉 3rd' : `${idx + 1}th`))}</div>
-          <div class="podium-name" style="color: ${racer.carColor || '#00f0ff'}">${racer.name}</div>
+          <div class="podium-name" style="color: ${safeCol}">${this.escapeHtml(racer.name)}</div>
           <div class="podium-time">${racer.totalTime ? this.formatTime(racer.totalTime) : 'DNF'}</div>
         `;
         this.resultsPodiumList.appendChild(row);
@@ -770,5 +1378,162 @@ export class UIManager {
     const secs = Math.floor(seconds % 60);
     const ms = Math.floor((seconds * 100) % 100);
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+  }
+
+  formatTrackClock(seconds) {
+    if (!seconds || isNaN(seconds) || seconds <= 0) return '0:00';
+    const s = Math.floor(seconds % 60);
+    const m = Math.floor(seconds / 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  openMusicModal() {
+    this.modalMusic?.classList.remove('hidden');
+    const st = this.onRequestMusicState?.();
+    this.syncMusicUI(st);
+    if (!this.indiaStationsLoaded) {
+      this.fetchIndianRadioDirectory('');
+    }
+  }
+
+  async fetchIndianRadioDirectory(query = '') {
+    if (!this.musicIndiaGrid) return;
+    this.musicIndiaGrid.innerHTML = '<div style="font-size:11px; color:var(--text-muted); padding:6px;">📡 Loading live Indian FM directory...</div>';
+    try {
+      const resp = await fetch(`/api/radio/india?q=${encodeURIComponent(query.trim())}`);
+      const data = await resp.json();
+      const stations = Array.isArray(data?.stations) ? data.stations : [];
+      this.indiaStationsLoaded = true;
+      this.cachedIndiaStations = stations;
+      window.gameApp?.audio?.setIndiaDirectory?.(stations);
+      this.renderIndianDirectory(stations, this.onRequestMusicState?.()?.activeId);
+    } catch (e) {
+      this.musicIndiaGrid.innerHTML = '<div style="font-size:11px; color:var(--text-muted); padding:6px;">⚠️ Could not load extra directory — use presets above!</div>';
+    }
+  }
+
+  renderIndianDirectory(stations = [], activeId = null) {
+    if (!this.musicIndiaGrid) return;
+    if (!stations.length) {
+      this.musicIndiaGrid.innerHTML = '<div style="font-size:11px; color:var(--text-muted); padding:6px;">No matching live HTTPS MP3/AAC streams found. Try another keyword (e.g. Mirchi, Red, Big, Bollywood, Punjabi).</div>';
+      return;
+    }
+    this.musicIndiaGrid.innerHTML = '';
+    stations.forEach((st) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `music-station-btn${activeId === st.id ? ' active' : ''}`;
+      btn.innerHTML = `<div>${this.escapeHtml(st.name)}</div><div style="font-size:10px; color:var(--text-muted); font-weight:500;">${this.escapeHtml(st.genre || 'Indian Live FM')}</div>`;
+      btn.addEventListener('click', () => this.onPlayLiveStation?.(st));
+      this.musicIndiaGrid.appendChild(btn);
+    });
+  }
+
+  renderMusicStations(activeId) {
+    if (this.musicLiveGrid) {
+      this.musicLiveGrid.innerHTML = '';
+      LIVE_RADIO_STREAMS.forEach((st) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `music-station-btn${activeId === st.id ? ' active' : ''}`;
+        btn.innerHTML = `<div>${st.name}</div><div style="font-size:10px; color:var(--text-muted); font-weight:500;">${st.genre}</div>`;
+        btn.addEventListener('click', () => this.onPlayLiveStation?.(st.id));
+        this.musicLiveGrid.appendChild(btn);
+      });
+    }
+    if (this.musicSynthGrid) {
+      this.musicSynthGrid.innerHTML = '';
+      RADIO_STATIONS.forEach((st) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `music-station-btn${activeId === st.id ? ' active' : ''}`;
+        btn.innerHTML = `<div>${st.name}</div><div style="font-size:10px; color:var(--text-muted); font-weight:500;">${st.genre}</div>`;
+        btn.addEventListener('click', () => this.onPlaySynthStation?.(st.id));
+        this.musicSynthGrid.appendChild(btn);
+      });
+    }
+  }
+
+  syncMusicUI(state) {
+    if (!state) return;
+    if (this.hudRadioStation && state.title) {
+      this.hudRadioStation.textContent = state.title;
+    }
+    if (this.musicStatusBadge) this.musicStatusBadge.textContent = state.statusLabel || 'RADIO';
+    if (this.musicNowTitle) this.musicNowTitle.textContent = state.title || 'S3D Radio';
+    if (this.musicNowSub) this.musicNowSub.textContent = state.subtitle || '';
+
+    if (this.musicSeekSlider && this.musicTimeLabel) {
+      if (state.sourceMode === 'local' && state.duration > 0) {
+        this.musicSeekSlider.disabled = false;
+        this.musicSeekSlider.value = String(Math.round((state.currentTime / state.duration) * 1000));
+        this.musicTimeLabel.textContent = `${this.formatTrackClock(state.currentTime)} / ${this.formatTrackClock(state.duration)}`;
+      } else {
+        this.musicSeekSlider.disabled = true;
+        this.musicSeekSlider.value = '0';
+        this.musicTimeLabel.textContent = state.sourceMode === 'live' ? 'LIVE FM' : '--:--';
+      }
+    }
+
+    if (this.musicPlaylistList) {
+      const tracks = state.localTracks || [];
+      if (!tracks.length) {
+        this.musicPlaylistList.innerHTML = '<div style="font-size:11px; color:var(--text-muted); text-align:center; padding:6px;">No device songs uploaded yet — choose MP3/WAV/M4A files above!</div>';
+      } else {
+        this.musicPlaylistList.innerHTML = '';
+        tracks.forEach((tr, idx) => {
+          const isCurr = state.sourceMode === 'local' && state.localIndex === idx;
+          const row = document.createElement('div');
+          row.className = `music-track-item${isCurr ? ' active' : ''}`;
+          row.innerHTML = `<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${isCurr ? '▶ ' : ''}${this.escapeHtml(tr.name)} <small style="color:var(--text-muted);">(${this.escapeHtml(tr.sizeLabel)})</small></span><button type="button" class="cyber-btn cyber-btn-ghost" style="padding:1px 6px; font-size:10px;">✕</button>`;
+          row.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') {
+              e.stopPropagation();
+              this.onRemoveLocalTrack?.(idx);
+            } else {
+              this.onPlayLocalTrack?.(idx);
+            }
+          });
+          this.musicPlaylistList.appendChild(row);
+        });
+      }
+    }
+
+    this.renderMusicStations(state.activeId);
+    if (this.cachedIndiaStations?.length) {
+      this.renderIndianDirectory(this.cachedIndiaStations, state.activeId);
+    }
+  }
+
+  syncAudioToggleUI(sfxMuted = false, musicMuted = false) {
+    const hudSfx = document.getElementById('hud-btn-mute-sfx');
+    const sfxIcon = document.getElementById('sfx-mute-icon');
+    if (hudSfx) hudSfx.classList.toggle('is-muted', !!sfxMuted);
+    if (sfxIcon) sfxIcon.textContent = sfxMuted ? '🏎️🔇' : '🏎️🔊';
+
+    const hudMusic = document.getElementById('hud-btn-mute-music');
+    const musicIcon = document.getElementById('music-mute-icon');
+    if (hudMusic) hudMusic.classList.toggle('is-muted', !!musicMuted);
+    if (musicIcon) musicIcon.textContent = musicMuted ? '🎵🔇' : '🎵🔊';
+
+    const modalSfx = document.getElementById('music-btn-mute-sfx');
+    if (modalSfx) {
+      modalSfx.textContent = sfxMuted ? '🏎️ CAR SOUND: OFF' : '🏎️ CAR SOUND: ON';
+      modalSfx.classList.toggle('is-muted', !!sfxMuted);
+    }
+    const modalMusic = document.getElementById('music-btn-mute-music');
+    if (modalMusic) {
+      modalMusic.textContent = musicMuted ? '🎵 MUSIC: OFF' : '🎵 MUSIC: ON';
+      modalMusic.classList.toggle('is-muted', !!musicMuted);
+    }
+  }
+
+  syncVehicleFxUI(indicatorMode = 'off', phaseOn = false, hornActive = false) {
+    const leftActive = indicatorMode === 'left' || indicatorMode === 'hazard';
+    const rightActive = indicatorMode === 'right' || indicatorMode === 'hazard';
+    this.hudBtnIndLeft?.classList.toggle('lit', !!phaseOn && leftActive);
+    this.hudBtnIndRight?.classList.toggle('lit', !!phaseOn && rightActive);
+    this.hudBtnHazard?.classList.toggle('hazard-lit', !!phaseOn && indicatorMode === 'hazard');
+    this.hudBtnHorn?.classList.toggle('active', !!hornActive);
   }
 }

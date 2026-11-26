@@ -8,25 +8,49 @@ export const UPGRADE_TIERS = {
     { tier: 1, name: 'Stock Engine', cost: 0, powerMult: 1.0, topSpeedBonus: 0 },
     { tier: 2, name: 'Stage 1 ECU + Intake', cost: 3500, powerMult: 1.12, topSpeedBonus: 12 },
     { tier: 3, name: 'Stage 2 Twin-Turbo', cost: 8500, powerMult: 1.25, topSpeedBonus: 24 },
-    { tier: 4, name: 'Stage 3 Cyber Hybrid V8', cost: 16000, powerMult: 1.42, topSpeedBonus: 40 }
+    { tier: 4, name: 'Stage 3 Hybrid Hyper-V12', cost: 16000, powerMult: 1.42, topSpeedBonus: 40 }
   ],
   turbo: [
     { tier: 1, name: 'Stock Throttle', cost: 0, launchMult: 1.0 },
     { tier: 2, name: 'High-Flow Intercooler', cost: 2500, launchMult: 1.15 },
-    { tier: 3, name: 'Ball-Bearing Turbocharger', cost: 6500, launchMult: 1.30 },
+    { tier: 3, name: 'Ball-Bearing Twin Turbo', cost: 6500, launchMult: 1.30 },
     { tier: 4, name: 'Anti-Lag Supercharger', cost: 12500, launchMult: 1.50 }
+  ],
+  gearbox: [
+    { tier: 1, name: 'Factory 6-Speed Synchro', cost: 0, shiftTorqueBonus: 1.0, ratioSpread: 1.0 },
+    { tier: 2, name: 'Close-Ratio Sport Box', cost: 2800, shiftTorqueBonus: 1.07, ratioSpread: 1.04 },
+    { tier: 3, name: '7-Spec Dual-Clutch DCT', cost: 6800, shiftTorqueBonus: 1.14, ratioSpread: 1.08 },
+    { tier: 4, name: 'Sequential Carbon Dogbox', cost: 13500, shiftTorqueBonus: 1.22, ratioSpread: 1.13 }
+  ],
+  suspension: [
+    { tier: 1, name: 'OEM Comfort Dampers', cost: 0, handlingMult: 1.0, rollStiffness: 1.0 },
+    { tier: 2, name: 'Lowered Sport Coilovers', cost: 2200, handlingMult: 1.08, rollStiffness: 1.22 },
+    { tier: 3, name: 'Track Ohlins 2-Way Billet', cost: 5800, handlingMult: 1.16, rollStiffness: 1.48 },
+    { tier: 4, name: 'Active Pushrod Hydraulic', cost: 11500, handlingMult: 1.26, rollStiffness: 1.80 }
+  ],
+  brakes: [
+    { tier: 1, name: 'Ventilated Steel Discs', cost: 0, brakeMult: 1.0, coolingRate: 1.0 },
+    { tier: 2, name: 'Brembo 6-Piston Drilled', cost: 2000, brakeMult: 1.14, coolingRate: 1.25 },
+    { tier: 3, name: 'Track Slotted Monoblock', cost: 5200, brakeMult: 1.28, coolingRate: 1.55 },
+    { tier: 4, name: 'F1 Carbon-Ceramic CCM-R', cost: 10800, brakeMult: 1.44, coolingRate: 2.0 }
+  ],
+  chassis: [
+    { tier: 1, name: 'OEM Steel & Aluminum', cost: 0, weightReduction: 1.0 },
+    { tier: 2, name: 'Carbon Hood & Trunk', cost: 3000, weightReduction: 1.07 },
+    { tier: 3, name: 'Titanium Cage + Lexan', cost: 7200, weightReduction: 1.15 },
+    { tier: 4, name: 'Full Carbon Monocoque Tub', cost: 14500, weightReduction: 1.24 }
   ],
   tires: [
     { tier: 1, name: 'Street Radial Tires', cost: 0, driftGrip: 0.90, gripMult: 1.0 },
     { tier: 2, name: 'Semi-Slick Sport Tires', cost: 2000, driftGrip: 0.93, gripMult: 1.10 },
     { tier: 3, name: 'Pro Drift Compound', cost: 5000, driftGrip: 0.97, gripMult: 1.20 },
-    { tier: 4, name: 'Apex Racing Slicks', cost: 10000, driftGrip: 0.99, gripMult: 1.35 }
+    { tier: 4, name: 'Apex Soft Racing Slicks', cost: 10000, driftGrip: 0.99, gripMult: 1.35 }
   ],
   nitro: [
     { tier: 1, name: 'Single NOS Bottle (100L)', cost: 0, capacity: 100, rechargeRate: 4, boostPower: 1.45 },
-    { tier: 2, name: 'Dual Bottle Setup (150L)', cost: 3000, capacity: 150, rechargeRate: 6, boostPower: 1.55 },
+    { tier: 2, name: 'Dual Purge Setup (150L)', cost: 3000, capacity: 150, rechargeRate: 6, boostPower: 1.55 },
     { tier: 3, name: 'Liquid Plasma Injection', cost: 7500, capacity: 200, rechargeRate: 8, boostPower: 1.70 },
-    { tier: 4, name: 'Quantum Overdrive Warp', cost: 14000, capacity: 250, rechargeRate: 12, boostPower: 1.90 }
+    { tier: 4, name: 'Quantum Overdrive ERS', cost: 14000, capacity: 250, rechargeRate: 12, boostPower: 1.90 }
   ]
 };
 
@@ -44,38 +68,38 @@ export const ACHIEVEMENTS = [
 export const CAREER_CUPS = [
   {
     id: 'novice_cup',
-    name: 'Novice Speed Cup',
+    name: 'Novice Delhi Cup',
     tier: 'Bronze',
     entryFee: 0,
     prizeMoney: 8000,
     races: [
-      { track: 'neon_city', weather: 'clear', laps: 2, name: 'Neon City Circuit' },
-      { track: 'cyber_desert', weather: 'clear', laps: 2, name: 'Cyber Desert Dunes' }
+      { track: 'delhi_sunny', weather: 'clear', laps: 2, name: 'India Gate Daylight Sprint' },
+      { track: 'delhi_sunset', weather: 'clear', laps: 2, name: 'Kartavya Path Golden Hour' }
     ]
   },
   {
     id: 'pro_cup',
-    name: 'Pro Cyber Championship',
+    name: 'Pro India Championship',
     tier: 'Silver',
     entryFee: 2500,
     prizeMoney: 18000,
     races: [
-      { track: 'cyber_rain', weather: 'rain', laps: 3, name: 'Rainstorm Grand Prix' },
-      { track: 'industrial_core', weather: 'clear', laps: 3, name: 'Industrial Core Hazard Run' },
-      { track: 'space_ring', weather: 'clear', laps: 3, name: 'Orbital Ring Highway' }
+      { track: 'delhi_monsoon', weather: 'rain', laps: 3, name: 'Delhi Monsoon Rain GP' },
+      { track: 'delhi_fog', weather: 'clear', laps: 3, name: 'November Ridge Forest Mist' },
+      { track: 'delhi_night', weather: 'clear', laps: 3, name: 'Midnight Delhi Floodlights' }
     ]
   },
   {
     id: 'apex_cup',
-    name: 'Apex World Masters',
+    name: 'Apex Delhi Masters',
     tier: 'Gold',
     entryFee: 6000,
     prizeMoney: 35000,
     races: [
-      { track: 'cyber_rain', weather: 'rain', laps: 3, name: 'Thunder Rain Sprint' },
-      { track: 'space_ring', weather: 'clear', laps: 4, name: 'Zero-G Orbital Ring' },
-      { track: 'industrial_core', weather: 'clear', laps: 4, name: 'Industrial Factory Gauntlet' },
-      { track: 'neon_city', weather: 'clear', laps: 5, name: 'Neon Metropolis Endurance' }
+      { track: 'delhi_monsoon', weather: 'rain', laps: 3, name: 'Connaught Place Monsoon' },
+      { track: 'delhi_fog', weather: 'clear', laps: 4, name: 'Sanjay Van Winter Mist' },
+      { track: 'delhi_night', weather: 'clear', laps: 4, name: 'Red Fort & Signature Night' },
+      { track: 'delhi_live', weather: 'clear', laps: 5, name: 'Live Real-Time Delhi Finale' }
     ]
   }
 ];
@@ -160,14 +184,22 @@ export class CareerManager {
     if (!this.data.upgrades || typeof this.data.upgrades !== 'object') {
       this.data.upgrades = {};
     }
+    const defaults = {
+      engine: 1, turbo: 1, gearbox: 1, suspension: 1, brakes: 1, chassis: 1, tires: 1, nitro: 1,
+      rimStyle: 0, spoiler: 1, spoilerStyle: 0, aeroKit: 0, exhaustStyle: 0, headlightStyle: 0,
+      caliperColor: 0, paintFinish: 'metallic', tint: 0, underglowMode: 'pulse'
+    };
     if (!this.data.upgrades[carId]) {
-      this.data.upgrades[carId] = { engine: 1, turbo: 1, tires: 1, nitro: 1, rimStyle: 0, spoiler: 1, tint: 0, underglowMode: 'pulse' };
+      this.data.upgrades[carId] = { ...defaults };
+    } else {
+      this.data.upgrades[carId] = { ...defaults, ...this.data.upgrades[carId] };
     }
     return this.data.upgrades[carId];
   }
 
   upgradeCarComponent(carId, category) {
-    const currentTier = this.data.upgrades[carId][category] || 1;
+    const up = this.getCarUpgrades(carId);
+    const currentTier = up[category] || 1;
     const nextTier = currentTier + 1;
     const tierList = UPGRADE_TIERS[category];
 
@@ -175,12 +207,10 @@ export class CareerManager {
 
     const upgradeConfig = tierList[nextTier - 1];
     if (this.spendCredits(upgradeConfig.cost)) {
-      this.data.upgrades[carId][category] = nextTier;
+      up[category] = nextTier;
       this.save();
 
-      // Check max tune achievement
-      const up = this.data.upgrades[carId];
-      if (up.engine === 4 && up.turbo === 4 && up.tires === 4 && up.nitro === 4) {
+      if (up.engine >= 4 && up.turbo >= 4 && up.tires >= 4 && up.nitro >= 4) {
         this.unlockAchievement('max_tune');
       }
 

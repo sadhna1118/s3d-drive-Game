@@ -11,6 +11,7 @@ export class NetworkClient {
     this.currentRoom = null;
     this.ping = 0;
     this.lastPingSent = 0;
+    this.pingInterval = null;
 
     // Callbacks
     this.onRoomsList = null;
@@ -114,7 +115,10 @@ export class NetworkClient {
   }
 
   startPingLoop() {
-    setInterval(() => {
+    if (this.pingInterval) {
+      clearInterval(this.pingInterval);
+    }
+    this.pingInterval = setInterval(() => {
       if (this.socket && this.connected) {
         this.lastPingSent = Date.now();
         this.socket.emit('ping_check', this.lastPingSent);

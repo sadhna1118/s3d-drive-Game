@@ -1,75 +1,54 @@
-# ⚡ S3D Drive – 3D Web Racing & Voice Driving
-  https://s3d-drive-game.onrender.com/
-> **Flagship 3D High-Performance Web Racing Game with Speech Recognition Voice Driving Control, Adaptive AI Nemesis Rivals, 5 Dynamic Environmental Tracks, Real-Time Online Multiplayer, and Multi-Angle Cinematic Replays.**
+# ⚡ S3D Drive – 3D Web Racing & Open World Driving
+
+> **3D High-Performance Browser Racing Game featuring 10 Sculpted & Real GLB Vehicles, Unified Real-Time New Delhi Open World, Realistic Model-Specific Engine Acoustics, Horn & Indicator FX, Local Music + Live Indian FM Radio, Cinematic Crash Physics, and Real-Time Socket.IO Multiplayer.**
 
 ---
 
-## 🌟 Key Features
+## 🌟 Highlights
 
-### 🎙️ 1. Real-Time Speech Recognition Voice Driving Control
-- Real-time continuous voice navigation in **English** & **Hindi**:
-  - **Speed / Accelerate**: *"Speed"*, *"Fast"*, *"Run"*, *"Go"*, *"Chal"*, *"Chalo"*, *"Bhagao"*, *"Aage"*
-  - **Steer Left**: *"Left"*, *"Turn Left"*, *"Baayein"*, *"Left mud"*, *"Left lo"*
-  - **Steer Right**: *"Right"*, *"Turn Right"*, *"Daayein"*, *"Right mud"*, *"Right lo"*
-  - **Center Steering**: *"Straight"*, *"Center"*, *"Seedha"*, *"Seedhe"*
-  - **Nitro Warp**: *"Nitro"*, *"Boost"*, *"NOS"*, *"Turbo"*, *"Tez"*
-  - **Brake / Stop**: *"Brake"*, *"Stop"*, *"Halt"*, *"Ruko"*, *"Rok"*
-  - **Drift**: *"Drift"*, *"Handbrake"*, *"Slide"*
-  - **Reverse**: *"Reverse"*, *"Back"*, *"Peeche"*
-  - **Reset**: *"Reset"*, *"Theek karo"*
-  - **Camera**: *"Camera"*, *"View"*, *"Cockpit"*
-
-### 🏎️ 2. Four Authentic Supercar Classes
-- **Hyperion GT3**: Twin-turbo track weapon with active aero swan-neck spoiler.
-- **Apex Hyperion X**: Quad-motor electric hypercar with Y-laser signature headlamps.
-- **Phantom GT-R**: Bolted widebody tuner with custom turbo exhaust pipes & drift balance.
-- **Pulse F1-Grand**: Open-wheel formula single-seater with titanium halo safety structure.
-
-### 🛣️ 3. Five Dynamic Environmental Tracks
-1. **🌇 Neon City (Night Circuit)**: High-speed street GP with holographic gantries.
-2. **🌧️ Cyber City (Rain & Thunder)**: Wet reflective asphalt with thunder and reduced tire grip.
-3. **🏜️ Cyber Desert (Sandstorm)**: Desert highway with air drag and shifting dunes.
-4. **🪐 Orbital Ring (Space Station)**: Low-gravity zero-G lunar highway.
-5. **⚙️ Industrial Core Zone**: Factory gauntlet with moving hydraulic pistons & obstacles.
-
-### 🌐 4. Real-Time Online Multiplayer
-- Custom room codes for instant multiplayer lobbies (up to 8 racers per room).
-- Sub-30ms vehicle transform synchronization, drift sparks, wheel rotation, and in-game chat.
-
-### 📊 5. Professional Telemetry & Cinematic Replays
-- Real-time telemetry dashboard (Top Speed, Average Speed, Drift Distance, Nitro Time, Overtakes).
-- Multi-angle director replay player (Chase, Low Asphalt, Wheel Side, Overhead Drone).
-- High-res photo mode with watermarked screenshot export.
+- **10 Distinct Vehicles (`Ferrari 458 Italia`, `Lamborghini Aventador`, `Bugatti Chiron Pur Sport`, `Rolls-Royce Spectre`, `McLaren P1 GTR`, `Mahindra Thar 4x4`, `Mahindra Scorpio-N`, `Tata Safari`, `Phantom GT-R`, `Pulse F1-Grand`)** calibrated up to `399 km/h` with PBR clearcoat materials, interiors, projector headlamps, glowing brake rotors, HSRP plates, and custom aero/rim/tint mods.
+- **Unified New Delhi Circuit & Climates**: Live clock-driven sky/sun (`Delhi Live`) plus Sunny, Golden Sunset, Monsoon Rain, Winter Fog, and Neon Night, featuring Kartavya Path, India Gate, Lodhi Gazebo, animated Delhi Metro trains, and open-world vistas.
+- **Car-Specific WebAudio Engine Synth & FX**: Warm class-tuned engine harmonics, blow-off valve, shift thud, heavy layered crash audio, plus dual-tone car horn (`H`) and mechanical relay turn-signal / hazard blinkers (`Z` / `X` / `F`) synced to 3D corner emitters.
+- **Music & Live Indian FM Player**: Stream Indian live radio stations or play your own local MP3/WAV/M4A files directly from your device with automatic source switching and independent Car Sound (`M`) and Music (`B`) mute controls.
+- **Full Cinematic Crash Physics**: High-speed impacts launch rivals spinning and tumbling with 3D debris fragments, sparks, smoke trails, barrier rebounds, chain pileups, directional camera kick, and brief impact slow-motion before clean recovery.
+- **Real-Time Online Multiplayer**: Custom 5-character room codes, live 45 Hz transform sync, leaderboard standings, and sanitized in-game chat.
 
 ---
 
-## 🚀 Quick Start (Local Run)
+## 🚀 Quick Start (Local Development)
 
 ```bash
 # 1. Install dependencies
 npm install
 
-# 2. Start server
+# 2. Start the server
 node server.js
 ```
+
 Open **`http://localhost:3000`** in Chrome, Edge, or Firefox.
+
+> [!NOTE]
+> Use `PORT` and optional `ALLOWED_ORIGIN` environment variables in production. Never store API keys or tokens in client files, `.env` files tracked by Git, or documentation.
 
 ---
 
 ## 🎮 Controls
 
-| Action | Keyboard | Touch / Mobile | Voice Command (EN / HI) |
-| :--- | :--- | :--- | :--- |
-| **Accelerate** | `W` / `Up Arrow` | Gas Pedal | *"Speed"* / *"Chal"* / *"Fast"* |
-| **Steer Left** | `A` / `Left Arrow` | Left Arrow | *"Left"* / *"Baayein"* |
-| **Steer Right** | `D` / `Right Arrow` | Right Arrow | *"Right"* / *"Daayein"* |
-| **Brake / Reverse** | `S` / `Down Arrow` | Brake Pedal | *"Brake"* / *"Stop"* / *"Ruko"* |
-| **Handbrake / Drift** | `Space` | E-Brake | *"Drift"* / *"Handbrake"* |
-| **Nitro Warp** | `Shift` / `N` | Nitro Button | *"Nitro"* / *"Boost"* / *"Tez"* |
-| **Change Camera** | `C` | Cam Icon | *"Camera"* / *"View"* |
-| **Reset Car** | `R` | — | *"Reset"* / *"Respawn"* |
+| Action | Keyboard | HUD / Touch |
+| :--- | :--- | :--- |
+| **Accelerate** | `W` / `Up Arrow` | Gas Pedal |
+| **Steer Left / Right** | `A` / `D` or `Left` / `Right` | Left / Right Touch |
+| **Brake / Reverse** | `S` / `Down Arrow` | Brake Pedal |
+| **Handbrake / Drift** | `Space` | `DRIFT` Button |
+| **Nitro Boost** | `Shift` / `N` | `NITRO` Button |
+| **Manual Shift Up / Down** | `E` / `Q` (`PgUp` / `PgDn`) | `▲` / `▼` Paddles |
+| **Horn** | `H` (Hold) | `📢 HORN` Button |
+| **Left / Right / Hazard Indicator** | `Z` / `X` / `F` | `◀` / `▶` / `⚠` Buttons |
+| **Change Camera / Reset** | `C` / `R` | Cam Icon |
+| **Mute Car FX / Music** | `M` / `B` | `🏎️ CAR` / `🎵 MUSIC` |
+| **Voice Commands / Pause** | `V` / `Esc` | Mic / Pause Icons |
 
 ---
 
 ## 📄 License
-MIT License. Built with Three.js, Socket.io, Express, and Web Speech API.
+MIT License. Built with Express, Socket.IO, Three.js, and Web Audio API.
