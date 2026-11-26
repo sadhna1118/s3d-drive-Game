@@ -2004,17 +2004,22 @@ export class Track {
     corner.rotation.y = -0.62;
 
     const rubyBalloonMat = new THREE.MeshPhysicalMaterial({
-      color: 0xe11d48,
-      emissive: 0x6b0b25,
-      emissiveIntensity: 0.42,
-      roughness: 0.16,
-      metalness: 0.15,
-      clearcoat: 1.0
+      color: 0xd91642,
+      emissive: 0x3b0514,
+      emissiveIntensity: 0.22,
+      roughness: 0.28,
+      metalness: 0.1,
+      clearcoat: 0.65
     });
-    const softPinkRoseMat = new THREE.MeshStandardMaterial({ color: 0xfb7185, roughness: 0.42 });
-    const stringMat = new THREE.MeshBasicMaterial({ color: 0xfef3c7 });
-    const petalCarpetMat = new THREE.MeshStandardMaterial({ color: 0x9f1239, roughness: 0.8 });
-    const fairyMat = new THREE.MeshBasicMaterial({ color: 0xffe48f });
+    const softPinkRoseMat = new THREE.MeshStandardMaterial({ color: 0xe86480, roughness: 0.55 });
+    const stringMat = new THREE.MeshBasicMaterial({ color: 0xe7d39c });
+    const petalCarpetMat = new THREE.MeshStandardMaterial({ color: 0x7a122e, roughness: 0.85 });
+    const fairyMat = new THREE.MeshStandardMaterial({
+      color: 0xf59e0b,
+      emissive: 0xb45309,
+      emissiveIntensity: 0.45,
+      roughness: 0.35
+    });
 
     // Petal circle platform under proposing arch
     const floorPad = new THREE.Mesh(new THREE.CylinderGeometry(2.55, 2.75, 0.06, 24), petalCarpetMat);
@@ -2100,28 +2105,73 @@ export class Track {
     const facingAngle = Math.atan2(dirToPark.x, dirToPark.z);
     pav.rotation.y = facingAngle;
 
-    const marbleMat = new THREE.MeshStandardMaterial({ color: spec.isFavorite ? 0xf6f0e8 : 0xedf2f7, roughness: 0.28, metalness: 0.08 });
-    const velvetMat = new THREE.MeshStandardMaterial({ color: spec.accentColorHex, roughness: 0.78 });
-    const chairVelvetMat = new THREE.MeshStandardMaterial({ color: 0xbe123c, roughness: 0.55 });
-    const goldMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.85, roughness: 0.22 });
-    const roseMat = new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.45 });
-    const waxMat = new THREE.MeshStandardMaterial({ color: 0xfff8e7, roughness: 0.45 });
-    const flameMat = new THREE.MeshBasicMaterial({ color: 0xffaa22 });
-    const glowMat = new THREE.MeshBasicMaterial({ color: spec.accentColorHex });
-    const fairyMat = new THREE.MeshBasicMaterial({ color: 0xffe48f });
+    const deckMat = new THREE.MeshStandardMaterial({ color: spec.isFavorite ? 0x7b5b43 : 0x6c584c, roughness: 0.86, metalness: 0.04 });
+    const walnutTableMat = new THREE.MeshStandardMaterial({ color: 0x452116, roughness: 0.45, metalness: 0.08 });
+    const stonePillarMat = new THREE.MeshStandardMaterial({ color: 0xc2a17e, roughness: 0.75, metalness: 0.05 });
+    const velvetMat = new THREE.MeshStandardMaterial({ color: 0x7d142f, roughness: 0.84 });
+    const chairVelvetMat = new THREE.MeshStandardMaterial({ color: 0x9e1938, roughness: 0.62 });
+    const goldMat = new THREE.MeshStandardMaterial({ color: 0xd99b26, metalness: 0.72, roughness: 0.32 });
+    const roseMat = new THREE.MeshStandardMaterial({ color: 0xbe123c, roughness: 0.55 });
+    const waxMat = new THREE.MeshStandardMaterial({ color: 0xf2dfc4, roughness: 0.6 });
+    const flameMat = new THREE.MeshBasicMaterial({ color: 0xffa733 });
+    const glowMat = new THREE.MeshStandardMaterial({ color: spec.accentColorHex, emissive: spec.accentColorHex, emissiveIntensity: 0.32, roughness: 0.4 });
+    const fairyMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xb45309, emissiveIntensity: 0.42, roughness: 0.38 });
 
-    // Expansive Marble Terrace Deck + Carpet Entryway
-    const deck = new THREE.Mesh(new THREE.CylinderGeometry(10.5, 11.2, 0.5, 28), marbleMat);
+    // Expansive Sandstone Terrace Deck + Carpet Entryway + Walled Courtyard Apron & Compound Gate
+    const deck = new THREE.Mesh(new THREE.CylinderGeometry(10.5, 11.2, 0.5, 28), deckMat);
     deck.position.y = 0.25;
     deck.receiveShadow = true;
     const carpet = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.08, 13.5), velvetMat);
     carpet.position.set(0, 0.52, 2.8);
     pav.add(deck, carpet);
 
-    // 4 Wide Pillars + Overhead Golden Fairy-Light Chandelier Grid (keeps center crystal clear)
+    // Compound Paved Driveway Apron + Valet Parking Bay + Open Entry Gate Pillars
+    const compoundAsphaltMat = new THREE.MeshStandardMaterial({ color: 0x35312f, roughness: 0.90, metalness: 0.04 });
+    const wallStoneMat = new THREE.MeshStandardMaterial({ color: 0x8d6e53, roughness: 0.82 });
+    const compoundApron = new THREE.Mesh(new THREE.BoxGeometry(22.5, 0.10, 12.0), compoundAsphaltMat);
+    compoundApron.position.set(-2.5, 0.04, 13.2);
+    compoundApron.receiveShadow = true;
+    pav.add(compoundApron);
+
+    // Side Compound Perimeter Walls (leaves open entrance gate right in center z=18.2!)
+    [[-9.8, 18.2, 7.6, 0.6], [4.6, 18.2, 5.4, 0.6], [-13.4, 13.2, 0.6, 10.6], [8.4, 13.2, 0.6, 10.6]].forEach(([wx, wz, ww, wd]) => {
+      const wMesh = new THREE.Mesh(new THREE.BoxGeometry(ww, 1.15, wd), wallStoneMat);
+      wMesh.position.set(wx, 0.58, wz);
+      pav.add(wMesh);
+    });
+
+    // Illuminated Open Compound Entrance Gate Pillars & Welcome Arch at (x=0, z=18.2)
+    [-2.45, 2.45].forEach((gx) => {
+      const gPillar = new THREE.Mesh(new THREE.BoxGeometry(0.62, 3.6, 0.62), stonePillarMat);
+      gPillar.position.set(gx, 1.8, 18.2);
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 8), fairyMat);
+      cap.position.set(gx, 3.85, 18.2);
+      pav.add(gPillar, cap);
+    });
+    const gateBeam = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.34, 0.42), goldMat);
+    gateBeam.position.set(0, 3.75, 18.2);
+    pav.add(gateBeam);
+
+    // Valet Parking Bay Stripes inside Compound off to the right side (-8.6, 11.4)
+    const bayBorderMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24 });
+    const bayLeft = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.04, 5.2), bayBorderMat);
+    bayLeft.position.set(-10.1, 0.11, 11.6);
+    const bayRight = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.04, 5.2), bayBorderMat);
+    bayRight.position.set(-7.1, 0.11, 11.6);
+    const bayBack = new THREE.Mesh(new THREE.BoxGeometry(3.14, 0.04, 0.14), bayBorderMat);
+    bayBack.position.set(-8.6, 0.11, 9.0);
+    pav.add(bayLeft, bayRight, bayBack);
+
+    // Valet Attendant waiting cleanly inside the compound portico
+    const valetHost = this.createParkVisitor(0x1e293b, 0xd4966c, false);
+    valetHost.group.position.set(-4.6, 0.08, 10.6);
+    valetHost.group.rotation.y = 0.65;
+    pav.add(valetHost.group);
+
+    // 4 Wide Sandstone Pillars + Overhead Warm Fairy-Light Chandelier Grid
     [-4.3, 4.3].forEach((px) => {
       [-3.4, 3.4].forEach((pz) => {
-        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 5.4, 10), marbleMat);
+        const col = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 5.4, 10), stonePillarMat);
         col.position.set(px, 2.9, pz);
         const garland = new THREE.Mesh(new THREE.SphereGeometry(0.45, 8, 8), roseMat);
         garland.position.set(px, 5.2, pz);
@@ -2150,8 +2200,8 @@ export class Track {
     archBeam.position.set(0, 5.6, -3.4);
     const boardFaceMat = new THREE.MeshStandardMaterial({
       map: this.makeVenueSignTexture(spec.name, spec.badgeText, spec.accentCss, spec.isFavorite),
-      roughness: 0.35,
-      metalness: 0.12
+      roughness: 0.45,
+      metalness: 0.08
     });
     if (spec.isFavorite) boardFaceMat.userData = { isHeartFace: true };
 
@@ -2168,11 +2218,14 @@ export class Track {
     topHeart.position.set(0, 9.45, -3.25);
     pav.add(archBeam, heartBorder, signBoard, topHeart);
 
-    // Candlelit Marble Dining Table + Twin Crystal Goblets + Center Rose Candelabra
+    // Candlelit Rosewood Dining Table + Velvet Runner + Crystal Goblets + Center Rose Vase
     const tableLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.28, 1.05, 8), goldMat);
     tableLeg.position.set(0, 0.85, 0);
-    const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(1.18, 1.18, 0.1, 20), marbleMat);
+    const tableTop = new THREE.Mesh(new THREE.CylinderGeometry(1.18, 1.18, 0.1, 20), walnutTableMat);
     tableTop.position.set(0, 1.4, 0);
+    const tableMatRunner = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.02, 16), velvetMat);
+    tableMatRunner.position.set(0, 1.455, 0);
+    pav.add(tableMatRunner);
     const crystalMat = new THREE.MeshPhysicalMaterial({ color: 0xeef8ff, metalness: 0.1, roughness: 0.05, transparent: true, opacity: 0.72 });
     [-0.36, 0.36].forEach((gx, idx) => {
       const zOff = idx === 0 ? 0.56 : -0.56;
@@ -2254,8 +2307,14 @@ export class Track {
       facingAngle,
       girlChair,
       boyChair,
+      valetHost,
       girlChairRestLocal: girlChairRestLocal.clone(),
       boyChairRestLocal: boyChairRestLocal.clone(),
+      gateEntryPos: pav.localToWorld(new THREE.Vector3(0, 0.06, 18.2)),
+      dropOffPos: pav.localToWorld(new THREE.Vector3(0, 0.06, 11.4)),
+      valetTurnMidPos: pav.localToWorld(new THREE.Vector3(-4.5, 0.06, 13.0)),
+      valetParkingPos: pav.localToWorld(new THREE.Vector3(-8.6, 0.06, 11.5)),
+      valetWaitPos: pav.localToWorld(new THREE.Vector3(-4.6, 0.08, 10.6)),
       entryApproachPos: pav.localToWorld(new THREE.Vector3(0, 0.52, 6.4)),
       tablePos: pav.localToWorld(new THREE.Vector3(0, 1.46, 0)),
       seatBoyPos: pav.localToWorld(new THREE.Vector3(0, 0.50, 1.08)),
@@ -2383,7 +2442,7 @@ export class Track {
         accentCss,
         accentColorHex,
         isFavorite,
-        pavilionPos: sp.position.clone().addScaledVector(sp.normal, chosenSign * 30).setY(0),
+        pavilionPos: sp.position.clone().addScaledVector(sp.normal, chosenSign * 34).setY(0),
         parkingPos: sp.position.clone().addScaledVector(sp.normal, chosenSign * 14.5).setY(0)
       };
     };
@@ -2396,7 +2455,7 @@ export class Track {
         accentCss: '#ff4d88',
         accentColorHex: 0xff4d88,
         isFavorite: true,
-        pavilionPos: new THREE.Vector3(-37, 0, 108),
+        pavilionPos: new THREE.Vector3(-43, 0, 108),
         parkingPos: new THREE.Vector3(-14.5, 0, 108)
       },
       { ...findSideSpot(0.28, 'Velvet Brew Café', 'ARTISANAL PURE VEG CAFÉ', '#fb923c', 0xfb923c, false), id: 'velvet_brew' },

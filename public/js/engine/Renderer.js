@@ -495,6 +495,36 @@ export class GameRenderer {
     this.usePostProcessing = !!(enabled && this.composer);
   }
 
+  setCafeAmbienceMode(enabled) {
+    if (this.bloomPass) {
+      if (enabled) {
+        if (this._savedBloomStrength === undefined) this._savedBloomStrength = this.bloomPass.strength;
+        if (this._savedBloomThreshold === undefined) this._savedBloomThreshold = this.bloomPass.threshold;
+        this.bloomPass.strength = 0.14;
+        this.bloomPass.threshold = 0.94;
+      } else if (this._savedBloomStrength !== undefined) {
+        this.bloomPass.strength = this._savedBloomStrength;
+        this.bloomPass.threshold = this._savedBloomThreshold ?? 0.82;
+      }
+    }
+    if (this.renderer) {
+      if (enabled) {
+        if (this._savedExposure === undefined) this._savedExposure = this.renderer.toneMappingExposure;
+        this.renderer.toneMappingExposure = Math.min(this._savedExposure || 1.0, 0.94);
+      } else if (this._savedExposure !== undefined) {
+        this.renderer.toneMappingExposure = this._savedExposure;
+      }
+    }
+    if (this.dirLight) {
+      if (enabled) {
+        if (this._savedDirIntensity === undefined) this._savedDirIntensity = this.dirLight.intensity;
+        this.dirLight.intensity = Math.min(this._savedDirIntensity || 1.0, 0.52);
+      } else if (this._savedDirIntensity !== undefined) {
+        this.dirLight.intensity = this._savedDirIntensity;
+      }
+    }
+  }
+
   render() {
     try {
       if (this.skyDome && this.camera) {

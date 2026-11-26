@@ -160,12 +160,13 @@ export function getVenueById(venueId) {
 }
 
 export class DateExperienceManager {
-  constructor(scene, track, cameraCtrl, particles, audio) {
+  constructor(scene, track, cameraCtrl, particles, audio, rendererCtrl = null) {
     this.scene = scene;
     this.track = track;
     this.cameraCtrl = cameraCtrl;
     this.particles = particles;
     this.audio = audio;
+    this.rendererCtrl = rendererCtrl;
 
     this.active = false;
     // Phases: 'IDLE' | 'DRIVING' | 'CUTSCENE_WALK' | 'CAFE_DINING' | 'CUTSCENE_RETURN' | 'DRIVE_HOME' | 'HOME_ARRIVED'
@@ -209,6 +210,9 @@ export class DateExperienceManager {
 
     this.boyRig = null;
     this.girlRig = null;
+    this.valetRig = null;
+    this.valetMsgPlayed = false;
+    this.valetParkedCar = false;
     this.carDoorPivot = null;
     this.floatingHearts = [];
 
@@ -221,30 +225,53 @@ export class DateExperienceManager {
   }
 
   initStudioLighting() {
-    // Dedicated 3-point candlelight + romantic ambiance rig positioned right at the active scene
-    this.cafeKeyLight = new THREE.PointLight(0xffe0b2, 0, 42);
-    this.cafeCandleLight = new THREE.PointLight(0xffb76b, 0, 24);
-    this.cafeRomanceLight = new THREE.PointLight(0xff5e99, 0, 28);
+    // Dedicated soft, warm 3-point candlelight ambiance rig (zero dazzling white glare!)
+    this.cafeKeyLight = new THREE.PointLight(0xffcb8c, 0, 36);
+    this.cafeCandleLight = new THREE.PointLight(0xff9a44, 0, 18);
+    this.cafeRomanceLight = new THREE.PointLight(0xf472b6, 0, 22);
     this.rootGroup.add(this.cafeKeyLight, this.cafeCandleLight, this.cafeRomanceLight);
   }
 
   updateStudioLighting(enable, centerPos, lookPos = null) {
+    this.rendererCtrl?.setCafeAmbienceMode?.(!!enable);
+    this.playerCar?.modelData?.setHeadlightsEnabled?.(!enable);
+
     if (!enable || !centerPos) {
       if (this.cafeKeyLight) this.cafeKeyLight.intensity = 0;
       if (this.cafeCandleLight) this.cafeCandleLight.intensity = 0;
       if (this.cafeRomanceLight) this.cafeRomanceLight.intensity = 0;
       return;
     }
-    this.cafeKeyLight.position.set(centerPos.x + 1.8, centerPos.y + 4.4, centerPos.z + 1.8);
-    this.cafeKeyLight.intensity = 2.6;
+    this.cafeKeyLight.position.set(centerPos.x + 2.0, centerPos.y + 5.6, centerPos.z + 2.0);
+    this.cafeKeyLight.intensity = 0.65;
 
-    this.cafeCandleLight.position.set(centerPos.x, centerPos.y + 0.95, centerPos.z);
-    const flicker = 2.0 + Math.sin(performance.now() * 0.008) * 0.22;
+    this.cafeCandleLight.position.set(centerPos.x, centerPos.y + 0.9, centerPos.z);
+    const flicker = 0.48 + Math.sin(performance.now() * 0.008) * 0.07;
     this.cafeCandleLight.intensity = flicker;
 
     const rTarget = lookPos || centerPos;
-    this.cafeRomanceLight.position.set(rTarget.x - 2.2, rTarget.y + 2.2, rTarget.z - 2.2);
-    this.cafeRomanceLight.intensity = 1.45;
+    this.cafeRomanceLight.position.set(rTarget.x - 2.4, rTarget.y + 2.5, rTarget.z - 2.4);
+    this.cafeRomanceLight.intensity = 0.36;
+  }
+
+  setCarTransform(pos, rotY) {
+    if (!this.playerCar) return;
+    if (this.playerCar.physics) {
+      const p = this.playerCar.physics;
+      p.speed = 0;
+      p.speedKmh = 0;
+      p.velocity.set(0, 0, 0);
+      p.angularVelocity = 0;
+      p.position.copy(pos);
+      p.position.y = 0.05;
+      p.rotationY = rotY;
+      p.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotY);
+    }
+    if (this.playerCar.mesh) {
+      this.playerCar.mesh.position.copy(pos);
+      this.playerCar.mesh.position.y = 0.05;
+      this.playerCar.mesh.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), rotY);
+    }
   }
 
   getVenueConfig() {
@@ -346,8 +373,10 @@ export class DateExperienceManager {
     this.removeHingedDoor();
     if (this.boyRig?.root?.parent) this.boyRig.root.parent.remove(this.boyRig.root);
     if (this.girlRig?.root?.parent) this.girlRig.root.parent.remove(this.girlRig.root);
+    if (this.valetRig?.root?.parent) this.valetRig.root.parent.remove(this.valetRig.root);
     this.boyRig = null;
     this.girlRig = null;
+    this.valetRig = null;
     while (this.tablePropsGroup.children.length > 0) {
       this.tablePropsGroup.remove(this.tablePropsGroup.children[0]);
     }
@@ -636,23 +665,11 @@ export class DateExperienceManager {
     if (this.phase === 'CAFE_DINING' || (!skipToDining && this.phase === 'CUTSCENE_WALK')) return;
 
     const worldVenue = this.getWorldVenueData();
+    const dropYaw = (worldVenue.facingAngle || 0) - Math.PI * 0.5;
+    const gateEntry = worldVenue.gateEntryPos || worldVenue.parkingPos;
 
-    if (this.playerCar?.physics) {
-      const p = this.playerCar.physics;
-      p.speed = 0;
-      p.speedKmh = 0;
-      p.velocity.set(0, 0, 0);
-      p.angularVelocity = 0;
-      p.position.copy(worldVenue.parkingPos);
-      p.position.y = 0.05;
-      p.rotationY = Math.atan2(
-        worldVenue.pavilionPos.x - worldVenue.parkingPos.x,
-        worldVenue.pavilionPos.z - worldVenue.parkingPos.z
-      ) + Math.PI * 0.5;
-      p.quaternion.setFromAxisAngle(new THREE.Vector3(0, 1, 0), p.rotationY);
-      this.playerCar.mesh.position.copy(p.position);
-      this.playerCar.mesh.quaternion.copy(p.quaternion);
-    }
+    // Position car cleanly at compound entrance gate ready to drive inside to front portico!
+    this.setCarTransform(gateEntry, (worldVenue.facingAngle || 0) + Math.PI);
 
     if (!this.boyRig) {
       this.boyRig = this.createStandingPerson(false);
@@ -662,8 +679,13 @@ export class DateExperienceManager {
       this.girlRig = this.createStandingPerson(true);
       this.rootGroup.add(this.girlRig.root);
     }
+    if (!this.valetRig) {
+      this.valetRig = this.createStandingPerson(false);
+      this.rootGroup.add(this.valetRig.root);
+    }
 
     if (skipToDining) {
+      this.setCarTransform(worldVenue.valetParkingPos || worldVenue.parkingPos, dropYaw);
       this.enterCafeDining();
       return;
     }
@@ -674,21 +696,33 @@ export class DateExperienceManager {
     this.doorOpenedPlayed = false;
     this.partnerSteppedOut = false;
     this.chairPulledMsg = false;
+    this.valetMsgPlayed = false;
+    this.valetParkedCar = false;
 
     this.setPersonPosture(this.boyRig, 'stand');
     this.setPersonPosture(this.girlRig, 'stand');
-    this.playerCar?.modelData?.setCrewSeatedVisible?.(false, true);
+    this.setPersonPosture(this.valetRig, 'stand');
+    // Both seated inside car while it drives through the restaurant compound gate!
+    this.playerCar?.modelData?.setCrewSeatedVisible?.(true, true);
     this.girlRig.root.visible = false;
-    this.boyRig.root.visible = true;
+    this.boyRig.root.visible = false;
+    this.valetRig.root.visible = true;
+    this.valetRig.root.position.copy(worldVenue.valetWaitPos || worldVenue.dropOffPos || worldVenue.parkingPos);
+    if (worldVenue.valetHost?.group) worldVenue.valetHost.group.visible = false;
     this.updateStudioLighting(true, worldVenue.tablePos, worldVenue.proposeCenterPos);
 
     const venueCfg = this.getVenueConfig();
-    this.onToast?.(`💖 Arrived at ${venueCfg.name}! ${this.coupleNames.partner1} gets out to open ${this.coupleNames.partner2}'s door...`);
+    this.onToast?.(`💖 Entering ${venueCfg.name} gate — pulling up inside compound right in front of the restaurant!`);
     this.emitUIState();
   }
 
   enterCafeDining() {
     this.phase = 'CAFE_DINING';
+    const worldVenue = this.getWorldVenueData();
+    const parkYaw = (worldVenue.facingAngle || 0) - Math.PI * 0.5;
+    if (worldVenue.valetParkingPos) {
+      this.setCarTransform(worldVenue.valetParkingPos, parkYaw);
+    }
     this.playerCar?.modelData?.setCrewSeatedVisible?.(false, false);
     if (this.carDoorPivot) this.carDoorPivot.rotation.y = 0;
     if (!this.boyRig) {
@@ -699,7 +733,10 @@ export class DateExperienceManager {
       this.girlRig = this.createStandingPerson(true);
       this.rootGroup.add(this.girlRig.root);
     }
-    const worldVenue = this.getWorldVenueData();
+    if (this.valetRig?.root) {
+      this.valetRig.root.visible = true;
+      this.valetRig.root.position.copy(worldVenue.valetWaitPos || worldVenue.parkingPos);
+    }
     if (worldVenue.girlChair && worldVenue.girlChairRestLocal) worldVenue.girlChair.position.copy(worldVenue.girlChairRestLocal);
     if (worldVenue.boyChair && worldVenue.boyChairRestLocal) worldVenue.boyChair.position.copy(worldVenue.boyChairRestLocal);
 
@@ -988,11 +1025,13 @@ export class DateExperienceManager {
     }
 
     if (skipWalk) {
+      const worldVenue = this.getWorldVenueData();
+      this.setCarTransform(worldVenue.gateEntryPos || worldVenue.parkingPos, (worldVenue.facingAngle || 0));
       this.finishReturnEnterDriveHome();
       return;
     }
 
-    // Start visible Return-to-Car Cutscene: Boy seats Girl first -> enters driver side!
+    // Start visible Return-to-Car Cutscene: Valet brings car to entrance -> Girl inside first -> Boy drives out gate!
     this.createHingedPassengerDoor(this.playerCar?.color);
     this.phase = 'CUTSCENE_RETURN';
     this.cutsceneTime = 0;
@@ -1010,12 +1049,17 @@ export class DateExperienceManager {
       this.girlRig = this.createStandingPerson(true);
       this.rootGroup.add(this.girlRig.root);
     }
+    if (!this.valetRig) {
+      this.valetRig = this.createStandingPerson(false);
+      this.rootGroup.add(this.valetRig.root);
+    }
     this.boyRig.root.visible = true;
     this.girlRig.root.visible = true;
+    this.valetRig.root.visible = false;
     this.setPersonPosture(this.boyRig, 'stand');
     this.setPersonPosture(this.girlRig, 'stand');
     this.playerCar?.modelData?.setCrewSeatedVisible?.(false, false);
-    this.onToast?.(`💑 Leaving the table — walking back to the car together...`);
+    this.onToast?.(`🚗 Valet brings the car to the entrance — walking back together...`);
     this.emitUIState();
   }
 
@@ -1023,6 +1067,10 @@ export class DateExperienceManager {
     this.removeHingedDoor();
     if (this.boyRig?.root) this.boyRig.root.visible = false;
     if (this.girlRig?.root) this.girlRig.root.visible = false;
+    if (this.valetRig?.root) this.valetRig.root.visible = false;
+    const worldVenue = this.getWorldVenueData();
+    if (worldVenue.valetHost?.group) worldVenue.valetHost.group.visible = true;
+    this.setCarTransform(worldVenue.gateEntryPos || worldVenue.parkingPos, worldVenue.facingAngle || 0);
     this.playerCar?.modelData?.setCrewSeatedVisible?.(true, true);
 
     this.phase = 'DRIVE_HOME';
@@ -1033,7 +1081,7 @@ export class DateExperienceManager {
     }
     this.updateStudioLighting(false);
     this.cameraCtrl?.setMode?.('CHASE');
-    this.onToast?.(`🏡 Both seated in car! Drive safely home to Home Sweet Home ♥`);
+    this.onToast?.(`🏡 Out through the gate & seated together! Driving home to Home Sweet Home ♥`);
     this.emitUIState();
   }
 
@@ -1158,10 +1206,40 @@ export class DateExperienceManager {
       return;
     }
 
-    // Arrival Cutscene: Boy exits -> Opens her door -> Walks in -> Pulls her chair back & seats her -> Sits down!
+    // Arrival Cutscene: Drive inside Compound Gate -> Stop at Restaurant Front -> Door Open -> Carpet + Valet Parks Car + Chair Pull!
     if (this.phase === 'CUTSCENE_WALK') {
       this.cutsceneTime += dt;
       const t = this.cutsceneTime;
+      const gatePos = worldVenue.gateEntryPos || worldVenue.parkingPos;
+      const dropPos = worldVenue.dropOffPos || worldVenue.parkingPos;
+      const parkBayPos = worldVenue.valetParkingPos || worldVenue.parkingPos;
+      const facingAngle = worldVenue.facingAngle || 0;
+      const entryYaw = facingAngle + Math.PI;
+      const dropYaw = facingAngle - Math.PI * 0.5;
+
+      // Stage 0 (0 - 2.4s): Car drives INSIDE compound entrance gate -> stops right in front of restaurant portico!
+      if (t < 2.4) {
+        const u = t / 2.4;
+        const easeU = 1 - Math.pow(1 - u, 2);
+        const carPos = new THREE.Vector3().lerpVectors(gatePos, dropPos, easeU);
+        const turnU = Math.max(0, (u - 0.35) / 0.65);
+        const currYaw = entryYaw + (dropYaw - entryYaw) * turnU;
+        this.setCarTransform(carPos, currYaw);
+        this.boyRig.root.visible = false;
+        this.girlRig.root.visible = false;
+        this.playerCar?.modelData?.setCrewSeatedVisible?.(true, true);
+
+        const focus = carPos.clone().add(new THREE.Vector3(0, 1.0, 0));
+        const gateCam = gatePos.clone().lerp(dropPos, 0.35).add(new THREE.Vector3(6.5, 3.2, 6.5));
+        this.cameraCtrl?.setExternalCameraPose?.(gateCam, focus, dt);
+        return;
+      }
+
+      // Snap cleanly at drop-off portico in front of restaurant
+      if (t < 6.8) {
+        this.setCarTransform(dropPos, dropYaw);
+      }
+
       const boyOutPos = this.carLocalToWorld(1.55, 0.05, -0.1, new THREE.Vector3());
       const noseBoyPos = this.carLocalToWorld(1.45, 0.05, 2.75, new THREE.Vector3());
       const noseGirlPos = this.carLocalToWorld(-1.45, 0.05, 2.75, new THREE.Vector3());
@@ -1176,18 +1254,22 @@ export class DateExperienceManager {
         ? worldVenue.pavGroup.localToWorld(new THREE.Vector3(-1.45, 0.50, 0.25))
         : worldVenue.seatBoyPos;
 
-      // Stage 1 (0 - 2.4s): Boy walks from driver side around front nose to her door
-      if (t < 2.4) {
-        const u = t / 2.4;
+      // Stage 1 (2.4 - 4.6s): Boy steps out driver side -> walks around nose to her passenger door
+      if (t < 4.6) {
+        if (!this.boyRig.root.visible) {
+          this.boyRig.root.visible = true;
+          this.playerCar?.modelData?.setCrewSeatedVisible?.(false, true);
+        }
+        const u = (t - 2.4) / 2.2;
         if (u < 0.35) this.boyRig.root.position.lerpVectors(boyOutPos, noseBoyPos, u / 0.35);
         else if (u < 0.65) this.boyRig.root.position.lerpVectors(noseBoyPos, noseGirlPos, (u - 0.35) / 0.30);
         else this.boyRig.root.position.lerpVectors(noseGirlPos, girlDoorStandPos, (u - 0.65) / 0.35);
         this.setWalkCycle(this.boyRig, t * 7.5, 1);
         this.boyRig.root.lookAt(u < 0.35 ? noseBoyPos : (u < 0.65 ? noseGirlPos : girlDoorStandPos));
       }
-      // Stage 2 (2.4 - 3.8s): Opens passenger car door (+Y outward) -> Girl steps out!
-      else if (t < 3.8) {
-        const u = (t - 2.4) / 1.4;
+      // Stage 2 (4.6 - 6.0s): Opens passenger car door (+Y outward) -> Girl steps out in front of restaurant!
+      else if (t < 6.0) {
+        const u = (t - 4.6) / 1.4;
         this.boyRig.root.position.copy(girlDoorStandPos);
         this.boyRig.root.lookAt(girlStepOutPos);
         this.setWalkCycle(this.boyRig, 0, 0);
@@ -1204,7 +1286,7 @@ export class DateExperienceManager {
           this.playerCar?.modelData?.setCrewSeatedVisible?.(false, false);
           this.girlRig.root.visible = true;
           this.girlRig.root.position.copy(girlStepOutPos);
-          this.onToast?.(`💖 ${this.coupleNames.partner1} opens the car door for ${this.coupleNames.partner2}!`);
+          this.onToast?.(`💖 ${this.coupleNames.partner1} opens the car door for ${this.coupleNames.partner2} in front of ${worldVenue.name}!`);
         }
         if (this.partnerSteppedOut) {
           this.girlRig.root.position.lerpVectors(
@@ -1216,14 +1298,13 @@ export class DateExperienceManager {
           this.setWalkCycle(this.girlRig, t * 6.5, 0.7);
         }
       }
-      // Stage 3 (3.8 - 6.8s): Walk hand-in-hand up carpet toward dining table
-      else if (t < 6.8) {
-        const u = (t - 3.8) / 3.0;
+      // Stage 3 (6.0 - 8.8s): Couple walks up carpet into restaurant WHILE Valet steps toward car & drives it into compound parking!
+      else if (t < 8.8) {
+        const u = (t - 6.0) / 2.8;
         if (this.carDoorPivot) this.carDoorPivot.rotation.y = Math.max(0, 1.08 * (1 - u * 2.4));
-        const sideOffset = new THREE.Vector3(-0.34, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), worldVenue.facingAngle);
-        const startCenter = girlDoorStandPos.clone();
+        const sideOffset = new THREE.Vector3(-0.34, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), facingAngle);
         const currCenter = u < 0.55
-          ? startCenter.clone().lerp(midCenter, u / 0.55)
+          ? girlDoorStandPos.clone().lerp(midCenter, u / 0.55)
           : midCenter.clone().lerp(worldVenue.tablePos.clone().setY(worldVenue.seatGirlPos.y).addScaledVector(
             worldVenue.seatGirlPos.clone().sub(worldVenue.tablePos).setY(0).normalize(), 1.65
           ), (u - 0.55) / 0.45);
@@ -1235,15 +1316,42 @@ export class DateExperienceManager {
         this.setWalkCycle(this.girlRig, t * 7.0 + Math.PI * 0.25, 1);
         this.boyRig.armR.rotation.x = -0.35;
         this.girlRig.armL.rotation.x = -0.35;
+
+        // Valet Driver hops into car and begins parking it in compound bay
+        if (!this.valetMsgPlayed && u > 0.28) {
+          this.valetMsgPlayed = true;
+          this.onToast?.(`🅿️ Valet Driver takes the car to ${worldVenue.name}'s compound parking...`);
+        }
+        if (u < 0.38 && this.valetRig) {
+          const w = u / 0.38;
+          this.valetRig.root.visible = true;
+          this.valetRig.root.position.lerpVectors(worldVenue.valetWaitPos || dropPos, boyOutPos, w);
+          this.valetRig.root.lookAt(boyOutPos);
+          this.setWalkCycle(this.valetRig, t * 7, 1);
+        } else {
+          if (this.valetRig) this.valetRig.root.visible = false;
+          this.playerCar?.modelData?.setCrewSeatedVisible?.(true, false);
+          const pFrac = Math.min(1, (u - 0.38) / 0.62);
+          const parkedPos = new THREE.Vector3().lerpVectors(dropPos, parkBayPos, pFrac);
+          this.setCarTransform(parkedPos, dropYaw);
+        }
       }
-      // Stage 4 (6.8 - 9.4s): Boy pulls Girl's chair back -> Girl sits cleanly -> Boy slides chair forward!
-      else if (t < 9.4) {
-        const u = (t - 6.8) / 2.6;
+      // Stage 4 (8.8 - 11.4s): Boy pulls Girl's chair back -> Girl sits -> Valet finishes parking car cleanly in compound bay!
+      else if (t < 11.4) {
+        if (!this.valetParkedCar) {
+          this.valetParkedCar = true;
+          this.setCarTransform(parkBayPos, dropYaw);
+          this.playerCar?.modelData?.setCrewSeatedVisible?.(false, false);
+          if (this.valetRig) {
+            this.valetRig.root.visible = true;
+            this.valetRig.root.position.copy(worldVenue.valetWaitPos || parkBayPos);
+          }
+        }
+        const u = (t - 8.8) / 2.6;
         if (!this.chairPulledMsg) {
           this.chairPulledMsg = true;
           this.onToast?.(`🪑 ${this.coupleNames.partner1} pulls out ${this.coupleNames.partner2}'s chair to seat her first!`);
         }
-        // Pull curve: 0 -> 0.35 pull out 0.72m, 0.35 -> 0.65 girl sits on pulled chair, 0.65 -> 1.0 tuck chair in!
         let pullFrac = 0;
         if (u < 0.35) pullFrac = u / 0.35;
         else if (u < 0.65) pullFrac = 1.0;
@@ -1262,7 +1370,6 @@ export class DateExperienceManager {
         this.boyRig.armL.rotation.x = -0.9;
         this.boyRig.armR.rotation.x = -0.9;
 
-        const chairSlideVec = worldVenue.seatGirlPos.clone().sub(girlBehindChairPos);
         const girlCurr = worldVenue.seatGirlPos.clone().addScaledVector(
           worldVenue.seatGirlPos.clone().sub(worldVenue.tablePos).setY(0).normalize(),
           pullFrac * 0.68
@@ -1272,14 +1379,13 @@ export class DateExperienceManager {
         if (u >= 0.34) {
           this.setPersonPosture(this.girlRig, 'sit');
           this.setWalkCycle(this.girlRig, 0, 0);
-          void chairSlideVec;
         } else {
           this.setPersonPosture(this.girlRig, 'stand');
         }
       }
-      // Stage 5 (9.4 - 11.4s): Boy walks gracefully to his side & takes his seat facing her across the candles!
-      else if (t < 11.4) {
-        const u = (t - 9.4) / 2.0;
+      // Stage 5 (11.4 - 13.4s): Boy walks gracefully to his side & takes his seat across the candles!
+      else if (t < 13.4) {
+        const u = (t - 11.4) / 2.0;
         this.setPersonPosture(this.girlRig, 'sit');
         this.girlRig.root.position.copy(worldVenue.seatGirlPos);
         this.girlRig.root.lookAt(worldVenue.tablePos.x, worldVenue.seatGirlPos.y, worldVenue.tablePos.z);
@@ -1303,20 +1409,27 @@ export class DateExperienceManager {
       }
 
       // Close, crisp camera tracking
-      const focusTarget = (t < 3.8
-        ? this.boyRig.root.position
-        : (t < 6.8 ? this.boyRig.root.position.clone().lerp(this.girlRig.root.position, 0.5) : worldVenue.tablePos.clone().setY(1.3)))
-        .clone().add(new THREE.Vector3(0, t < 6.8 ? 1.1 : 0.0, 0));
-      const camOffset = t < 3.8 ? new THREE.Vector3(-4.2, 1.55, 3.2)
-        : (t < 6.8 ? new THREE.Vector3(-4.6, 1.75, 3.6) : new THREE.Vector3(3.4, 2.25, 2.4));
+      const focusTarget = (t < 6.0
+        ? (this.boyRig.root.visible ? this.boyRig.root.position : (worldVenue.dropOffPos || worldVenue.parkingPos))
+        : (t < 8.8 ? this.boyRig.root.position.clone().lerp(this.girlRig.root.position, 0.5) : worldVenue.tablePos.clone().setY(1.3)))
+        .clone().add(new THREE.Vector3(0, t < 8.8 ? 1.1 : 0.0, 0));
+      const camOffset = t < 6.0 ? new THREE.Vector3(-4.5, 1.85, 3.6)
+        : (t < 8.8 ? new THREE.Vector3(-5.0, 2.0, 4.0) : new THREE.Vector3(3.4, 2.25, 2.4));
       this.cameraCtrl?.setExternalCameraPose?.(focusTarget.clone().add(camOffset), focusTarget, dt);
       return;
     }
 
-    // Return-to-Car Cutscene: Walk back -> Boy opens door & seats Girl inside first -> Boy gets in driver seat!
+    // Return-to-Car Cutscene: Valet brings car from compound bay -> Couple walks out -> Girl seated first -> Boy drives out gate!
     if (this.phase === 'CUTSCENE_RETURN') {
       this.cutsceneTime += dt;
       const t = this.cutsceneTime;
+      const gatePos = worldVenue.gateEntryPos || worldVenue.parkingPos;
+      const dropPos = worldVenue.dropOffPos || worldVenue.parkingPos;
+      const parkBayPos = worldVenue.valetParkingPos || worldVenue.parkingPos;
+      const facingAngle = worldVenue.facingAngle || 0;
+      const dropYaw = facingAngle - Math.PI * 0.5;
+      const exitYaw = facingAngle;
+
       const startBoy = worldVenue.seatBoyPos;
       const startGirl = worldVenue.seatGirlPos;
       const midCenter = worldVenue.entryApproachPos;
@@ -1326,23 +1439,31 @@ export class DateExperienceManager {
       const noseBoyPos = this.carLocalToWorld(1.45, 0.05, 2.75, new THREE.Vector3());
       const driverDoorPos = this.carLocalToWorld(1.50, 0.05, -0.08, new THREE.Vector3());
 
-      // Stage 1 (0 - 3.0s): Walk hand-in-hand back down carpet to passenger side of car
+      // Stage 1 (0 - 3.0s): Valet drives car back from compound parking to restaurant entrance WHILE couple walks out!
       if (t < 3.0) {
         const u = t / 3.0;
+        const currCarPos = new THREE.Vector3().lerpVectors(parkBayPos, dropPos, Math.min(1, u / 0.85));
+        this.setCarTransform(currCarPos, dropYaw);
+        this.playerCar?.modelData?.setCrewSeatedVisible?.(u < 0.88, false);
+
         const startC = startBoy.clone().lerp(startGirl, 0.5);
-        const sideOffset = new THREE.Vector3(-0.34, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), worldVenue.facingAngle);
+        const sideOffset = new THREE.Vector3(-0.34, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), facingAngle);
         const currC = u < 0.45
           ? startC.clone().lerp(midCenter, u / 0.45)
-          : midCenter.clone().lerp(girlDoorStandPos, (u - 0.45) / 0.55);
+          : midCenter.clone().lerp(
+            new THREE.Vector3(dropPos.x, 0.05, dropPos.z).addScaledVector(new THREE.Vector3(Math.sin(facingAngle), 0, Math.cos(facingAngle)), 1.6),
+            (u - 0.45) / 0.55
+          );
         this.boyRig.root.position.copy(currC).add(sideOffset);
         this.girlRig.root.position.copy(currC).sub(sideOffset);
-        this.boyRig.root.lookAt(girlDoorStandPos);
-        this.girlRig.root.lookAt(girlDoorStandPos);
+        this.boyRig.root.lookAt(dropPos);
+        this.girlRig.root.lookAt(dropPos);
         this.setWalkCycle(this.boyRig, t * 7.0, 1);
         this.setWalkCycle(this.girlRig, t * 7.0 + Math.PI * 0.25, 1);
       }
-      // Stage 2 (3.0 - 5.2s): Boy opens passenger door -> Girl gets into the car first -> Door closes
+      // Stage 2 (3.0 - 5.2s): Car parked at portico -> Boy opens Girl's door -> Girl steps in first -> Door shuts
       else if (t < 5.2) {
+        this.setCarTransform(dropPos, dropYaw);
         const u = (t - 3.0) / 2.2;
         this.boyRig.root.position.copy(girlDoorStandPos);
         this.boyRig.root.lookAt(girlInsideCarPos);
@@ -1372,9 +1493,10 @@ export class DateExperienceManager {
           this.onToast?.(`💖 ${this.coupleNames.partner1} seats ${this.coupleNames.partner2} inside first & closes the door!`);
         }
       }
-      // Stage 3 (5.2 - 7.6s): Boy walks around nose back to driver side & climbs in!
-      else if (t < 7.6) {
-        const u = (t - 5.2) / 2.4;
+      // Stage 3 (5.2 - 7.4s): Boy walks around nose back to driver side & climbs in!
+      else if (t < 7.4) {
+        this.setCarTransform(dropPos, dropYaw);
+        const u = (t - 5.2) / 2.2;
         if (this.carDoorPivot) this.carDoorPivot.rotation.y = 0;
         if (u < 0.35) this.boyRig.root.position.lerpVectors(girlDoorStandPos, noseGirlPos, u / 0.35);
         else if (u < 0.65) this.boyRig.root.position.lerpVectors(noseGirlPos, noseBoyPos, (u - 0.35) / 0.30);
@@ -1386,14 +1508,27 @@ export class DateExperienceManager {
         }
         this.boyRig.root.lookAt(u < 0.35 ? noseGirlPos : (u < 0.65 ? noseBoyPos : driverDoorPos));
         this.setWalkCycle(this.boyRig, t * 7.5, 1);
+      }
+      // Stage 4 (7.4 - 9.4s): Car drives cleanly OUT through the Compound Gate onto Emerald Boulevard!
+      else if (t < 9.4) {
+        const u = (t - 7.4) / 2.0;
+        const currCarPos = new THREE.Vector3().lerpVectors(dropPos, gatePos, u);
+        const currYaw = dropYaw + (exitYaw - dropYaw) * Math.min(1, u * 1.4);
+        this.setCarTransform(currCarPos, currYaw);
+        this.boyRig.root.visible = false;
+        this.girlRig.root.visible = false;
+        this.playerCar?.modelData?.setCrewSeatedVisible?.(true, true);
+        const focus = currCarPos.clone().add(new THREE.Vector3(0, 1.0, 0));
+        this.cameraCtrl?.setExternalCameraPose?.(focus.clone().add(new THREE.Vector3(-5.2, 2.3, 4.8)), focus, dt);
+        return;
       } else {
         this.finishReturnEnterDriveHome();
         return;
       }
 
-      const fPos = this.boyRig.root.visible ? this.boyRig.root.position : driverDoorPos;
+      const fPos = this.boyRig.root.visible ? this.boyRig.root.position : (this.playerCar?.mesh?.position || dropPos);
       const look = fPos.clone().add(new THREE.Vector3(0, 1.0, 0));
-      const camPos = look.clone().add(new THREE.Vector3(-4.8, 1.75, 4.0));
+      const camPos = look.clone().add(new THREE.Vector3(-4.8, 1.85, 4.2));
       this.cameraCtrl?.setExternalCameraPose?.(camPos, look, dt);
       return;
     }

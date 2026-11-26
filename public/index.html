@@ -896,53 +896,52 @@
 
     <div id="date-cafe-studio" class="date-cafe-studio glass-panel hidden">
       <div class="date-cafe-header">
-        <div>
-          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <span id="cafe-studio-title" style="font-family:'Orbitron'; font-size:15px; font-weight:900; color:#ff8cb8;">SHAH RASOI ★</span>
-            <span class="pure-veg-badge">100% PURE VEG</span>
-            <span id="cafe-studio-fav-badge" class="fav-heart-badge">♥ OUR FAVORITE</span>
+        <div style="min-width:0;">
+          <div style="display:flex; align-items:center; gap:5px; flex-wrap:wrap;">
+            <span id="cafe-studio-title" style="font-family:'Orbitron'; font-size:12px; font-weight:900; color:#ff8cb8;">SHAH RASOI ★</span>
+            <span class="pure-veg-badge">PURE VEG</span>
+            <span id="cafe-studio-fav-badge" class="fav-heart-badge">♥ FAV</span>
           </div>
-          <div id="cafe-studio-sub" style="font-size:11px; color:var(--text-muted); margin-top:2px;">
-            Aarav ♥ Meera • Romantic Candlelight Dinner
+          <div id="cafe-studio-sub" style="font-size:10px; color:var(--text-muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            Aarav ♥ Meera • Candlelit Table
           </div>
         </div>
-        <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
-          <button id="btn-date-return-table" type="button" class="cyber-btn cyber-btn-ghost hidden" style="padding:6px 11px; font-size:10px;">
-            🕯️ BACK TO TABLE
-          </button>
-          <button id="btn-date-back-car" type="button" class="cyber-btn cyber-btn-secondary" style="padding:7px 13px; font-size:11px;">
-            🚗 GO BACK TO CAR &amp; HOME
-          </button>
+        <div style="display:flex; gap:4px; align-items:center;">
+          <button id="btn-date-toggle-compact" type="button" class="cyber-btn cyber-btn-ghost" style="padding:4px 8px; font-size:10px;" title="Minimize / Expand Corner Box">▾</button>
+          <button id="btn-date-return-table" type="button" class="cyber-btn cyber-btn-ghost hidden" style="padding:4px 8px; font-size:10px;">🕯️</button>
+          <button id="btn-date-back-car" type="button" class="cyber-btn cyber-btn-secondary" style="padding:4px 8px; font-size:10px;">🚗 HOME</button>
         </div>
       </div>
 
-      <div id="date-lyric-bubble" class="date-lyric-bubble hidden">
-        <div id="date-lyric-song" style="font-size:10px; font-weight:800; color:#ffd166;">🎤 SINGING DUET</div>
-        <div id="date-lyric-line" style="font-size:13px; font-weight:700; color:#fff;">♫ ...</div>
-      </div>
-
-      <div class="date-actions-row-multi">
-        <button id="btn-date-feed" type="button" class="cyber-btn cyber-btn-gold">🥄 FEED EACH OTHER</button>
-        <button id="btn-date-cut-cake" type="button" class="cyber-btn cyber-btn-love">🎂 CUT CAKE TOGETHER</button>
-        <button id="btn-date-propose" type="button" class="cyber-btn cyber-btn-love" style="border-color:#ff4d88;">💍 PROPOSING CORNER</button>
-        <button id="btn-date-celebrate" type="button" class="cyber-btn cyber-btn-gold">🥂 CELEBRATE</button>
-        <button id="btn-date-sing" type="button" class="cyber-btn cyber-btn-love">🎤 SING DUET</button>
-        <button id="btn-date-dance" type="button" class="cyber-btn cyber-btn-primary">💃 SLOW DANCE</button>
-        <button id="btn-date-twirl" type="button" class="cyber-btn cyber-btn-primary" style="border-color:#c084fc; color:#f0abfc;">💫 TWIRL PARTNER</button>
-      </div>
-
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-top:2px;">
-        <div id="date-menu-tabs" class="date-menu-tabs">
-          <button type="button" class="date-cat-chip active" data-cat="All">✨ ALL</button>
-          <button type="button" class="date-cat-chip" data-cat="Dosa">🥞 DOSA</button>
-          <button type="button" class="date-cat-chip" data-cat="Chaat & Snacks">🥘 CHAAT</button>
-          <button type="button" class="date-cat-chip" data-cat="Pizza & Mains">🍕 PIZZA &amp; MAINS</button>
-          <button type="button" class="date-cat-chip" data-cat="Shakes & Juices">🍫 SHAKES &amp; JUICES</button>
-          <button type="button" class="date-cat-chip" data-cat="Cakes">🎂 CAKES ★</button>
+      <div id="date-cafe-body" style="display:flex; flex-direction:column; gap:6px;">
+        <div id="date-lyric-bubble" class="date-lyric-bubble hidden">
+          <div id="date-lyric-song" style="font-size:9px; font-weight:800; color:#ffd166;">🎤 DUET</div>
+          <div id="date-lyric-line" style="font-size:11px; font-weight:700; color:#fff;">♫ ...</div>
         </div>
-        <span id="cafe-ordered-count" style="font-size:11px; font-weight:800; color:#4ade80;">Served: 0 items</span>
+
+        <div class="date-actions-row-multi">
+          <button id="btn-date-feed" type="button" class="cyber-btn cyber-btn-gold">🥄 FEED</button>
+          <button id="btn-date-cut-cake" type="button" class="cyber-btn cyber-btn-love">🎂 CUT CAKE</button>
+          <button id="btn-date-propose" type="button" class="cyber-btn cyber-btn-love" style="border-color:#ff4d88;">💍 PROPOSE</button>
+          <button id="btn-date-celebrate" type="button" class="cyber-btn cyber-btn-gold">🥂 TOAST</button>
+          <button id="btn-date-sing" type="button" class="cyber-btn cyber-btn-love">🎤 SING</button>
+          <button id="btn-date-dance" type="button" class="cyber-btn cyber-btn-primary">💃 DANCE</button>
+          <button id="btn-date-twirl" type="button" class="cyber-btn cyber-btn-primary" style="border-color:#c084fc; color:#f0abfc;">💫 TWIRL</button>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:4px; flex-wrap:wrap;">
+          <div id="date-menu-tabs" class="date-menu-tabs">
+            <button type="button" class="date-cat-chip active" data-cat="All">ALL</button>
+            <button type="button" class="date-cat-chip" data-cat="Dosa">DOSA</button>
+            <button type="button" class="date-cat-chip" data-cat="Chaat & Snacks">CHAAT</button>
+            <button type="button" class="date-cat-chip" data-cat="Pizza & Mains">PIZZA</button>
+            <button type="button" class="date-cat-chip" data-cat="Shakes & Juices">SHAKES</button>
+            <button type="button" class="date-cat-chip" data-cat="Cakes">CAKES ★</button>
+          </div>
+          <span id="cafe-ordered-count" style="font-size:10px; font-weight:800; color:#4ade80;">Served: 0</span>
+        </div>
+        <div id="date-cafe-menu-grid" class="date-cafe-menu-grid"></div>
       </div>
-      <div id="date-cafe-menu-grid" class="date-cafe-menu-grid"></div>
     </div>
   </div>
 

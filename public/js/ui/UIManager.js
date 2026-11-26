@@ -158,6 +158,8 @@ export class UIManager {
     this.cafeStudioSub = document.getElementById('cafe-studio-sub');
     this.btnDateBackCar = document.getElementById('btn-date-back-car');
     this.btnDateReturnTable = document.getElementById('btn-date-return-table');
+    this.btnDateToggleCompact = document.getElementById('btn-date-toggle-compact');
+    this.dateCafeBody = document.getElementById('date-cafe-body');
     this.dateHomeCard = document.getElementById('date-home-card');
     this.dateHomeSub = document.getElementById('date-home-sub');
     this.dateLyricBubble = document.getElementById('date-lyric-bubble');
@@ -609,6 +611,10 @@ export class UIManager {
     });
     this.btnDateReturnTable?.addEventListener('click', () => {
       this.onDateReturnToTable?.();
+    });
+    this.btnDateToggleCompact?.addEventListener('click', () => {
+      const mini = this.dateCafeStudio?.classList.toggle('is-minimized');
+      if (this.btnDateToggleCompact) this.btnDateToggleCompact.textContent = mini ? '▴ EXPAND' : '▾';
     });
     document.getElementById('btn-date-feed')?.addEventListener('click', () => {
       this.onDateFeed?.();

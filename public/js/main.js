@@ -171,7 +171,8 @@ class GameApp {
         this.track,
         this.cameraCtrl,
         this.particles,
-        this.audio
+        this.audio,
+        this.renderer
       );
       this.dateExperience.onStateChange = (st) => this.ui?.syncDateExperienceUI?.(st);
       this.dateExperience.onToast = (msg) => this.ui?.showToast?.(msg);
