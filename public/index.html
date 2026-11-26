@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>S3D Drive – 3D Web Racing & Voice Driving</title>
+  <meta name="description" content="S3D Drive: Flagship 3D Web Racing Game with Speech Recognition Voice Driving Control, Adaptive AI Rivals, 5 Dynamic Worlds, and Multi-Angle Cinematic Replays.">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Three.js & Post-Processing (Self-Contained Offline/Online Local Libs) -->
+  <script src="libs/three.min.js"></script>
+  <script src="libs/Pass.js"></script>
+  <script src="libs/CopyShader.js"></script>
+  <script src="libs/LuminosityHighPassShader.js"></script>
+  <script src="libs/ShaderPass.js"></script>
+  <script src="libs/RenderPass.js"></script>
+  <script src="libs/EffectComposer.js"></script>
+  <script src="libs/UnrealBloomPass.js"></script>
+
+  <!-- Global Diagnostic & Error Boundary -->
+  <script>
+    window.addEventListener('error', function(e) {
+      console.error('Captured Runtime Error:', e);
+      var errData = {
+        message: e.message,
+        filename: e.filename ? e.filename.split('/').pop() : '',
+        lineno: e.lineno,
+        colno: e.colno,
+        stack: e.error ? e.error.stack : null
+      };
+      try {
+        fetch('/api/client-error', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(errData)
+        });
+      } catch (err) {}
+
+      var box = document.getElementById('debug-error-box');
+      if (!box) {
+        box = document.createElement('div');
+        box.id = 'debug-error-box';
+        box.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(220,20,60,0.95);color:#fff;padding:12px 24px;border-radius:8px;z-index:999999;font-family:sans-serif;font-size:13px;font-weight:bold;box-shadow:0 0 20px rgba(0,0,0,0.8);border:1px solid #fff;max-width:90vw;';
+        document.body.appendChild(box);
+      }
+      box.innerHTML = '⚠️ Error: ' + (e.message || 'Script issue') + ' (' + (e.filename ? e.filename.split('/').pop() : '') + ':' + (e.lineno || '') + ')<br><small style="font-weight:normal;opacity:0.9;">Please refresh (Ctrl+F5) or check browser settings.</small>';
+    });
+
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('Unhandled Promise Rejection:', e.reason);
+      var errData = {
+        message: e.reason ? (e.reason.message || String(e.reason)) : 'Unhandled Rejection',
+        stack: e.reason ? e.reason.stack : null
+      };
+      try {
+        fetch('/api/client-error', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(errData)
+        });
+      } catch (err) {}
+    });
+
+    // Check WebGL Support
+    function checkWebGL() {
+      try {
+        var canvas = document.createElement('canvas');
+        var gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        return !!gl;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    if (window.location.protocol === 'file:') {
+      window.addEventListener('DOMContentLoaded', () => {
+        const fileAlert = document.createElement('div');
+        fileAlert.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(7,10,18,0.96);z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-family:Orbitron,sans-serif;color:#fff;text-align:center;padding:24px;';
+        fileAlert.innerHTML = `
+          <div style="font-size:32px;font-weight:900;color:#00f0ff;text-shadow:0 0 20px #00f0ff;">⚡ S3D DRIVE</div>
+          <div style="font-size:16px;max-width:550px;color:#cbd5e1;line-height:1.6;font-family:Rajdhani,sans-serif;font-weight:600;">
+            Browsers block 3D JavaScript modules and microphone access on direct file double-click (file:// protocol).<br><br>
+            Please open the game via its local server:
+          </div>
+          <a href="http://localhost:3000" style="padding:14px 28px;background:linear-gradient(135deg,#00f0ff,#0088ff);color:#000;font-weight:900;border-radius:8px;text-decoration:none;font-size:16px;box-shadow:0 0 25px rgba(0,240,255,0.6);">
+            🚀 OPEN HTTP://LOCALHOST:3000
+          </a>
+        `;
+        document.body.appendChild(fileAlert);
+      });
+    }
+  </script>
+  <script src="/socket.io/socket.io.js" onerror="console.warn('Socket.io server offline, playing in offline/single-player mode')"></script>
+</head>
+<body>
+
+  <!-- 3D Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- =========================================
+       1. 3D GARAGE & SHOWROOM SCREEN
+  ========================================= -->
+  <div id="screen-garage" class="ui-layer interactive">
+    <!-- Top Header -->
+    <header class="garage-header">
+      <div class="brand-title">
+        <span>⚡ S3D DRIVE</span> 3D RACING
+      </div>
+
+      <div class="garage-header-right">
+        <!-- Player Credits -->
+        <div class="player-credits-badge glass-panel">
+          <span>💰</span>
+          <span id="player-credits-val">$5,000</span>
+        </div>
+
+        <button id="btn-toggle-voice-garage" class="cyber-btn cyber-btn-secondary voice-mic-btn" style="padding:6px 14px; font-size:11px;">
+          🎙️ MIC: OFF
+        </button>
+        <button id="btn-open-voice-guide" class="cyber-btn cyber-btn-ghost" style="padding:6px 14px; font-size:11px;">
+          🗣️ VOICE COMMANDS
+        </button>
+        <button id="btn-self-test" class="cyber-btn cyber-btn-ghost" style="padding:6px 14px; font-size:11px; border-color:var(--accent-green); color:var(--accent-green);">
+          🟢 READY
+        </button>
+        <button id="btn-open-tuning" class="cyber-btn cyber-btn-ghost" style="padding:6px 14px; font-size:11px;">
+          🔧 TUNING
+        </button>
+        <button id="btn-open-career" class="cyber-btn cyber-btn-ghost" style="padding:6px 14px; font-size:11px;">
+          👑 CAREER
+        </button>
+        <button id="btn-open-achievements" class="cyber-btn cyber-btn-ghost" style="padding:6px 14px; font-size:11px;">
+          🏆 BADGES
+        </button>
+
+        <div class="player-profile-tag glass-panel">
+          <span style="font-size: 11px; color: var(--text-muted);">PILOT:</span>
+          <input type="text" id="player-name-input" maxlength="16" placeholder="Your Callcode" value="Rebel 707">
+        </div>
+      </div>
+    </header>
+
+    <!-- Center Carousel Arrows -->
+    <div class="garage-center-nav">
+      <button id="btn-prev-car" class="cyber-btn cyber-btn-ghost nav-arrow-btn">◀</button>
+      <button id="btn-next-car" class="cyber-btn cyber-btn-ghost nav-arrow-btn">▶</button>
+    </div>
+
+    <!-- Bottom Showcase Panels -->
+    <div class="garage-bottom-container">
+      <!-- Car Specs Card -->
+      <div class="car-details-card glass-panel">
+        <div id="garage-car-type" class="car-type-badge">GT SUPERCAR</div>
+        <div id="garage-car-name" class="car-title">HYPERION GT3</div>
+        <div id="garage-car-desc" class="car-desc">Twin-turbo precision racer with balanced high-speed downforce.</div>
+
+        <div class="stat-row">
+          <div class="stat-label-row"><span>TOP SPEED</span></div>
+          <div class="stat-track"><div id="stat-speed" class="stat-fill" style="width: 90%;"></div></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label-row"><span>ACCELERATION</span></div>
+          <div class="stat-track"><div id="stat-accel" class="stat-fill" style="width: 86%;"></div></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label-row"><span>HANDLING & DRIFT</span></div>
+          <div class="stat-track"><div id="stat-handling" class="stat-fill" style="width: 88%;"></div></div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-label-row"><span>NITRO WARP</span></div>
+          <div class="stat-track"><div id="stat-nitro" class="stat-fill" style="width: 85%;"></div></div>
+        </div>
+      </div>
+
+      <!-- Center Customizer & World Select -->
+      <div class="garage-center-customizer">
+        <div class="customizer-box glass-panel">
+          <div class="palette-label">METALLIC LIVERY & UNDERGLOW</div>
+          <div class="color-chips-row">
+            <div class="color-chip active" data-color="#00f0ff" style="background:#00f0ff;"></div>
+            <div class="color-chip" data-color="#ff0055" style="background:#ff0055;"></div>
+            <div class="color-chip" data-color="#ffaa00" style="background:#ffaa00;"></div>
+            <div class="color-chip" data-color="#00ff88" style="background:#00ff88;"></div>
+            <div class="color-chip" data-color="#aa00ff" style="background:#aa00ff;"></div>
+            <div class="color-chip" data-color="#ffffff" style="background:#ffffff;"></div>
+            <div class="color-chip" data-color="#ff3300" style="background:#ff3300;"></div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; width:100%; margin-top:2px;">
+            <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
+              <span class="palette-label">RIMS</span>
+              <div class="rim-chips-row">
+                <div class="rim-chip active" data-rim="0">SPORT</div>
+                <div class="rim-chip" data-rim="1">TURBINE</div>
+                <div class="rim-chip" data-rim="2">MESH</div>
+              </div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:2px; align-items:center;">
+              <span class="palette-label">UNDERGLOW</span>
+              <div class="underglow-chips-row">
+                <div class="underglow-chip active" data-mode="pulse">PULSE</div>
+                <div class="underglow-chip" data-mode="rainbow">RAINBOW</div>
+                <div class="underglow-chip" data-mode="static">STATIC</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5 Worlds Selector -->
+        <div class="track-weather-bar">
+          <select id="garage-track-select">
+            <option value="neon_city">🏙️ 1. Neon City (Night Circuit)</option>
+            <option value="cyber_rain">🌧️ 2. Cyber City (Rain & Thunder)</option>
+            <option value="cyber_desert">🏜️ 3. Cyber Desert (Sandstorm)</option>
+            <option value="space_ring">🌌 4. Space Ring (Low-Gravity)</option>
+            <option value="industrial_core">🏭 5. Industrial Core (Hazards)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 5 Game Mode Launchers -->
+      <div class="play-actions-card glass-panel">
+        <button id="btn-mode-gp" class="cyber-btn cyber-btn-primary start-race-hero-btn">
+          🏁 START RACE (GRAND PRIX)
+        </button>
+        <button id="btn-mode-drift" class="cyber-btn cyber-btn-gold">
+          🔥 DRIFT ARENA
+        </button>
+        <button id="btn-mode-knockout" class="cyber-btn cyber-btn-secondary">
+          ⚡ ELIMINATION KNOCKOUT
+        </button>
+        <button id="btn-mode-boss" class="cyber-btn cyber-btn-secondary" style="border-color:#ffaa00; color:#ffaa00;">
+          👑 BOSS BATTLE (VS APEX)
+        </button>
+        <button id="btn-mode-time-attack" class="cyber-btn cyber-btn-ghost">
+          ⏱️ TIME ATTACK (GHOST)
+        </button>
+        <button id="btn-mode-mp" class="cyber-btn cyber-btn-ghost" style="border-color:var(--primary-neon);">
+          🌐 ONLINE MULTIPLAYER
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================
+       2. PERFORMANCE TUNING SHOP MODAL
+  ========================================= -->
+  <div id="modal-tuning" class="modal-overlay hidden">
+    <div class="modal-card glass-panel">
+      <div class="modal-title">🔧 PERFORMANCE TUNING SHOP</div>
+      <div style="font-size:12px; color:var(--text-muted); text-align:center;">Upgrade Engine, Turbo, Tires, and Nitro to dominate the AI Rivals.</div>
+      
+      <div id="tuning-cards-container" class="tuning-grid"></div>
+
+      <button class="cyber-btn cyber-btn-ghost btn-close-modal" style="margin-top:6px;">BACK TO GARAGE</button>
+    </div>
+  </div>
+
+  <!-- =========================================
+       3. CAREER CHAMPIONSHIPS MODAL
+  ========================================= -->
+  <div id="modal-career" class="modal-overlay hidden">
+    <div class="modal-card glass-panel">
+      <div class="modal-title">👑 CAREER TOURNAMENT CUPS</div>
+      <div style="font-size:12px; color:var(--text-muted); text-align:center;">Win multi-stage championships to earn trophies and high credits!</div>
+      
+      <div id="career-cups-container" class="career-grid"></div>
+
+      <button class="cyber-btn cyber-btn-ghost btn-close-modal" style="margin-top:6px;">CANCEL</button>
+    </div>
+  </div>
+
+  <!-- =========================================
+       4. ACHIEVEMENTS MODAL
+  ========================================= -->
+  <div id="modal-achievements" class="modal-overlay hidden">
+    <div class="modal-card glass-panel">
+      <div class="modal-title">🏆 RACER ACHIEVEMENTS</div>
+      
+      <div id="achievements-list-container" class="achievements-grid"></div>
+
+      <button class="cyber-btn cyber-btn-ghost btn-close-modal" style="margin-top:6px;">CLOSE</button>
+    </div>
+  </div>
+
+  <!-- =========================================
+       4b. VOICE CONTROL COMMANDS GUIDE MODAL
+  ========================================= -->
+  <div id="modal-voice-guide" class="modal-overlay hidden">
+    <div class="modal-card glass-panel" style="width: 650px;">
+      <div class="modal-title">🎙️ S3D DRIVE – VOICE CONTROL GUIDE</div>
+      <div style="font-size:12px; color:var(--text-muted); text-align:center;">
+        Speak naturally in <b>English</b> or <b>Hindi</b> to steer, accelerate, drift, boost, and control your supercar!
+      </div>
+
+      <div class="voice-commands-grid">
+        <div class="voice-cmd-card glass-panel">
+          <div class="voice-cmd-header"><span class="voice-icon">⚡</span> <b>ACCELERATE / SPEED</b></div>
+          <div class="voice-cmd-phrases">"Go", "Speed", "Run", "Fast", "Chal", "Chalo", "Aage", "Bhagao"</div>
+        </div>
+
+        <div class="voice-cmd-card glass-panel">
+          <div class="voice-cmd-header"><span class="voice-icon">◀</span> <b>STEER LEFT</b></div>
+          <div class="voice-cmd-phrases">"Left", "Turn Left", "Go Left", "Baayein", "Left Mud", "Left Lo"</div>
+        </div>
+
+        <div class="voice-cmd-card glass-panel">
+          <div class="voice-cmd-header"><span class="voice-icon">▶</span> <b>STEER RIGHT</b></div>
+          <div class="voice-cmd-phrases">"Right", "Turn Right", "Go Right", "Daayein", "Right Mud", "Right Lo"</div>
+        </div>
+
+        <div class="voice-cmd-card glass-panel">
+          <div class="voice-cmd-header"><span class="voice-icon">⬆</span> <b>STRAIGHT / CENTER</b></div>
+          <div class="voice-cmd-phrases">"Straight", "Center", "Seedha", "Seedhe", "Samne"</div>
+        </div>
+
+        <div class="voice-cmd-card glass-panel">
+          <div class="voice-cmd-header"><span class="voice-icon">🔥</span> <b>NITRO WARP BOOST</b></div>
+          <div class="voice-cmd-phrases">"Nitro", "Boost", "Warp", "NOS", "Turbo", "Speed Up", "Tez"</div>
+        </div>
+
+        <div class="voice-cmd-card glass-panel">
+          <div class="voice-cmd-header"><span class="voice-icon">🛑</span> <b>BRAKE / STOP</b></div>
+          <div class="voice-cmd-phrases">"Stop", "Brake", "Halt", "Slow Down", "Ruko", "Ruk", "Rok"</div>
+        </div>
+
+        <div class="voice-cmd-card glass-panel">
+          <div class="voice-cmd-header"><span class="voice-icon">🌀</span> <b>DRIFT</b></div>
+          <div class="voice-cmd-phrases">"Drift", "Handbrake", "Slide", "Skid"</div>
+        </div>
+
+        <div class="voice-cmd-card glass-panel">
+          <div class="voice-cmd-header"><span class="voice-icon">⏪</span> <b>REVERSE</b></div>
+          <div class="voice-cmd-phrases">"Reverse", "Back", "Backward", "Peeche", "Piche Lo"</div>
+        </div>
+
+        <div class="voice-cmd-card glass-panel">
+          <div class="voice-cmd-header"><span class="voice-icon">🔄</span> <b>RESET CAR</b></div>
+          <div class="voice-cmd-phrases">"Reset", "Respawn", "Theek Karo"</div>
+        </div>
+
+        <div class="voice-cmd-card glass-panel">
+          <div class="voice-cmd-header"><span class="voice-icon">🎥</span> <b>CAMERA</b></div>
+          <div class="voice-cmd-phrases">"Camera", "View", "Cockpit", "Change Camera"</div>
+        </div>
+      </div>
+
+      <div style="background: rgba(0, 240, 255, 0.08); border: 1px solid var(--primary-neon); border-radius: 8px; padding: 10px; font-size: 11px; text-align: center; color: #fff;">
+        💡 <b>Tip:</b> Click <b>🎙️ MIC BUTTON</b> anytime or press <b>V</b> to toggle Voice Driving on/off.
+      </div>
+
+      <button class="cyber-btn cyber-btn-primary btn-close-modal" style="margin-top:6px;">START DRIVING</button>
+    </div>
+  </div>
+
+  <!-- =========================================
+       5. TELEMETRY & ANALYTICS DASHBOARD MODAL
+  ========================================= -->
+  <div id="modal-telemetry" class="modal-overlay hidden">
+    <div class="modal-card glass-panel" style="width: 640px;">
+      <div class="modal-title">📊 RACE ANALYTICS & TELEMETRY</div>
+      <div style="font-size:12px; color:var(--text-muted); text-align:center;">Comprehensive post-race telemetry data and driving accuracy analysis.</div>
+
+      <div class="telemetry-grid">
+        <div class="tel-stat-box"><span class="tel-label">TOP SPEED RECORD</span><span id="tel-top-speed" class="tel-val">287 KM/H</span></div>
+        <div class="tel-stat-box"><span class="tel-label">AVERAGE SPEED</span><span id="tel-avg-speed" class="tel-val">164 KM/H</span></div>
+        <div class="tel-stat-box"><span class="tel-label">TOTAL DRIFT DISTANCE</span><span id="tel-drift-dist" class="tel-val">1,240 m</span></div>
+        <div class="tel-stat-box"><span class="tel-label">NITRO SURGE USED</span><span id="tel-nitro-count" class="tel-val">7 (12.4s)</span></div>
+        <div class="tel-stat-box"><span class="tel-label">OVERTAKES COMPLETED</span><span id="tel-overtakes" class="tel-val">8</span></div>
+        <div class="tel-stat-box"><span class="tel-label">AIRBORNE JUMP TIME</span><span id="tel-air-time" class="tel-val">3.8s</span></div>
+        <div class="tel-stat-box" style="grid-column: span 2;"><span class="tel-label">CLEAN DRIVING ACCURACY</span><span id="tel-clean-acc" class="tel-val" style="color:var(--accent-green);">92%</span></div>
+      </div>
+
+      <button class="cyber-btn cyber-btn-primary btn-close-modal" style="margin-top:6px;">CLOSE ANALYTICS</button>
+    </div>
+  </div>
+
+  <!-- =========================================
+       6. MULTIPLAYER ROOMS MODAL
+  ========================================= -->
+  <div id="modal-multiplayer" class="modal-overlay hidden">
+    <div class="modal-card glass-panel">
+      <div class="modal-title">ONLINE MULTIPLAYER GP</div>
+      
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <label style="font-size:11px; color:var(--text-muted);">HOST A NEW ROOM</label>
+        <input type="text" id="mp-room-name" class="glass-panel" style="padding:8px; border:1px solid var(--bg-glass-border); color:#fff; font-family:'Rajdhani'; font-size:14px; outline:none;" placeholder="Room Name" value="Neon Rebellion GP">
+        
+        <div style="display:flex; gap:8px;">
+          <select id="mp-laps-select" class="glass-panel" style="flex:1; padding:8px; border:1px solid var(--bg-glass-border); color:#fff; font-family:'Rajdhani'; font-size:13px; outline:none; background:#070a12;">
+            <option value="2">2 Laps Sprint</option>
+            <option value="3" selected>3 Laps Standard</option>
+            <option value="5">5 Laps Endurance</option>
+          </select>
+          <button id="btn-mp-create" class="cyber-btn cyber-btn-primary">CREATE ROOM</button>
+        </div>
+      </div>
+
+      <div style="height: 1px; background: var(--bg-glass-border); margin: 4px 0;"></div>
+
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <label style="font-size:11px; color:var(--text-muted);">JOIN WITH ROOM CODE</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="mp-join-code" class="glass-panel" style="flex:1; padding:8px; border:1px solid var(--bg-glass-border); color:#fff; font-family:'Orbitron'; font-size:14px; text-transform:uppercase; outline:none;" placeholder="ROOM CODE">
+          <button id="btn-mp-join" class="cyber-btn cyber-btn-secondary">JOIN ROOM</button>
+        </div>
+      </div>
+
+      <button class="cyber-btn cyber-btn-ghost btn-close-modal" style="margin-top:6px;">CANCEL</button>
+    </div>
+  </div>
+
+  <!-- =========================================
+       7. MULTIPLAYER LOBBY SCREEN
+  ========================================= -->
+  <div id="screen-lobby" class="ui-layer interactive hidden">
+    <div class="lobby-container glass-panel" style="width:720px; max-width:90vw; padding:24px; margin:auto; margin-top:8vh; display:flex; flex-direction:column; gap:14px;">
+      <div class="lobby-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--bg-glass-border); padding-bottom:12px;">
+        <div>
+          <div id="lobby-room-name" class="lobby-title" style="font-family:'Orbitron'; font-size:20px; color:var(--primary-neon);">GRAND PRIX LOBBY</div>
+          <div style="font-size: 12px; color: var(--text-muted);">WAITING FOR PLAYERS TO GET READY</div>
+        </div>
+        <div class="room-code-tag" style="font-family:'Orbitron'; background:rgba(0,240,255,0.15); border:1px dashed var(--primary-neon); padding:4px 10px; border-radius:6px; font-weight:700;">CODE: <span id="lobby-room-code">----</span></div>
+      </div>
+
+      <div id="lobby-player-list" class="lobby-players-grid" style="display:flex; flex-direction:column; gap:6px; max-height:240px; overflow-y:auto;"></div>
+
+      <div class="lobby-footer" style="display:flex; justify-content:space-between; align-items:center;">
+        <button id="btn-leave-lobby" class="cyber-btn cyber-btn-ghost">LEAVE ROOM</button>
+        <div style="display:flex; gap:8px;">
+          <button id="btn-lobby-ready" class="cyber-btn cyber-btn-secondary">SET READY</button>
+          <button id="btn-lobby-start" class="cyber-btn cyber-btn-primary" style="display:none;">START RACE (HOST)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================
+       8. IN-GAME RACING HUD & RIVALS
+  ========================================= -->
+  <div id="screen-hud" class="ui-layer hidden">
+    <!-- Top Bar -->
+    <div class="hud-top-bar">
+      <!-- Position & Lap Counter -->
+      <div class="hud-pos-lap-box">
+        <div class="hud-stat-pill glass-panel">
+          <span class="hud-stat-label">POSITION</span>
+          <span class="hud-stat-val"><span id="hud-pos-val">1</span><span style="font-size:12px; color:var(--text-muted);">/<span id="hud-pos-total">6</span></span></span>
+        </div>
+        <div class="hud-stat-pill glass-panel">
+          <span class="hud-stat-label">LAP</span>
+          <span class="hud-stat-val"><span id="hud-lap-val">1</span><span style="font-size:12px; color:var(--text-muted);">/<span id="hud-lap-total">3</span></span></span>
+        </div>
+      </div>
+
+      <!-- Center Lap Times & Radio -->
+      <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+        <div class="hud-timer-box glass-panel">
+          <span id="hud-time-current" class="hud-timer-main">00:00.00</span>
+          <span class="hud-timer-best">BEST: <span id="hud-time-best">--:--.--</span></span>
+        </div>
+        <div id="hud-btn-radio" class="hud-radio-widget glass-panel interactive" title="Click to Change Radio Station">
+          <span id="hud-radio-name">📻 Cyberwave 2077</span>
+        </div>
+      </div>
+
+      <!-- Top Right Controls -->
+      <div class="hud-top-controls interactive">
+        <div id="hud-mode-badge" class="hud-stat-pill glass-panel" style="padding: 4px 10px; font-family:'Orbitron'; font-size:11px; font-weight:800; color:var(--accent-gold);">
+          GRAND PRIX
+        </div>
+        <button id="hud-btn-voice" class="cyber-btn cyber-btn-ghost hud-icon-btn voice-mic-btn" title="Toggle Voice Driving (V)">🎙️</button>
+        <button id="hud-btn-cam" class="cyber-btn cyber-btn-ghost hud-icon-btn" title="Change Camera (C)">🎥</button>
+        <button id="hud-btn-mute" class="cyber-btn cyber-btn-ghost hud-icon-btn" title="Mute Audio (M)"><span id="mute-icon">🔊</span></button>
+        <button id="hud-btn-pause" class="cyber-btn cyber-btn-ghost hud-icon-btn" title="Pause Game (ESC)">⏸</button>
+      </div>
+    </div>
+
+    <!-- Rival Dialogue Banter Toast -->
+    <div id="hud-rival-banter" class="hud-rival-banter glass-panel hidden">
+      <span style="font-size:22px;">⚡</span>
+      <div>
+        <div id="hud-rival-name" style="font-family:'Orbitron'; font-size:12px; font-weight:900;">VORTEX</div>
+        <div id="hud-rival-text" style="font-size:13px; color:#fff;">"You think you can pass me?!"</div>
+      </div>
+    </div>
+
+    <!-- Center Alerts & Voice Command Pill -->
+    <div class="hud-center-alerts">
+      <div id="hud-voice-pill" class="hud-voice-pill glass-panel hidden">
+        <span class="voice-pulse-dot"></span>
+        <span id="hud-voice-title" style="font-family:'Orbitron'; font-weight:800; color:var(--primary-neon);">VOICE</span>
+        <span id="hud-voice-desc" style="font-size:12px; color:#fff;">LISTENING...</span>
+      </div>
+      <div id="hud-wrong-way" class="hud-wrong-way-alert hidden">WRONG WAY! TURN AROUND</div>
+      <div id="hud-knockout-box" class="hud-wrong-way-alert hidden" style="border-color:var(--accent-gold); color:var(--accent-gold); background:rgba(255,170,0,0.2);">
+        ELIMINATION IN: <span id="hud-knockout-timer">30</span>s
+      </div>
+      <div id="hud-countdown" class="hud-countdown-overlay hidden"><span id="hud-countdown-text">3</span></div>
+      <div id="hud-drift-box" class="hud-drift-popup glass-panel hidden">
+        <span class="drift-badge">DRIFT</span>
+        <span id="hud-drift-score" class="drift-points">1,240</span>
+        <span id="hud-drift-combo" class="drift-combo-badge">x2.0</span>
+      </div>
+    </div>
+
+    <!-- Bottom Gauges & Radar -->
+    <div class="hud-bottom-bar">
+      <!-- 2D Minimap Radar -->
+      <div class="radar-box">
+        <canvas id="minimap-canvas" width="140" height="140"></canvas>
+      </div>
+
+      <!-- Speedometer & Tachometer Cluster -->
+      <div class="speedometer-cluster">
+        <div class="speed-dial-box">
+          <span id="hud-speed-val" class="speed-val">0</span>
+          <span class="speed-unit">KM/H</span>
+          <span id="hud-gear-val" class="gear-indicator">1</span>
+        </div>
+
+        <div class="rpm-gauge-container">
+          <div id="hud-rpm-bar" class="rpm-bar-fill"></div>
+        </div>
+
+        <div class="nitro-gauge-container">
+          <span class="nitro-label">WARP</span>
+          <div class="nitro-track">
+            <div id="hud-nitro-bar" class="nitro-bar-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Standings Leaderboard -->
+      <div class="hud-leaderboard-box glass-panel">
+        <div class="lb-title">LIVE STANDINGS</div>
+        <div id="hud-leaderboard-list" class="lb-list"></div>
+      </div>
+    </div>
+
+    <!-- In-Game Multiplayer Chat Drawer -->
+    <div id="chat-drawer" class="chat-drawer glass-panel">
+      <div id="chat-messages-list" class="chat-messages"></div>
+      <div class="chat-input-row">
+        <input type="text" id="chat-input" placeholder="Comms..." maxlength="100">
+        <button id="btn-send-chat" class="cyber-btn cyber-btn-primary chat-send-btn">SEND</button>
+      </div>
+    </div>
+
+    <!-- Mobile Touch Controls -->
+    <div class="touch-controls-layer">
+      <div class="touch-cluster">
+        <button id="touch-left" class="touch-btn">◀</button>
+        <button id="touch-right" class="touch-btn">▶</button>
+      </div>
+      <div class="touch-cluster">
+        <button id="touch-handbrake" class="touch-btn" style="border-color:var(--accent-gold); color:var(--accent-gold);">DRIFT</button>
+        <button id="touch-nitro" class="touch-btn" style="border-color:var(--primary-neon); color:var(--primary-neon);">NITRO</button>
+      </div>
+      <div class="touch-cluster">
+        <button id="touch-brake" class="touch-btn touch-pedal touch-brake">BRAKE</button>
+        <button id="touch-gas" class="touch-btn touch-pedal touch-gas">GAS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================
+       9. CINEMATIC REPLAY CONTROLS PANEL
+  ========================================= -->
+  <div id="panel-replay-controls" class="ui-layer hidden">
+    <div class="replay-controls-bar glass-panel">
+      <button id="btn-replay-playpause" class="cyber-btn cyber-btn-primary" style="padding:6px 14px; font-size:12px;">⏯ PLAY / PAUSE</button>
+      <button id="btn-replay-speed-slow" class="cyber-btn cyber-btn-ghost" style="padding:6px 10px; font-size:11px;">0.5x</button>
+      <button id="btn-replay-speed-norm" class="cyber-btn cyber-btn-ghost" style="padding:6px 10px; font-size:11px;">1x</button>
+      <button id="btn-replay-speed-fast" class="cyber-btn cyber-btn-ghost" style="padding:6px 10px; font-size:11px;">2x</button>
+      <button id="btn-replay-cam" class="cyber-btn cyber-btn-gold" style="padding:6px 14px; font-size:12px;">🎥 SWITCH ANGLE</button>
+      <button id="btn-replay-photo" class="cyber-btn cyber-btn-secondary" style="padding:6px 14px; font-size:12px;">📸 PHOTO MODE</button>
+      <button id="btn-replay-exit" class="cyber-btn cyber-btn-ghost" style="padding:6px 12px; font-size:11px;">EXIT REPLAY</button>
+    </div>
+  </div>
+
+  <!-- =========================================
+       10. PHOTO MODE CAMERA OVERLAY
+  ========================================= -->
+  <div id="panel-photo-mode" class="ui-layer hidden">
+    <div class="photo-mode-overlay glass-panel">
+      <div style="font-family:'Orbitron'; font-weight:800; font-size:16px; color:var(--primary-neon); text-align:center;">📸 PHOTO STUDIO</div>
+      <div style="font-size:11px; color:var(--text-muted); text-align:center;">Drag mouse / touch to orbit camera. Scroll to zoom.</div>
+
+      <div style="display:flex; flex-direction:column; gap:4px;">
+        <span style="font-size:11px; color:var(--text-muted);">CAMERA FOV</span>
+        <input type="range" id="photo-fov-slider" min="30" max="90" value="65" style="width:100%;">
+      </div>
+
+      <button id="btn-photo-capture" class="cyber-btn cyber-btn-primary" style="width:100%; padding:10px; font-size:13px;">
+        💾 DOWNLOAD PHOTO (PNG)
+      </button>
+      <button id="btn-photo-exit" class="cyber-btn cyber-btn-ghost" style="width:100%; padding:8px; font-size:11px;">
+        EXIT PHOTO MODE
+      </button>
+    </div>
+  </div>
+
+  <!-- =========================================
+       11. PAUSE MENU MODAL
+  ========================================= -->
+  <div id="screen-pause" class="modal-overlay hidden">
+    <div class="modal-card glass-panel" style="width:480px;">
+      <div class="modal-title">GAME PAUSED</div>
+      
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <button id="btn-pause-resume" class="cyber-btn cyber-btn-primary">RESUME RACE</button>
+        <button id="btn-pause-restart" class="cyber-btn cyber-btn-secondary">RESTART RACE</button>
+        <button id="btn-pause-quit" class="cyber-btn cyber-btn-ghost">RETURN TO GARAGE</button>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.04); padding: 10px; border-radius: 6px; font-size: 12px; color: var(--text-muted); line-height: 1.4;">
+        <strong style="color:#fff;">CONTROLS:</strong><br>
+        • <b>W / Arrow Up</b>: Accelerate<br>
+        • <b>S / Arrow Down</b>: Brake / Reverse<br>
+        • <b>A / D / Left / Right</b>: Steer<br>
+        • <b>SPACEBAR</b>: Handbrake Drift<br>
+        • <b>SHIFT / N</b>: Nitro Warp Surge<br>
+        • <b>C</b>: Change Camera (Chase / Hood / Cockpit)<br>
+        • <b>R</b>: Reset Car to Track
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================
+       12. RACE RESULTS & PODIUM SCREEN
+  ========================================= -->
+  <div id="screen-results" class="modal-overlay hidden">
+    <div class="modal-card glass-panel" style="width: 580px;">
+      <div class="modal-title">🏁 RACE RESULTS 🏁</div>
+
+      <div class="results-stats-row">
+        <div class="results-stat-col">
+          <span style="font-size:10px; color:var(--text-muted);">TOTAL TIME</span>
+          <span id="results-total-time" style="font-family:'Orbitron'; font-size:18px; font-weight:800; color:var(--primary-neon);">02:45.32</span>
+        </div>
+        <div class="results-stat-col">
+          <span style="font-size:10px; color:var(--text-muted);">BEST LAP</span>
+          <span id="results-best-lap" style="font-family:'Orbitron'; font-size:18px; font-weight:800; color:var(--accent-gold);">00:52.18</span>
+        </div>
+        <div class="results-stat-col">
+          <span style="font-size:10px; color:var(--text-muted);">CASH REWARD</span>
+          <span id="results-cash-prize" style="font-family:'Orbitron'; font-size:18px; font-weight:800; color:var(--accent-green);">+$6,000</span>
+        </div>
+      </div>
+
+      <div class="podium-list" id="results-podium-list"></div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:6px;">
+        <button id="btn-results-replay" class="cyber-btn cyber-btn-gold">🎥 WATCH REPLAY</button>
+        <button id="btn-results-telemetry" class="cyber-btn cyber-btn-primary">📊 VIEW TELEMETRY</button>
+        <button id="btn-results-rematch" class="cyber-btn cyber-btn-secondary">🔄 REMATCH</button>
+        <button id="btn-results-garage" class="cyber-btn cyber-btn-ghost">GARAGE / SHOP</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Game Entry ES Module -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

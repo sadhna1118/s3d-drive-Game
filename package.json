@@ -1,0 +1,25 @@
+{
+  "name": "s3d-drive",
+  "version": "1.0.0",
+  "description": "S3D Drive - 3D Web-based Multiplayer Racing Game with Speech Recognition Voice Driving Control",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "game",
+    "threejs",
+    "socketio",
+    "racing",
+    "3d",
+    "multiplayer"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1",
+    "three": "^0.186.0"
+  }
+}

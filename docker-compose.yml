@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  velocity-rush-game:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: velocity_rush_neon_rebellion
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
