@@ -1597,12 +1597,12 @@ export class DateExperienceManager {
           this.particles?.emitPetal?.(worldVenue.proposeCenterPos);
         }
 
-        // Frame BOTH the kneeling couple AND the illuminated "Will you marry me?" Gate + Red Heart Balloons!
-        const gateFrontLook = worldVenue.proposeCenterPos.clone().add(new THREE.Vector3(0, 1.55, 0));
-        const forwardOut = new THREE.Vector3(0, 0, 1).applyEuler(new THREE.Euler(0, (worldVenue.facingAngle || 0) - 0.62, 0));
+        // Frame BOTH the kneeling couple AND the unobstructed "Will you marry me?" Gate + Red Heart Balloons!
+        const gateFrontLook = worldVenue.proposeCenterPos.clone().add(new THREE.Vector3(0, 1.75, 0));
+        const forwardOut = new THREE.Vector3(0, 0, 1).applyEuler(new THREE.Euler(0, (worldVenue.facingAngle || 0) - 0.42, 0));
         const camPos = worldVenue.proposeCenterPos.clone()
-          .addScaledVector(forwardOut, 5.2)
-          .add(new THREE.Vector3(0, 1.95, 0));
+          .addScaledVector(forwardOut, 5.4)
+          .add(new THREE.Vector3(0, 1.85, 0));
         this.cameraCtrl?.setExternalCameraPose?.(camPos, gateFrontLook, dt);
         return;
       }

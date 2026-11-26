@@ -2000,8 +2000,9 @@ export class Track {
 
   buildProposingCorner(parentPav, goldMat, roseMat, flameMat) {
     const corner = new THREE.Group();
-    corner.position.set(4.9, 0.5, 3.8);
-    corner.rotation.y = -0.62;
+    // Wide-open right garden extension — completely outside all 4 pavilion pillars (+4.3, ±3.4) so ZERO pillars ever block the view!
+    corner.position.set(7.8, 0.5, 1.8);
+    corner.rotation.y = -0.42;
 
     const rubyBalloonMat = new THREE.MeshPhysicalMaterial({
       color: 0xd91642,
@@ -2043,18 +2044,18 @@ export class Track {
       }
     });
 
-    // Heart-Shaped Grand Top Arch Frame around the Gate
+    // Heart-Shaped Grand Top Arch Frame around & ABOVE the banner (zero overlap on text!)
     [-1, 1].forEach((s) => {
-      const lobe = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.11, 10, 24, Math.PI * 1.15), roseMat);
-      lobe.position.set(s * 0.88, 3.45, 0);
-      lobe.rotation.z = s > 0 ? -0.18 : 0.18;
+      const lobe = new THREE.Mesh(new THREE.TorusGeometry(0.95, 0.11, 10, 24, Math.PI * 1.05), roseMat);
+      lobe.position.set(s * 0.88, 4.18, 0);
+      lobe.rotation.z = s > 0 ? -0.14 : 0.14;
       corner.add(lobe);
     });
     const archHeartCrest = new THREE.Mesh(this.create3DHeartGeo(0.75, 0.22), rubyBalloonMat);
-    archHeartCrest.position.set(0, 4.75, 0.04);
+    archHeartCrest.position.set(0, 5.18, 0.04);
     corner.add(archHeartCrest);
 
-    // "Will you marry me?" Romantic Illuminated Banner
+    // "Will you marry me?" Romantic Illuminated Banner cleanly framed inside the gate
     const signFrame = new THREE.Mesh(new THREE.BoxGeometry(3.45, 1.18, 0.14), goldMat);
     signFrame.position.set(0, 3.45, -0.02);
     const signMat = new THREE.MeshBasicMaterial({ map: this.makeProposeBannerTexture() });
@@ -2062,14 +2063,14 @@ export class Track {
     signFace.position.set(0, 3.45, 0.06);
     corner.add(signFrame, signFace);
 
-    // SO MANY Floating 3D Red Heart Balloons (22 balloons arching left, right, and crown!)
+    // SO MANY Floating 3D Red Heart Balloons (framed around left/right pillars & top crown, leaving sign 100% clear)
     const balloonHeartGeo = this.create3DHeartGeo(0.32, 0.16);
     const balloonCoords = [
-      [-2.15, 2.35, 0.25], [-2.45, 2.85, -0.15], [-1.95, 3.35, 0.35], [-2.55, 3.75, 0.1],
-      [-2.15, 4.25, -0.2], [-1.55, 4.55, 0.25], [-1.05, 4.95, -0.15], [-0.55, 5.15, 0.2],
-      [2.15, 2.35, 0.25], [2.45, 2.85, -0.15], [1.95, 3.35, 0.35], [2.55, 3.75, 0.1],
-      [2.15, 4.25, -0.2], [1.55, 4.55, 0.25], [1.05, 4.95, -0.15], [0.55, 5.15, 0.2],
-      [0, 5.45, 0.15], [-2.35, 1.85, 0.45], [2.35, 1.85, 0.45], [-1.45, 2.55, 0.55], [1.45, 2.55, 0.55], [0, 4.95, -0.25]
+      [-2.25, 2.35, 0.25], [-2.55, 2.85, -0.15], [-2.15, 3.45, 0.25], [-2.60, 3.85, 0.1],
+      [-2.25, 4.35, -0.2], [-1.75, 4.85, 0.25], [-1.15, 5.25, -0.15], [-0.55, 5.45, 0.2],
+      [2.25, 2.35, 0.25], [2.55, 2.85, -0.15], [2.15, 3.45, 0.25], [2.60, 3.85, 0.1],
+      [2.25, 4.35, -0.2], [1.75, 4.85, 0.25], [1.15, 5.25, -0.15], [0.55, 5.45, 0.2],
+      [0, 5.75, 0.15], [-2.40, 1.85, 0.45], [2.40, 1.85, 0.45], [-2.05, 2.65, 0.55], [2.05, 2.65, 0.55], [0, 5.35, -0.25]
     ];
     balloonCoords.forEach(([bx, by, bz], idx) => {
       const bGroup = new THREE.Group();
@@ -2118,7 +2119,7 @@ export class Track {
     const fairyMat = new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xb45309, emissiveIntensity: 0.42, roughness: 0.38 });
 
     // Expansive Sandstone Terrace Deck + Carpet Entryway + Walled Courtyard Apron & Compound Gate
-    const deck = new THREE.Mesh(new THREE.CylinderGeometry(10.5, 11.2, 0.5, 28), deckMat);
+    const deck = new THREE.Mesh(new THREE.CylinderGeometry(11.4, 12.0, 0.5, 28), deckMat);
     deck.position.y = 0.25;
     deck.receiveShadow = true;
     const carpet = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.08, 13.5), velvetMat);
